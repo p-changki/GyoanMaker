@@ -9,6 +9,7 @@ const {
   processBoundedParallel,
 } = require("./server/processor");
 const { validateGenerateRequest } = require("./server/validation");
+const { getSystemPrompt } = require("./server/prompt");
 
 const app = express();
 
@@ -33,25 +34,36 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/generate", async (req, res) => {
+  // 1. SYSTEM_PROMPT 검증
+  const systemPrompt = getSystemPrompt();
+  if (!systemPrompt) {
+    return sendError(
+      res,
+      500,
+      "SERVER_MISCONFIGURED",
+      "SYSTEM_PROMPT or SYSTEM_PROMPT_B64 environment variable is required."
+    );
+  }
+
+  // 2. 요청 본문 검증
   const validated = validateGenerateRequest(req.body);
   if (!validated.ok) {
     return sendError(res, validated.status, validated.code, validated.message);
   }
 
+  // 3. Gemini 클라이언트 생성
   let ai;
   try {
     ai = createGeminiClient();
-  } catch {
-    return sendError(
-      res,
-      500,
-      "SERVER_MISCONFIGURED",
-      "GOOGLE_CLOUD_API_KEY is not set."
-    );
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown error";
+    return sendError(res, 500, "SERVER_MISCONFIGURED", detail);
   }
 
+  // 4. 생성 실행
   try {
-    const generateOne = (passage) => generateOnePassage(ai, passage);
+    const generateOne = (passage) =>
+      generateOnePassage(ai, systemPrompt, passage);
 
     const results =
       PROCESSING_MODE === "parallel"
@@ -80,4 +92,8 @@ app.use((_req, res) => {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`[api] listening on http://0.0.0.0:${PORT}`);
+  console.log(
+    `[api] SYSTEM_PROMPT: ${getSystemPrompt() ? "loaded" : "⚠ NOT SET"}`
+  );
+  console.log(`[api] mode: ${PROCESSING_MODE}`);
 });

@@ -5,12 +5,14 @@
 **개인 개발자를 위한 경량 Next.js 템플릿**
 
 ### 언제 사용?
+
 - 혼자 토이 프로젝트
 - 빠른 프로토타입
 - 학습/실험
 - 해커톤
 
 ### 언제 사용 안 함?
+
 - 2명 이상 협업 → Full 템플릿 사용
 - 프로덕션 배포 → Full 템플릿 사용
 - 테스트 필요 → Full 템플릿 사용
@@ -109,42 +111,69 @@ npm run format        # 모든 파일 포맷팅
 npm run lint:fix      # 린트 오류 수정
 ```
 
-## 환경 변수 관리
+## 환경 변수
 
-### 설정 방법
+| 변수                       | 필수      | 설명                                           |
+| -------------------------- | --------- | ---------------------------------------------- |
+| `GOOGLE_CLOUD_PROJECT`     | ✅ (운영) | GCP 프로젝트 ID                                |
+| `GOOGLE_CLOUD_LOCATION`    | ✅ (운영) | GCP 리전 (예: `asia-northeast3`)               |
+| `GOOGLE_CLOUD_API_KEY`     | 로컬 전용 | Gemini API 키 (우선)                           |
+| `GOOGLE_API_KEY`           | 로컬 전용 | Gemini API 키 (하위호환 폴백)                  |
+| `SYSTEM_PROMPT_B64`        | ✅ (택1)  | 시스템 프롬프트 Base64 인코딩 (Cloud Run 권장) |
+| `SYSTEM_PROMPT`            | ✅ (택1)  | 시스템 프롬프트 raw text                       |
+| `PORT`                     | —         | 서버 포트 (기본: `4000`)                       |
+| `PROCESSING_MODE`          | —         | `sequential` (기본) 또는 `parallel`            |
+| `PARALLEL_LIMIT`           | —         | 병렬 동시 요청 수 (기본: `3`, 최대: `5`)       |
+| `NEXT_PUBLIC_API_BASE_URL` | ✅        | 프론트에서 호출할 백엔드 URL                   |
 
-1. `.env.example` 파일을 `.env.local`로 복사합니다:
+### 우선순위
+
+- **API Key**: `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` → (없으면 Vertex AI ADC 모드)
+- **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt`
+
+### Base64 프롬프트 생성
 
 ```bash
-cp .env.example .env.local
+# 프롬프트 파일을 Base64로 인코딩
+cat server/system-prompt.txt | base64 -w0
+# macOS의 경우
+cat server/system-prompt.txt | base64
 ```
 
-2. `.env.local` 파일을 열어 실제 값을 입력합니다.
+## Cloud Run 배포
 
-3. ⚠️ **중요**: `.env.local`은 Git에 커밋되지 않습니다 (보안).
+### 1. 빌드 & 배포
 
-### 환경 변수 규칙
-
-- **공개 변수** (브라우저에서 접근 가능): `NEXT_PUBLIC_` 접두사 사용
-- **비공개 변수** (서버에서만 접근 가능): 접두사 없음
-
-### 프런트엔드 최소 환경 변수 예시
-
-```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+```bash
+gcloud run deploy gyoanmaker-api \
+  --source . \
+  --region asia-northeast3 \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=your-project-id" \
+  --set-env-vars "GOOGLE_CLOUD_LOCATION=asia-northeast3" \
+  --set-env-vars "PROCESSING_MODE=sequential" \
+  --set-env-vars "SYSTEM_PROMPT_B64=$(cat server/system-prompt.txt | base64)"
 ```
 
-### 파일 우선순위 (Frontend 기준)
+### 2. Cloud Run 콘솔에서 환경변수 설정
 
-이 프런트엔드 레포에서는 로컬 개발 시 `.env.local`만 사용합니다.
+1. [Cloud Run 콘솔](https://console.cloud.google.com/run) 접속
+2. `gyoanmaker-api` 서비스 선택
+3. **수정 및 새 버전 배포** → **변수 및 보안 비밀** 탭
+4. `SYSTEM_PROMPT_B64` 환경변수 추가
 
-- `.env.local` (로컬 개발용, Git에 커밋되지 않음)
+### 3. 서비스 계정 권한
 
-배포 환경(AWS 등)에서는 플랫폼의 환경 변수 설정을 사용합니다.
+```bash
+gcloud projects add-iam-policy-binding your-project-id \
+  --member="serviceAccount:YOUR_PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
+  --role="roles/aiplatform.user"
+```
 
-## 배포 개요 (AWS)
+### 4. 배포 확인
 
-이 프로젝트는 Vercel이 아닌 AWS 환경에 배포합니다.
-• Frontend (Next.js): AWS에 배포 (SSR/Node 런타임 필요)
-• Backend (Express): 별도 저장소/서비스로 AWS에 배포
-• 통신 방식: Front → Back API 호출 (도메인/환경변수로 분리)
+```bash
+curl https://gyoanmaker-api-XXXXX-an.a.run.app/health
+# {"ok":true}
+```

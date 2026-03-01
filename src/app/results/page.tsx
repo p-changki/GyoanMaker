@@ -1,23 +1,21 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ActionBar from "@/components/ActionBar";
 import CopyButton from "@/components/CopyButton";
-import JsonModal from "@/components/JsonModal";
-import ResultCard from "@/components/results/ResultCard";
-import { MOCK_PASSAGE_RESULTS } from "@/lib/mockData";
-import { formatAllPassagesText } from "@/lib/formatText";
+import RawResultCard from "@/components/results/RawResultCard";
+import { generatePassages, ApiResultItem } from "@/services/api";
 import {
-  PassageResult,
   InputMode,
   PassageInput,
   OutputOptionState,
   GenerationMode,
-  ResultStatus,
 } from "@/lib/types";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
+
+type ResultStatus = "pending" | "generating" | "completed" | "failed";
 
 interface SessionInputData {
   inputMode: InputMode;
@@ -31,8 +29,10 @@ interface SessionInputData {
 
 interface ResultItem {
   id: string;
+  index: number;
   status: ResultStatus;
-  data: PassageResult;
+  outputText: string;
+  error?: string;
 }
 
 export default function ResultsPage() {
@@ -40,14 +40,10 @@ export default function ResultsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [inputData, setInputData] = useState<SessionInputData | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
-  const [modalData, setModalData] = useState<{
-    isOpen: boolean;
-    data: PassageResult | null;
-  }>({
-    isOpen: false,
-    data: null,
-  });
+  const [apiError, setApiError] = useState<string | null>(null);
+  const hasStartedRef = useRef(false);
 
+  // 1) sessionStorage에서 데이터 읽기
   useEffect(() => {
     const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
     if (!stored) {
@@ -63,24 +59,16 @@ export default function ResultsPage() {
       }
       setInputData(parsed);
 
+      // 초기 상태: 모두 pending
       const total = Math.min(20, parsed.passages.length);
       const initialResults: ResultItem[] = Array.from(
         { length: total },
-        (_, i) => {
-          const mockIndex = i % MOCK_PASSAGE_RESULTS.length;
-          const mock = MOCK_PASSAGE_RESULTS[mockIndex];
-
-          const status: ResultStatus = i === 2 ? "failed" : "completed";
-
-          return {
-            id: `P${String(i + 1).padStart(2, "0")}`,
-            status,
-            data: {
-              ...mock,
-              passage_id: `P${String(i + 1).padStart(2, "0")}`,
-            },
-          };
-        }
+        (_, i) => ({
+          id: `P${String(i + 1).padStart(2, "0")}`,
+          index: i,
+          status: "pending" as ResultStatus,
+          outputText: "",
+        })
       );
       setResults(initialResults);
     } catch (e) {
@@ -90,37 +78,97 @@ export default function ResultsPage() {
     }
   }, []);
 
-  const handleRegenerate = useCallback(async (index: number) => {
-    setResults((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], status: "generating" };
-      return next;
-    });
+  // 2) inputData가 설정되면 API 호출
+  useEffect(() => {
+    if (!inputData || hasStartedRef.current) return;
+    hasStartedRef.current = true;
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    setResults((prev) => {
-      const next = [...prev];
-      const currentItem = next[index];
-
-      const currentMockIndex = MOCK_PASSAGE_RESULTS.findIndex(
-        (m) => m.topic_sentence.en === currentItem.data.topic_sentence.en
+    const callApi = async () => {
+      // 모두 generating 상태로 전환
+      setResults((prev) =>
+        prev.map((r) => ({ ...r, status: "generating" as ResultStatus }))
       );
-      const nextMockIndex =
-        (currentMockIndex + 1) % MOCK_PASSAGE_RESULTS.length;
-      const nextMock = MOCK_PASSAGE_RESULTS[nextMockIndex];
 
-      next[index] = {
-        ...currentItem,
-        status: "completed",
-        data: {
-          ...nextMock,
-          passage_id: currentItem.id,
-        },
-      };
-      return next;
-    });
-  }, []);
+      try {
+        const response = await generatePassages(inputData.passages);
+
+        setResults((prev) =>
+          prev.map((r) => {
+            const apiResult = response.results.find(
+              (ar: ApiResultItem) => ar.index === r.index
+            );
+            if (apiResult) {
+              return {
+                ...r,
+                status: "completed" as ResultStatus,
+                outputText: apiResult.outputText,
+              };
+            }
+            return {
+              ...r,
+              status: "failed" as ResultStatus,
+              error: "결과를 찾을 수 없습니다.",
+            };
+          })
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "알 수 없는 오류";
+        setApiError(message);
+        setResults((prev) =>
+          prev.map((r) => ({
+            ...r,
+            status: "failed" as ResultStatus,
+            error: message,
+          }))
+        );
+      }
+    };
+
+    callApi();
+  }, [inputData]);
+
+  // 3) 개별 재생성
+  const handleRegenerate = useCallback(
+    async (index: number) => {
+      if (!inputData) return;
+
+      setResults((prev) => {
+        const next = [...prev];
+        next[index] = { ...next[index], status: "generating", outputText: "" };
+        return next;
+      });
+
+      try {
+        const passage = inputData.passages[index];
+        const response = await generatePassages([passage]);
+        const apiResult = response.results[0];
+
+        setResults((prev) => {
+          const next = [...prev];
+          next[index] = {
+            ...next[index],
+            status: "completed",
+            outputText: apiResult?.outputText || "",
+          };
+          return next;
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "알 수 없는 오류";
+        setResults((prev) => {
+          const next = [...prev];
+          next[index] = {
+            ...next[index],
+            status: "failed",
+            error: message,
+          };
+          return next;
+        });
+      }
+    },
+    [inputData]
+  );
 
   const handleRetry = useCallback(
     (index: number) => {
@@ -129,10 +177,7 @@ export default function ResultsPage() {
     [handleRegenerate]
   );
 
-  const handleShowJson = useCallback((data: PassageResult) => {
-    setModalData({ isOpen: true, data });
-  }, []);
-
+  // 로딩 중
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -141,6 +186,7 @@ export default function ResultsPage() {
     );
   }
 
+  // 데이터 없음
   if (!inputData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4">
@@ -169,7 +215,12 @@ export default function ResultsPage() {
       >
         <div className="flex items-center gap-2">
           <CopyButton
-            getText={() => formatAllPassagesText(results.map((r) => r.data))}
+            getText={() =>
+              results
+                .filter((r) => r.status === "completed")
+                .map((r) => `【${r.id}】\n${r.outputText}`)
+                .join("\n\n---\n\n")
+            }
             label="전체 복사"
             className="bg-white border-gray-200 hover:border-gray-300 shadow-sm rounded-xl font-bold text-xs h-9 px-4"
             disabled={completed === 0}
@@ -196,26 +247,25 @@ export default function ResultsPage() {
           </p>
         </div>
 
+        {apiError && (
+          <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800">
+            <strong>API 오류:</strong> {apiError}
+          </div>
+        )}
+
         <div className="space-y-10">
           {results.map((item, index) => (
-            <ResultCard
+            <RawResultCard
               key={item.id}
-              result={item.data}
-              status={item.status}
+              passageId={item.id}
+              outputText={item.outputText}
+              status={item.status === "pending" ? "generating" : item.status}
               onRegenerate={() => handleRegenerate(index)}
               onRetry={() => handleRetry(index)}
-              onShowJson={() => handleShowJson(item.data)}
             />
           ))}
         </div>
       </main>
-
-      <JsonModal
-        isOpen={modalData.isOpen}
-        onClose={() => setModalData({ isOpen: false, data: null })}
-        data={modalData.data}
-        title={`${modalData.data?.passage_id || ""} JSON 데이터`}
-      />
     </div>
   );
 }
