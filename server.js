@@ -3,17 +3,22 @@ require("dotenv").config();
 
 const cors = require("cors");
 const express = require("express");
-const { createGeminiClient, generateOnePassage } = require("./server/gemini");
+const {
+  MODEL_NAME,
+  createGeminiClient,
+  generateOnePassage,
+} = require("./server/gemini");
 const {
   processSequential,
   processBoundedParallel,
 } = require("./server/processor");
 const { validateGenerateRequest } = require("./server/validation");
-const { getSystemPrompt } = require("./server/prompt");
+const { getSystemPrompt, getPromptMetadata } = require("./server/prompt");
 
 const app = express();
 
 const PORT = Number(process.env.PORT || 4000);
+const ADMIN_KEY = process.env.ADMIN_KEY;
 const PROCESSING_MODE = process.env.PROCESSING_MODE || "sequential";
 const PARALLEL_LIMIT = Number(process.env.PARALLEL_LIMIT || 3);
 
@@ -28,6 +33,27 @@ function sendError(res, status, code, message) {
     },
   });
 }
+
+/**
+ * 서버 메타데이터 및 프롬프트 상태 확인 (보안 엔드포인트)
+ */
+app.get("/meta", (req, res) => {
+  const adminKey = req.headers["x-admin-key"];
+
+  if (!ADMIN_KEY || adminKey !== ADMIN_KEY) {
+    // 보안을 위해 401 반환 (또는 404로 위장 가능하나 명확성을 위해 401)
+    return sendError(res, 401, "UNAUTHORIZED", "Invalid or missing admin key.");
+  }
+
+  const meta = getPromptMetadata();
+  return res.json({
+    model: MODEL_NAME,
+    location: process.env.GOOGLE_CLOUD_LOCATION || "local",
+    promptSource: meta?.source || "none",
+    promptSha256: meta?.sha256 || "none",
+    promptHead: meta?.head || "none",
+  });
+});
 
 app.get("/health", (_req, res) => {
   return res.json({ ok: true });

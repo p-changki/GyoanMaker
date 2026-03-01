@@ -113,31 +113,60 @@ npm run lint:fix      # 린트 오류 수정
 
 ## 환경 변수
 
-| 변수                       | 필수      | 설명                                           |
-| -------------------------- | --------- | ---------------------------------------------- |
-| `GOOGLE_CLOUD_PROJECT`     | ✅ (운영) | GCP 프로젝트 ID                                |
-| `GOOGLE_CLOUD_LOCATION`    | ✅ (운영) | GCP 리전 (예: `asia-northeast3`)               |
-| `GOOGLE_CLOUD_API_KEY`     | 로컬 전용 | Gemini API 키 (우선)                           |
-| `GOOGLE_API_KEY`           | 로컬 전용 | Gemini API 키 (하위호환 폴백)                  |
-| `SYSTEM_PROMPT_B64`        | ✅ (택1)  | 시스템 프롬프트 Base64 인코딩 (Cloud Run 권장) |
-| `SYSTEM_PROMPT`            | ✅ (택1)  | 시스템 프롬프트 raw text                       |
-| `PORT`                     | —         | 서버 포트 (기본: `4000`)                       |
-| `PROCESSING_MODE`          | —         | `sequential` (기본) 또는 `parallel`            |
-| `PARALLEL_LIMIT`           | —         | 병렬 동시 요청 수 (기본: `3`, 최대: `5`)       |
-| `NEXT_PUBLIC_API_BASE_URL` | ✅        | 프론트에서 호출할 백엔드 URL                   |
+| 변수                       | 필수      | 설명                                       |
+| -------------------------- | --------- | ------------------------------------------ |
+| `GOOGLE_CLOUD_PROJECT`     | ✅ (운영) | GCP 프로젝트 ID                            |
+| `GOOGLE_CLOUD_LOCATION`    | ✅ (운영) | GCP 리전 (예: `asia-northeast3`)           |
+| `GOOGLE_CLOUD_API_KEY`     | 로컬 전용 | Gemini API 키 (우선)                       |
+| `GOOGLE_API_KEY`           | 로컬 전용 | Gemini API 키 (하위호환 폴백)              |
+| `SYSTEM_PROMPT_B64`        | 선택      | 시스템 프롬프트 Base64 (긴급 override용)   |
+| `SYSTEM_PROMPT`            | 선택      | 시스템 프롬프트 raw text (긴급 override용) |
+| `ADMIN_KEY`                | ✅ (운영) | `/meta` 엔드포인트 접근을 위한 보안 키     |
+| `PORT`                     | —         | 서버 포트 (기본: `4000`)                   |
+| `PROCESSING_MODE`          | —         | `sequential` (기본) 또는 `parallel`        |
+| `PARALLEL_LIMIT`           | —         | 병렬 동시 요청 수 (기본: `3`, 최대: `5`)   |
+| `NEXT_PUBLIC_API_BASE_URL` | ✅        | 프론트에서 호출할 백엔드 URL               |
 
 ### 우선순위
 
 - **API Key**: `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` → (없으면 Vertex AI ADC 모드)
-- **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt`
+- **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt` (기본값)
 
-### Base64 프롬프트 생성
+## 프롬프트 튜닝 워크플로우
+
+가장 권장되는 프롬프트 수정 방법은 파일을 직접 수정하는 것입니다.
+
+1. `server/system-prompt.txt` 파일을 수정합니다.
+2. `git add`, `git commit`, `git push`를 통해 저장소에 반영합니다.
+3. Cloud Run의 자동 빌드/배포가 완료되면 즉시 반영됩니다.
+
+**긴급 시 환경변수 Override**: 코드를 수정하지 않고 즉시 프롬프트를 변경해야 할 경우에만 `SYSTEM_PROMPT_B64` 또는 `SYSTEM_PROMPT` 환경변수를 사용하세요. 이 변수들이 설정되어 있으면 파일 내용보다 우선적으로 적용됩니다.
+
+## 서버 메타데이터 확인 (/meta)
+
+서버의 현재 상태와 어떤 프롬프트를 사용 중인지 확인하려면 `/meta` 엔드포인트를 호출하세요. 보안을 위해 `X-ADMIN-KEY` 헤더가 필요합니다.
 
 ```bash
-# 프롬프트 파일을 Base64로 인코딩
-cat server/system-prompt.txt | base64 -w0
-# macOS의 경우
-cat server/system-prompt.txt | base64
+curl -H "X-ADMIN-KEY: YOUR_ADMIN_KEY" https://your-api-url/meta
+```
+
+반환값 예시:
+
+```json
+{
+  "model": "gemini-2.5-pro",
+  "location": "asia-northeast3",
+  "promptSource": "file",
+  "promptSha256": "84a3b8...",
+  "promptHead": "# Role 당신은 대한민국 대치동 1타..."
+}
+```
+
+### Base64 프롬프트 생성 (긴급용)
+
+```bash
+# macOS/Linux에서 줄바꿈 없는 1줄 Base64 생성
+base64 -b 0 -i server/system-prompt.txt | pbcopy
 ```
 
 ## Cloud Run 배포
@@ -152,8 +181,7 @@ gcloud run deploy gyoanmaker-api \
   --allow-unauthenticated \
   --set-env-vars "GOOGLE_CLOUD_PROJECT=your-project-id" \
   --set-env-vars "GOOGLE_CLOUD_LOCATION=asia-northeast3" \
-  --set-env-vars "PROCESSING_MODE=sequential" \
-  --set-env-vars "SYSTEM_PROMPT_B64=$(cat server/system-prompt.txt | base64)"
+  --set-env-vars "ADMIN_KEY=your-secure-key"
 ```
 
 ### 2. Cloud Run 콘솔에서 환경변수 설정
