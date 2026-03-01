@@ -14,8 +14,9 @@ export interface GenerateErrorResponse {
   };
 }
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+// Vercel Proxy를 통한 호출로 변경 (보안)
+// /api/generate 경로는 Next.js Route Handler(Proxy)에서 처리함
+const API_BASE_URL = "/api";
 
 export async function generatePassages(
   passages: string[],

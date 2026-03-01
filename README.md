@@ -113,24 +113,32 @@ npm run lint:fix      # 린트 오류 수정
 
 ## 환경 변수
 
-| 변수                       | 필수      | 설명                                       |
-| -------------------------- | --------- | ------------------------------------------ |
-| `GOOGLE_CLOUD_PROJECT`     | ✅ (운영) | GCP 프로젝트 ID                            |
-| `GOOGLE_CLOUD_LOCATION`    | ✅ (운영) | GCP 리전 (예: `asia-northeast3`)           |
-| `GOOGLE_CLOUD_API_KEY`     | 로컬 전용 | Gemini API 키 (우선)                       |
-| `GOOGLE_API_KEY`           | 로컬 전용 | Gemini API 키 (하위호환 폴백)              |
-| `SYSTEM_PROMPT_B64`        | 선택      | 시스템 프롬프트 Base64 (긴급 override용)   |
-| `SYSTEM_PROMPT`            | 선택      | 시스템 프롬프트 raw text (긴급 override용) |
-| `ADMIN_KEY`                | ✅ (운영) | `/meta` 엔드포인트 접근을 위한 보안 키     |
-| `PORT`                     | —         | 서버 포트 (기본: `4000`)                   |
-| `PROCESSING_MODE`          | —         | `sequential` (기본) 또는 `parallel`        |
-| `PARALLEL_LIMIT`           | —         | 병렬 동시 요청 수 (기본: `3`, 최대: `5`)   |
-| `NEXT_PUBLIC_API_BASE_URL` | ✅        | 프론트에서 호출할 백엔드 URL               |
+| 변수                    | 필수        | 설명                                     |
+| ----------------------- | ----------- | ---------------------------------------- |
+| `API_KEY`               | ✅ (운영)   | 백엔드 보호용 키 (Cloud Run 설정)        |
+| `ADMIN_KEY`             | ✅ (운영)   | `/meta` 접근용 보안 키 (Cloud Run 설정)  |
+| `CLOUDRUN_API_BASE_URL` | ✅ (Vercel) | Cloud Run 앱의 실제 URL (프록시용)       |
+| `CLOUDRUN_API_KEY`      | ✅ (Vercel) | 백엔드의 API_KEY와 동일한 값             |
+| `GOOGLE_CLOUD_PROJECT`  | ✅ (운영)   | GCP 프로젝트 ID                          |
+| `GOOGLE_CLOUD_LOCATION` | ✅ (운영)   | GCP 리전 (예: `asia-northeast3`)         |
+| `SYSTEM_PROMPT_B64`     | 선택        | 시스템 프롬프트 Base64 (긴급 override용) |
+| `PROCESSING_MODE`       | —           | `sequential` (기본) 또는 `parallel`      |
+| `NEXT_PUBLIC_APP_URL`   | ✅          | 앱의 공개 호스트 URL                     |
 
 ### 우선순위
 
 - **API Key**: `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` → (없으면 Vertex AI ADC 모드)
 - **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt` (기본값)
+
+## 보안 아키텍처 (Vercel API Proxy)
+
+비용 방어와 키 노출 방지를 위해 다음과 같은 구조를 사용합니다.
+
+1. **브라우저**: `/api/generate` (Vercel 내장 주소)를 호출합니다.
+2. **Vercel Server Side**: `CLOUDRUN_API_KEY`를 헤더에 붙여 Cloud Run에 요청을 전달(Proxy)합니다.
+3. **Cloud Run**: `X-API-KEY`를 검증하여 일치할 때만 인스턴스를 실행합니다.
+
+이 방식을 통해 브라우저 Network 탭에서 Cloud Run의 주소와 API Key가 일절 노출되지 않습니다.
 
 ## 프롬프트 튜닝 워크플로우
 
@@ -181,7 +189,8 @@ gcloud run deploy gyoanmaker-api \
   --allow-unauthenticated \
   --set-env-vars "GOOGLE_CLOUD_PROJECT=your-project-id" \
   --set-env-vars "GOOGLE_CLOUD_LOCATION=asia-northeast3" \
-  --set-env-vars "ADMIN_KEY=your-secure-key"
+  --set-env-vars "API_KEY=your-secure-api-key" \
+  --set-env-vars "ADMIN_KEY=your-secure-admin-key"
 ```
 
 ### 2. Cloud Run 콘솔에서 환경변수 설정
