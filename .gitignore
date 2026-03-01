@@ -46,3 +46,6 @@ next-env.d.ts
 
 # references (external repos)
 /references/
+
+# editor local settings
+.sisyphus/

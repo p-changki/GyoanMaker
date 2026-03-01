@@ -31,6 +31,7 @@ export default function Home() {
     pdf: false,
     docx: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const passageCount = useMemo(() => {
     if (inputMode === "text") {
@@ -72,7 +73,8 @@ export default function Home() {
   };
 
   const handleSubmit = () => {
-    if (isSubmitDisabled) return;
+    if (isSubmitDisabled || isSubmitting) return;
+    setIsSubmitting(true);
 
     const finalPassages =
       inputMode === "text"
@@ -313,14 +315,14 @@ export default function Home() {
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={isSubmitDisabled}
+          disabled={isSubmitDisabled || isSubmitting}
           className={`w-full md:w-80 py-5 rounded-2xl text-xl font-black transition-all shadow-xl ${
-            isSubmitDisabled
+            isSubmitDisabled || isSubmitting
               ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
               : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.03] active:scale-[0.97] shadow-blue-200"
           }`}
         >
-          교안 생성하기
+          {isSubmitting ? "생성 중..." : "교안 생성하기"}
         </button>
         {passageCount > 20 && (
           <p className="text-sm text-red-500 font-bold bg-red-50 px-4 py-2 rounded-full">

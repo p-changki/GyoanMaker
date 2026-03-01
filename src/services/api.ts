@@ -18,12 +18,14 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export async function generatePassages(
-  passages: string[]
+  passages: string[],
+  signal?: AbortSignal
 ): Promise<GenerateResponse> {
   const res = await fetch(`${API_BASE_URL}/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ passages }),
+    signal,
   });
 
   if (!res.ok) {

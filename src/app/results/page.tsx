@@ -7,6 +7,11 @@ import CopyButton from "@/components/CopyButton";
 import RawResultCard from "@/components/results/RawResultCard";
 import { generatePassages, ApiResultItem } from "@/services/api";
 import {
+  hashPassages,
+  getCachedResult,
+  setCachedResult,
+} from "@/services/cache";
+import {
   InputMode,
   PassageInput,
   OutputOptionState,
@@ -43,54 +48,78 @@ export default function ResultsPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const hasStartedRef = useRef(false);
 
-  // 1) sessionStorage에서 데이터 읽기
+  // 1) sessionStorage에서 데이터 읽기 + 캐시 확인 + API 호출
   useEffect(() => {
-    const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
-    if (!stored) {
-      setIsLoading(false);
-      return;
-    }
+    const controller = new AbortController();
 
-    try {
-      const parsed = JSON.parse(stored);
-      if (!parsed.passages || !Array.isArray(parsed.passages)) {
+    const init = async () => {
+      const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (!stored) {
         setIsLoading(false);
         return;
       }
-      setInputData(parsed);
 
-      // 초기 상태: 모두 pending
+      let parsed: SessionInputData;
+      try {
+        parsed = JSON.parse(stored);
+        if (!parsed.passages || !Array.isArray(parsed.passages)) {
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse session storage", e);
+        setIsLoading(false);
+        return;
+      }
+
+      setInputData(parsed);
       const total = Math.min(20, parsed.passages.length);
-      const initialResults: ResultItem[] = Array.from(
-        { length: total },
-        (_, i) => ({
+
+      // 캐시 확인
+      const hash = await hashPassages(parsed.passages);
+      const cached = getCachedResult(hash);
+
+      if (cached) {
+        // 캐시 히트 → API 호출 없이 즉시 렌더링
+        setResults(
+          Array.from({ length: total }, (_, i) => ({
+            id: `P${String(i + 1).padStart(2, "0")}`,
+            index: i,
+            status: "completed" as ResultStatus,
+            outputText:
+              cached.results.find((r) => r.index === i)?.outputText || "",
+          }))
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      // 캐시 미스 + 중복 호출 가드
+      if (hasStartedRef.current) {
+        setIsLoading(false);
+        return;
+      }
+      hasStartedRef.current = true;
+
+      // 초기 상태: 모두 generating
+      setResults(
+        Array.from({ length: total }, (_, i) => ({
           id: `P${String(i + 1).padStart(2, "0")}`,
           index: i,
-          status: "pending" as ResultStatus,
+          status: "generating" as ResultStatus,
           outputText: "",
-        })
+        }))
       );
-      setResults(initialResults);
-    } catch (e) {
-      console.error("Failed to parse session storage", e);
-    } finally {
       setIsLoading(false);
-    }
-  }, []);
-
-  // 2) inputData가 설정되면 API 호출
-  useEffect(() => {
-    if (!inputData || hasStartedRef.current) return;
-    hasStartedRef.current = true;
-
-    const callApi = async () => {
-      // 모두 generating 상태로 전환
-      setResults((prev) =>
-        prev.map((r) => ({ ...r, status: "generating" as ResultStatus }))
-      );
 
       try {
-        const response = await generatePassages(inputData.passages);
+        const response = await generatePassages(
+          parsed.passages,
+          controller.signal
+        );
+
+        // 캐시 저장
+        setCachedResult(hash, parsed.passages, response.results);
 
         setResults((prev) =>
           prev.map((r) => {
@@ -112,6 +141,9 @@ export default function ResultsPage() {
           })
         );
       } catch (error) {
+        // AbortError는 무시 (정상적인 취소)
+        if (error instanceof Error && error.name === "AbortError") return;
+
         const message =
           error instanceof Error ? error.message : "알 수 없는 오류";
         setApiError(message);
@@ -125,8 +157,11 @@ export default function ResultsPage() {
       }
     };
 
-    callApi();
-  }, [inputData]);
+    init();
+
+    // cleanup: 언마운트/라우트 전환 시 요청 취소
+    return () => controller.abort();
+  }, []);
 
   // 3) 개별 재생성
   const handleRegenerate = useCallback(
