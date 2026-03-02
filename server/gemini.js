@@ -4,16 +4,44 @@ const { GoogleGenAI } = require("@google/genai");
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
 
 /**
- * Gemini 클라이언트를 생성한다. (통합 SDK @google/genai 용)
+ * 현재 인증 모드를 반환한다.
+ * - "vertex": GOOGLE_CLOUD_PROJECT가 있을 때 Vertex AI ADC 방식
+ * - "apikey": GOOGLE_API_KEY 또는 GOOGLE_CLOUD_API_KEY 방식 (로컬 개발용)
+ */
+function getAuthMode() {
+  if (process.env.GOOGLE_CLOUD_PROJECT) return "vertex";
+  if (process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY)
+    return "apikey";
+  return null;
+}
+
+/**
+ * Gemini 클라이언트를 생성한다.
+ *
+ * 우선순위:
+ *   1. GOOGLE_CLOUD_PROJECT 있으면 Vertex AI ADC 모드 (Cloud Run 운영)
+ *   2. GOOGLE_CLOUD_API_KEY 또는 GOOGLE_API_KEY 로 API Key 모드 (로컬 개발)
  */
 function createGeminiClient() {
+  const project = process.env.GOOGLE_CLOUD_PROJECT;
+  const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
   const apiKey = process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY;
 
-  if (!apiKey) {
-    throw new Error("GOOGLE_API_KEY is missing in .env.local");
+  if (project) {
+    // ① Vertex AI ADC 모드: Cloud Run 서비스 계정 권한으로 자동 인증
+    return new GoogleGenAI({ vertexai: true, project, location });
   }
 
-  return new GoogleGenAI({ apiKey });
+  if (apiKey) {
+    // ② API Key 모드: 로컬 개발 전용
+    return new GoogleGenAI({ apiKey });
+  }
+
+  throw new Error(
+    "[gemini] 인증 정보가 없습니다. " +
+      "Cloud Run 운영: GOOGLE_CLOUD_PROJECT 환경변수 필요. " +
+      "로컬 개발: GOOGLE_API_KEY 또는 GOOGLE_CLOUD_API_KEY 환경변수 필요."
+  );
 }
 
 /**
@@ -40,7 +68,10 @@ function extractText(response) {
  */
 async function generateOnePassage(ai, systemPrompt, passage) {
   const startTime = Date.now();
-  console.log(`[gemini] >>> Start generating with ${MODEL_NAME}`);
+  const authMode = getAuthMode();
+  console.log(
+    `[gemini] >>> Start generating with ${MODEL_NAME} (authMode: ${authMode})`
+  );
   console.log(
     `[gemini] systemPrompt length: ${systemPrompt?.length || 0} chars`
   );
@@ -71,6 +102,7 @@ async function generateOnePassage(ai, systemPrompt, passage) {
 
 module.exports = {
   MODEL_NAME,
+  getAuthMode,
   createGeminiClient,
   generateOnePassage,
 };

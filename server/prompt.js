@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { getAuthMode } = require("./gemini");
 
 const PROMPT_FILE = path.join(__dirname, "system-prompt.txt");
 
@@ -70,6 +71,7 @@ function getPromptMetadata() {
     source: info.source,
     sha256,
     head,
+    authMode: getAuthMode() || "unknown",
   };
 }
 

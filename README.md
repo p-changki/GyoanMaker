@@ -53,11 +53,17 @@ npm install
 cp .env.example .env.local
 ```
 
-Open the `.env.local` file and set the following 3 strictly required variables:
+Open the `.env.local` file and set the following required variables:
 
-1. `GOOGLE_API_KEY`: Enter your issued Gemini API Key (skip if using Vertex AI).
-2. `API_KEY`: Any secret password to protect the local backend.
-3. `CLOUDRUN_API_KEY`: The password the frontend uses to call the backend (must be identical to `API_KEY`).
+**Backend auth — choose ONE mode:**
+
+- **(A) API Key mode (simple, local dev):** Set `GOOGLE_API_KEY` to your Gemini API Key.
+- **(B) Vertex AI ADC mode (same as production):** Set `GOOGLE_CLOUD_PROJECT` and run `gcloud auth application-default login`. `GOOGLE_API_KEY` is not required.
+
+**Proxy auth (required for both modes):**
+
+1. `API_KEY`: Any secret password to protect the local backend.
+2. `CLOUDRUN_API_KEY`: The password the frontend uses to call the backend (must be identical to `API_KEY`).
 
 ### 2️⃣ Running 2 Local Servers Simultaneously
 
@@ -147,11 +153,17 @@ npm install
 cp .env.example .env.local
 ```
 
-`.env.local` 파일을 열어 아래 3가지를 필수로 설정합니다:
+`.env.local` 파일을 열어 아래와 같이 설정합니다.
 
-1. `GOOGLE_API_KEY`: 발급받은 Gemini API 키 입력 (Vertex AI 사용 시 생략)
-2. `API_KEY`: 로컬 백엔드 보호용 임의의 비밀번호 (우측과 동일하게)
-3. `CLOUDRUN_API_KEY`: 프론트가 백엔드 호출 시 사용할 비밀번호 (`API_KEY`와 같은 값으로 통일)
+**백엔드 인증 — 둘 중 하나 선택:**
+
+- **(A) API Key 모드 (간단, 로컬 개발):** `GOOGLE_API_KEY`에 발급받은 Gemini API 키 입력.
+- **(B) Vertex ADC 모드 (운영과 동일):** `GOOGLE_CLOUD_PROJECT` / `GOOGLE_CLOUD_LOCATION` 설정 후 `gcloud auth application-default login` 실행. `GOOGLE_API_KEY` 불필요.
+
+**프록시 인증 (공통 필수):**
+
+1. `API_KEY`: 로컬 백엔드 보호용 임의의 비밀번호
+2. `CLOUDRUN_API_KEY`: 프론트가 백엔드 호출 시 사용할 비밀번호 (`API_KEY`와 같은 값)
 
 ### 2️⃣ 로컬 서버 2개 동시 실행
 
@@ -281,8 +293,8 @@ npm run lint:fix      # 린트 오류 수정
 
 ### 우선순위
 
-- **API Key**: `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` → (없으면 Vertex AI ADC 모드)
-- **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt` (기본값)
+- **인증 방식**: `GOOGLE_CLOUD_PROJECT` 있으면 → Vertex AI ADC 모드 (Cloud Run 운영 권장) → 없으면 `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` (로컬 개발 fallback)
+- **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt` (기본값, 이 파일을 수정 후 push하면 자동 반영)
 
 ## 보안 아키텍처 (Vercel API Proxy)
 
@@ -314,7 +326,9 @@ npm run lint:fix      # 린트 오류 수정
 2. `git add`, `git commit`, `git push`를 통해 저장소에 반영합니다.
 3. Cloud Run의 자동 빌드/배포가 완료되면 즉시 반영됩니다.
 
-**긴급 시 환경변수 Override**: 코드를 수정하지 않고 즉시 프롬프트를 변경해야 할 경우에만 `SYSTEM_PROMPT_B64` 또는 `SYSTEM_PROMPT` 환경변수를 사용하세요. 이 변수들이 설정되어 있으면 파일 내용보다 우선적으로 적용됩니다.
+**기본(권장):** `server/system-prompt.txt` 파일을 직접 수정 → push → Cloud Run 재배포 시 자동 반영.
+
+**긴급 override:** 코드를 수정하지 않고 즉시 프롬프트를 바꿔야 할 경우에만 `SYSTEM_PROMPT_B64` 또는 `SYSTEM_PROMPT` 환경변수를 사용하세요. 설정되어 있으면 파일보다 우선 적용됩니다.
 
 ## 서버 메타데이터 확인 (/meta)
 
@@ -358,6 +372,8 @@ gcloud run deploy your-api-service-name \
   --set-env-vars "API_KEY=your-secure-api-key" \
   --set-env-vars "ADMIN_KEY=your-secure-admin-key"
 ```
+
+> ⚠️ **운영 환경에서 `GOOGLE_API_KEY`는 설정하지 않는 것을 권장합니다.** `GOOGLE_CLOUD_PROJECT`가 있으면 Vertex AI ADC(서비스 계정) 방식으로 자동 인증됩니다.
 
 ### 2. Cloud Run 콘솔에서 환경변수 설정
 
