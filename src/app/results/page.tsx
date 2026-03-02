@@ -370,7 +370,6 @@ export default function ResultsPage() {
   const completed = results.filter((r) => r.status === "completed").length;
   const generating = results.filter((r) => r.status === "generating").length;
   const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const showPdf = inputData.options?.pdf === true;
   const etaLabel = etaSeconds !== null ? formatEta(etaSeconds) : null;
 
   return (
@@ -402,34 +401,32 @@ export default function ResultsPage() {
             className="bg-white border-gray-200 hover:border-gray-300 shadow-sm rounded-xl font-bold text-xs h-9 px-4"
             disabled={completed === 0}
           />
-          {showPdf && (
-            <button
-              type="button"
-              onClick={() => router.push("/compile")}
-              className="inline-flex items-center justify-center px-6 py-2.5 text-[13px] font-black text-white bg-[#5E35B1] rounded-xl hover:bg-[#4527A0] transition-all shadow-xl shadow-purple-100 hover:scale-[1.02] active:scale-[0.98] animate-in slide-in-from-right-4 duration-500"
+          <button
+            type="button"
+            onClick={() => router.push("/compile")}
+            className="inline-flex items-center justify-center px-6 py-2.5 text-[13px] font-black text-white bg-[#5E35B1] rounded-xl hover:bg-[#4527A0] transition-all shadow-xl shadow-purple-100 hover:scale-[1.02] active:scale-[0.98] animate-in slide-in-from-right-4 duration-500"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mr-2"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="mr-2"
-              >
-                <title>합본 교안 작성 아이콘</title>
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
-                <polyline points="10 9 9 9 8 9" />
-              </svg>
-              합본 교안 작성
-            </button>
-          )}
+              <title>합본 교안 작성 아이콘</title>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            합본 교안 작성
+          </button>
         </div>
       </ActionBar>
 
