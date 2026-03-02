@@ -318,17 +318,15 @@ npm run lint:fix      # 린트 오류 수정
 - 기본값은 Proxy 기준 55초이며(`CLOUDRUN_API_TIMEOUT_MS` 미설정 시), 로컬 타겟(`localhost/127.0.0.1`)은 개발 편의를 위해 더 긴 timeout을 사용합니다.
 - 운영 환경에서는 `CLOUDRUN_API_TIMEOUT_MS`를 명시해 환경별 편차를 제거하는 것을 권장합니다.
 
-## 프롬프트 튜닝 워크플로우
+## 프롬프트 튜닝 워크플로우 (promptSource: file)
 
-가장 권장되는 프롬프트 수정 방법은 파일을 직접 수정하는 것입니다.
+**현재 Cloud Run은 `promptSource: file` 방식으로 운영 중입니다.** 따라서 프롬프트를 수정할 때는 환경변수가 아닌 파일만 수정해야 합니다.
 
-1. `server/system-prompt.txt` 파일을 수정합니다.
+1. `server/system-prompt.txt` 파일을 직접 수정합니다.
 2. `git add`, `git commit`, `git push`를 통해 저장소에 반영합니다.
-3. Cloud Run의 자동 빌드/배포가 완료되면 즉시 반영됩니다.
+3. 터미널에서 `gcloud run deploy --source .` 명령어로 재배포하면 즉시 반영됩니다.
 
-**기본(권장):** `server/system-prompt.txt` 파일을 직접 수정 → push → Cloud Run 재배포 시 자동 반영.
-
-**긴급 override:** 코드를 수정하지 않고 즉시 프롬프트를 바꿔야 할 경우에만 `SYSTEM_PROMPT_B64` 또는 `SYSTEM_PROMPT` 환경변수를 사용하세요. 설정되어 있으면 파일보다 우선 적용됩니다.
+**긴급 override:** 장애 등의 사유로 즉시 덮어써야 할 경우에만 Cloud Run 콘솔에서 `SYSTEM_PROMPT_B64` 환경변수를 강제 주입하세요. (설정 해제 시 다시 파일 모드로 복구됨)
 
 ## 서버 메타데이터 확인 (/meta)
 
