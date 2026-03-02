@@ -1,0 +1,502 @@
+"use client";
+
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { HandoutSection } from "@/types/handout";
+import {
+  DEFAULT_CUSTOM_HEADER_TEXT,
+  useHandoutStore,
+  useSection,
+} from "@/stores/useHandoutStore";
+
+const HEADER_TEXT_STORAGE_KEY = "gyoanmaker:header-text";
+
+function normalizeHeaderText(value: string): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return DEFAULT_CUSTOM_HEADER_TEXT;
+  }
+  return normalized.slice(0, 40);
+}
+
+const ids = Array.from(
+  { length: 20 },
+  (_, i) => `P${String(i + 1).padStart(2, "0")}`
+);
+
+export default function PreviewCanvas() {
+  const setCustomHeaderText = useHandoutStore(
+    (state) => state.setCustomHeaderText
+  );
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(HEADER_TEXT_STORAGE_KEY);
+    if (stored) {
+      setCustomHeaderText(normalizeHeaderText(stored));
+    }
+  }, [setCustomHeaderText]);
+
+  return (
+    <div
+      id="preview-canvas-root"
+      className="h-full overflow-auto bg-[#F9FAFB] px-8 py-6"
+    >
+      <div className="w-full space-y-12">
+        {ids.map((id) => (
+          <SectionCanvasItem key={id} id={id} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const SectionCanvasItem = memo(function SectionCanvasItem({
+  id,
+}: {
+  id: string;
+}) {
+  const section = useSection(id);
+  const isActive = useHandoutStore((state) => state.activeId === id);
+
+  if (!section?.isParsed) {
+    return (
+      <div
+        id={`section-${id}`}
+        className={`bg-white rounded-[2px] overflow-hidden min-h-[1123px] flex flex-col transition-all duration-500 ${
+          isActive ? "ring-4 ring-[#5E35B1]/20 scale-[1.01]" : "opacity-90"
+        }`}
+        style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+      >
+        <EmptyHandoutView id={id} rawText={section?.rawText} />
+      </div>
+    );
+  }
+
+  // 문장을 7개 단위로 청크(chunk) 분할
+  const sentences = section.sentences || [];
+  const chunkSize = 7;
+  const sentenceChunks = [];
+  for (let i = 0; i < sentences.length; i += chunkSize) {
+    sentenceChunks.push(sentences.slice(i, i + chunkSize));
+  }
+
+  // 문장이 아예 없을 경우 최소 1페이지 보장
+  if (sentenceChunks.length === 0) {
+    sentenceChunks.push([]);
+  }
+
+  return (
+    <div
+      className={`flex flex-col gap-12 transition-all duration-500 ${
+        isActive ? "ring-4 ring-[#5E35B1]/20 scale-[1.01]" : "opacity-90"
+      }`}
+      data-export-id={id}
+    >
+      {/* 1페이지들을 청크 개수만큼 반복 생성 */}
+      {sentenceChunks.map((chunk, index) => (
+        <div
+          key={`${id}-page1-${index}`}
+          id={`section-${id}-page1-${index}`}
+          data-pdf-part={`page1-${index}`}
+          className="bg-white rounded-[2px] overflow-hidden min-h-[1123px] flex flex-col relative"
+          style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+        >
+          <ParsedHandoutViewPage1
+            section={section}
+            sentencesChunk={chunk}
+            pageNum={index + 1}
+          />
+        </div>
+      ))}
+
+      {/* 마지막 핵심 요약 페이지 (pageNum은 앞의 1페이지 개수 + 1) */}
+      <div
+        id={`section-${id}-page2`}
+        data-pdf-part="page2"
+        className="bg-white rounded-[2px] overflow-hidden min-h-[1123px] flex flex-col relative"
+        style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+      >
+        <ParsedHandoutViewPage2
+          section={section}
+          pageNum={sentenceChunks.length + 1}
+        />
+      </div>
+    </div>
+  );
+});
+
+function HandoutHeader({ section }: { section: HandoutSection }) {
+  return (
+    <header className="mb-12 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 bg-[#FFE4E1] shrink-0">
+      <div className="flex items-end justify-between pb-6 pt-12 gap-4">
+        <div className="flex flex-col relative flex-1 h-[100px]">
+          {/* 01 Badge extending from top edge */}
+          <div className="absolute -top-[80px] left-0 bg-[#D1D5DB] rounded-b-[2rem] w-[110px] h-[100px] rounded-tr-none z-0 translate-x-3 translate-y-3" />
+          <div
+            className="absolute -top-[80px] left-0 bg-[#5E35B1] rounded-b-[2rem] rounded-tr-none w-[110px] h-[100px] flex items-center justify-center z-10"
+            style={{
+              boxShadow:
+                "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
+            }}
+          >
+            <span className="text-white text-[64px] font-black tracking-tighter leading-none mt-2">
+              {section.passageId.slice(1).padStart(2, "0")}
+            </span>
+          </div>
+
+          {/* Logic Title */}
+          <h1 className="absolute bottom-0 left-0 text-[56px] font-black text-[#5E35B1] tracking-tighter leading-none">
+            Logic
+          </h1>
+        </div>
+        <div className="bg-[#5E35B1] px-5 py-2 text-white text-base font-bold shrink-0 whitespace-nowrap">
+          <EditableHeaderText />
+        </div>
+      </div>
+      <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#5E35B1]" />
+    </header>
+  );
+}
+
+function HandoutFooter({
+  section,
+  pageNum,
+}: {
+  section: HandoutSection;
+  pageNum: number;
+}) {
+  return (
+    <footer className="mt-auto pt-10 flex items-center justify-between shrink-0">
+      <div className="flex items-center gap-2">
+        <div className="h-1 w-24 bg-[#5E35B1] rounded-full" />
+        <span className="text-[10px] font-black text-[#5E35B1] uppercase tracking-tighter">
+          Design by GyoanMaker
+        </span>
+      </div>
+      <span className="text-xs font-black text-[#E5E7EB]">
+        PAGE {section.passageId.slice(1)}-{pageNum}
+      </span>
+    </footer>
+  );
+}
+
+function ParsedHandoutViewPage1({
+  section,
+  sentencesChunk,
+  pageNum,
+}: {
+  section: HandoutSection;
+  sentencesChunk: { en: string; ko: string }[];
+  pageNum: number;
+}) {
+  return (
+    <div className="p-8 md:p-12 xl:p-16 flex flex-col h-full bg-white relative">
+      <HandoutHeader section={section} />
+
+      {/* 1. Sentence Analysis (PDF Matching) */}
+      <section className="mb-8 relative flex-1 w-full">
+        <div className="inline-flex items-center justify-center bg-white text-[#5E35B1] text-sm font-bold px-3 py-1.5 border border-[#5E35B1] rounded-full mb-3 z-10 relative leading-none">
+          <span className="translate-y-[1px]">
+            01. 구문 분석 및 해석 {pageNum > 1 ? `(계속)` : ""}
+          </span>
+        </div>
+
+        {/* Continuous Row Grid with Pink Background for Korean */}
+        <div className="border-t-[3px] border-b-[3px] border-[#5E35B1] w-full">
+          <div className="flex relative w-full">
+            {/* Right Pink Background */}
+            <div className="absolute top-0 right-0 w-[35%] h-full bg-[#FFE8E8]/50" />
+
+            <div className="flex flex-col w-full relative z-10 divide-y divide-[#E5E7EB]">
+              {sentencesChunk.map((pair, i) => (
+                <div
+                  key={`${pair.en}-${pair.ko}-${i}`}
+                  className="flex min-h-[60px] w-full"
+                >
+                  {/* English (65%) */}
+                  <div className="w-[65%] flex py-4 pr-6">
+                    <div className="w-8 shrink-0 text-[14px] font-black text-[#5E35B1] pt-0.5">
+                      {String((pageNum - 1) * 7 + i + 1).padStart(2, "0")}
+                    </div>
+                    <div className="flex-1 text-[13.5px] font-normal text-[#111827] leading-[1.7]">
+                      {pair.en.replace(
+                        /^[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳❶❷❸❹❺❻❼❽❾❿⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴\s]+/,
+                        ""
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Korean (35%) */}
+                  <div className="w-[35%] py-4 pl-6 pr-4">
+                    <div className="text-[12px] font-normal text-[#1F2937] leading-relaxed">
+                      {pair.ko.replace(
+                        /^[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳❶❷❸❹❺❻❼❽❾❿⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴\s]+/,
+                        ""
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <HandoutFooter section={section} pageNum={pageNum} />
+    </div>
+  );
+}
+
+function ParsedHandoutViewPage2({
+  section,
+  pageNum,
+}: {
+  section: HandoutSection;
+  pageNum: number;
+}) {
+  return (
+    <div className="p-8 md:p-12 xl:p-16 flex flex-col h-full bg-white relative">
+      <HandoutHeader section={section} />
+
+      {/* Summary Banner & Sections */}
+      <section className="mb-14 relative flex-1 w-full">
+        <div
+          className="relative mb-10 h-12 bg-[#5E35B1] rounded-r-xl flex items-center pr-10 w-[95%] mt-6"
+          style={{
+            boxShadow:
+              "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
+          }}
+        >
+          {/* The Avatar overlapping the top left edge */}
+          <div className="absolute -top-[40px] left-6 w-[90px] h-[90px] z-20">
+            <Image
+              src="/images/avatar.png"
+              alt="Teacher Avatar"
+              fill
+              className="object-contain"
+              style={{
+                filter:
+                  "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))",
+              }}
+            />
+          </div>
+          <span className="text-white text-[15px] font-black tracking-wide ml-32">
+            하늘쌤 PICK 핵심 정리
+          </span>
+        </div>
+
+        <div className="space-y-8 pl-2">
+          {/* Topic */}
+          <div>
+            <div
+              className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
+              style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
+            >
+              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-[1px]">
+                주제
+              </h3>
+            </div>
+            <div className="pl-1">
+              <p className="text-[13.5px] font-black text-[#111827] mb-1 leading-relaxed">
+                {section.topic.en}
+              </p>
+              <p className="text-[12px] font-medium text-[#374151] tracking-tight">
+                {section.topic.ko}
+              </p>
+            </div>
+          </div>
+
+          {/* Flow */}
+          <div>
+            <div
+              className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
+              style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
+            >
+              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-[1px]">
+                내용 정리
+              </h3>
+            </div>
+            <div className="pl-1 space-y-2">
+              {section.flow.map((step) => (
+                <div
+                  key={step.text}
+                  className="bg-[#FFE8E8]/60 px-3 py-2 rounded-md text-[11.5px] font-bold text-[#1F2937]"
+                >
+                  {step.text}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vocab Table */}
+          <div>
+            <div
+              className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
+              style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
+            >
+              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-[1px]">
+                핵심 어휘
+              </h3>
+            </div>
+
+            <table className="w-full text-left border-collapse border-t-[3px] border-b-[3px] border-[#5E35B1]">
+              <thead>
+                <tr className="bg-[#5E35B1] text-white text-[11.5px] font-bold">
+                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">
+                    핵심 어휘
+                  </th>
+                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">
+                    뜻
+                  </th>
+                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">
+                    유의어
+                  </th>
+                  <th className="px-3 py-2 w-[25%]">반의어</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {section.vocabulary
+                  .filter((vocab) => vocab.word !== "핵심 어휘 및 확장")
+                  .map((vocab, index) => (
+                    <tr
+                      key={`${vocab.word}-${vocab.meaning}`}
+                      className={`border-b border-[#5E35B1]/20 text-[11.5px] ${index % 2 === 1 ? "bg-[#F9FAFB]/50" : ""}`}
+                    >
+                      <td className="px-3 py-2 text-[#111827] font-bold border-r border-[#5E35B1]/20">
+                        {vocab.word}
+                      </td>
+                      <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-[#5E35B1]/20">
+                        {vocab.meaning}
+                      </td>
+                      <td className="px-3 py-2 text-[#4B5563] border-r border-[#5E35B1]/20 align-middle font-normal">
+                        {vocab.synonyms.length > 0
+                          ? vocab.synonyms.map((s, idx) => (
+                              <div
+                                key={`syn-${idx}`}
+                                className="mb-1 last:mb-0"
+                              >
+                                {s.word} {s.meaning}
+                              </div>
+                            ))
+                          : "-"}
+                      </td>
+                      <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
+                        {vocab.antonyms.length > 0
+                          ? vocab.antonyms.map((a, idx) => (
+                              <div
+                                key={`ant-${idx}`}
+                                className="mb-1 last:mb-0"
+                              >
+                                {a.word} {a.meaning}
+                              </div>
+                            ))
+                          : "-"}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <HandoutFooter section={section} pageNum={pageNum} />
+    </div>
+  );
+}
+
+const EditableHeaderText = memo(function EditableHeaderText() {
+  const customHeaderText = useHandoutStore((state) => state.customHeaderText);
+  const setCustomHeaderText = useHandoutStore(
+    (state) => state.setCustomHeaderText
+  );
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(customHeaderText);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      const length = inputRef.current?.value.length ?? 0;
+      inputRef.current?.setSelectionRange(length, length);
+    }
+  }, [isEditing]);
+
+  const commitEdit = useCallback(() => {
+    const nextValue = normalizeHeaderText(draft);
+    setCustomHeaderText(nextValue);
+    sessionStorage.setItem(HEADER_TEXT_STORAGE_KEY, nextValue);
+    setIsEditing(false);
+  }, [draft, setCustomHeaderText]);
+
+  const handleCancel = useCallback(() => {
+    setDraft(customHeaderText);
+    setIsEditing(false);
+  }, [customHeaderText]);
+
+  if (isEditing) {
+    return (
+      <input
+        type="text"
+        value={draft}
+        ref={inputRef}
+        maxLength={40}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commitEdit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commitEdit();
+          }
+
+          if (event.key === "Escape") {
+            event.preventDefault();
+            handleCancel();
+          }
+        }}
+        className="w-full bg-transparent text-white text-lg font-bold outline-none border-0 p-0 m-0"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setDraft(customHeaderText);
+        setIsEditing(true);
+      }}
+      className="bg-transparent border-0 p-0 m-0 text-white text-lg font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+      aria-label="헤더 텍스트 편집"
+    >
+      {customHeaderText}
+    </button>
+  );
+});
+
+function EmptyHandoutView({ id, rawText }: { id: string; rawText?: string }) {
+  return (
+    <div className="p-16 flex flex-col items-center justify-center h-full text-center space-y-6">
+      <div className="w-24 h-24 bg-[#F9FAFB] rounded-3xl flex items-center justify-center text-3xl font-black text-[#E5E7EB] border-2 border-dashed border-[#E5E7EB]">
+        {id}
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-xl font-black text-[#9CA3AF] tracking-tight">
+          지문 내용을 기다리는 중
+        </h3>
+        <p className="text-sm text-[#D1D5DB] font-bold max-w-sm">
+          우측 상단의 [템플릿 적용] 버튼을 눌러 교안을 완성해주세요.
+        </p>
+      </div>
+
+      {rawText && (
+        <div className="w-full mt-10 p-6 bg-[#F9FAFB]/50 rounded-2xl border border-[#F3F4F6] text-left overflow-hidden opacity-30 select-none">
+          <p className="text-[10px] text-[#9CA3AF] font-mono line-clamp-6">
+            {rawText}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
