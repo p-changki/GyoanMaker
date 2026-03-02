@@ -149,7 +149,7 @@ function HandoutHeader({ section }: { section: HandoutSection }) {
             Logic
           </h1>
         </div>
-        <div className="bg-[#5E35B1] px-5 py-2 text-white text-base font-bold shrink-0 whitespace-nowrap">
+        <div className="bg-[#5E35B1] px-5 py-2 text-white text-base font-bold shrink-0 whitespace-nowrap translate-y-6 relative z-20">
           <EditableHeaderText />
         </div>
       </div>
