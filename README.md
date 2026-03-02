@@ -9,6 +9,9 @@ An AI educational material compiler that analyzes English passages using **Googl
 |           1. Dashboard            |       2. AI Analysis & Parsing        |         3. PDF Compile & Export         |
 | :-------------------------------: | :-----------------------------------: | :-------------------------------------: |
 | ![Main](public/images/1_main.png) | ![Result](public/images/2_result.png) | ![Compile](public/images/3_compile.png) |
+[Uploading 강의교안 샘플.md…]()
+
+
 
 ## 🌟 Key Features
 
