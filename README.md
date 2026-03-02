@@ -288,8 +288,9 @@ npm run lint:fix      # 린트 오류 수정
 | `GOOGLE_CLOUD_LOCATION`                   | ✅ (운영)   | GCP 리전 (예: `asia-northeast3`)             |
 | `SYSTEM_PROMPT_B64`                       | 선택        | 시스템 프롬프트 Base64 (긴급 override용)     |
 | `ENABLE_REPAIR`                           | 선택        | 규칙 위반 시 1회 자동 재시도 (기본: `true`)  |
+| `REPAIR_MAX_ATTEMPTS`                     | 선택        | Repair 재시도 횟수 (기본: `1`, 최대 `1`)     |
 | `PROCESSING_MODE`                         | —           | `sequential` (기본) 또는 `parallel`          |
-| `NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE` | 선택        | 결과 페이지 청크 단위(기본 1)                |
+| `NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE` | 선택        | 결과 페이지 청크 단위(기본 2)                |
 | `NEXT_PUBLIC_APP_URL`                     | ✅          | 앱의 공개 호스트 URL                         |
 
 ### 우선순위
