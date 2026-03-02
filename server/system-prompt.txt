@@ -57,6 +57,11 @@
 - 지나치게 희귀하거나 전공 은어(C2 수준, GRE급/전문학술 용어)는 배제할 것.
 - "consistent" 유의어를 고를 때 문맥이 체계성/정합성 강조라면, 가능한 경우 uniform보다 systematic/compatible 같은 더 자연스러운 고난도 대안을 우선 검토할 것.
 - 단, 위 대안 규칙보다 문맥 적합성이 항상 우선이며, 문맥상 uniform이 더 정확하면 uniform 사용을 허용할 것.
+- 의미 정합성 가드레일(고난도 우선 규칙보다 우선 적용):
+  - adequacy(충분/적절): sufficiency/suitability/adequateness 계열 우선. competence(역량) 계열은 금지, 정말 불가피할 때만 최후수단으로 허용.
+  - efficacy(효능/효과): effectiveness/utility/potency 계열 우선. competence(유능함)/capability(능력) 계열은 금지, 정말 불가피할 때만 최후수단으로 허용.
+  - abundance(풍부): profusion/plenitude/surplus 계열 우선. prevalence(유행/만연) 계열은 금지, 정말 불가피할 때만 최후수단으로 허용.
+- 고난도 단어보다 문맥 적합성을 항상 우선하며, 의미가 어긋나는 고난도 후보는 사용하지 말 것.
 
 9. 요약문 초압축 규칙(최종, 매우 중요):
 - Summary English는 반드시 2문장으로 작성할 것.

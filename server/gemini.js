@@ -3,7 +3,18 @@ const { validateOutputText } = require("./validators/validateOutput");
 const { validateVocabText } = require("./validators/validateVocab");
 
 const ENABLE_REPAIR = process.env.ENABLE_REPAIR !== "false";
-const REPAIR_MAX_ATTEMPTS = 1;
+
+function getRepairMaxAttempts() {
+  const raw = Number(process.env.REPAIR_MAX_ATTEMPTS || "1");
+  if (!Number.isFinite(raw)) {
+    return 1;
+  }
+
+  const parsed = Math.floor(raw);
+  return Math.min(1, Math.max(0, parsed));
+}
+
+const REPAIR_MAX_ATTEMPTS = getRepairMaxAttempts();
 
 // 환경변수에서 모델명을 가져오거나 기본값으로 gemini-2.5-pro 사용
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
@@ -122,7 +133,8 @@ async function generateOnePassage(ai, systemPrompt, passage) {
           `[gemini] Errors: ${allErrors.slice(0, 2).join(", ")}${allErrors.length > 2 ? "..." : ""}`
         );
 
-        const repairInstruction = `\n\n[🚨 REPAIR INSTRUCTION 🚨]\n직전 출력에서 다음과 같은 규칙 위반이 있었습니다:\n${allErrors.map((e) => "- " + e).join("\n")}\n\n위 사항을 반드시 수정하여 전체 교안을 다시 작성하세요. 다른 내용은 잘 된 부분을 그대로 유지하십시오.`;
+        const repairErrors = allErrors.slice(0, 8);
+        const repairInstruction = `\n\n[REPAIR INSTRUCTION]\n직전 출력의 규칙 위반 항목:\n${repairErrors.map((e) => "- " + e).join("\n")}\n\n위반된 섹션(Topic/Summary/Core Vocabulary)만 교정하고, 이미 규칙을 만족한 다른 섹션은 변경하지 마십시오.`;
 
         response = await ai.models.generateContent({
           model: MODEL_NAME,
