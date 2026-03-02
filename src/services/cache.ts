@@ -11,10 +11,22 @@ import type { ApiResultItem } from "./api";
 const CACHE_PREFIX = "gyoanmaker:result:";
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30분
 
+function fallbackHash(raw: string): string {
+  let hash = 0x811c9dc5;
+
+  for (let i = 0; i < raw.length; i += 1) {
+    hash ^= raw.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+
+  const hex = (hash >>> 0).toString(16).padStart(8, "0");
+  return `${hex}${hex}`;
+}
+
 export interface CachedResult {
-  passages: string[];
   results: ApiResultItem[];
   createdAt: string;
+  version: number;
 }
 
 /**
@@ -22,13 +34,23 @@ export interface CachedResult {
  */
 export async function hashPassages(passages: string[]): Promise<string> {
   const raw = JSON.stringify(passages);
-  const data = new TextEncoder().encode(raw);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return hashHex.slice(0, 16); // 앞 16자만 사용 (충돌 확률 극히 낮음)
+  const subtle = globalThis.crypto?.subtle;
+
+  if (!subtle) {
+    return fallbackHash(raw);
+  }
+
+  try {
+    const data = new TextEncoder().encode(raw);
+    const hashBuffer = await subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    return hashHex.slice(0, 16); // 앞 16자만 사용 (충돌 확률 극히 낮음)
+  } catch {
+    return fallbackHash(raw);
+  }
 }
 
 /**
@@ -41,7 +63,20 @@ export function getCachedResult(hash: string): CachedResult | null {
     const stored = sessionStorage.getItem(key);
     if (!stored) return null;
 
-    const parsed: CachedResult = JSON.parse(stored);
+    const parsed = JSON.parse(stored) as Partial<CachedResult> & {
+      results?: unknown;
+      createdAt?: unknown;
+    };
+
+    if (!Array.isArray(parsed.results)) {
+      sessionStorage.removeItem(key);
+      return null;
+    }
+
+    if (typeof parsed.createdAt !== "string") {
+      sessionStorage.removeItem(key);
+      return null;
+    }
 
     // TTL 체크
     const age = Date.now() - new Date(parsed.createdAt).getTime();
@@ -50,7 +85,11 @@ export function getCachedResult(hash: string): CachedResult | null {
       return null;
     }
 
-    return parsed;
+    return {
+      version: typeof parsed.version === "number" ? parsed.version : 1,
+      createdAt: parsed.createdAt,
+      results: parsed.results as ApiResultItem[],
+    };
   } catch {
     return null;
   }
@@ -59,15 +98,11 @@ export function getCachedResult(hash: string): CachedResult | null {
 /**
  * 결과를 sessionStorage에 캐시한다.
  */
-export function setCachedResult(
-  hash: string,
-  passages: string[],
-  results: ApiResultItem[]
-): void {
+export function setCachedResult(hash: string, results: ApiResultItem[]): void {
   try {
     const key = `${CACHE_PREFIX}${hash}`;
     const data: CachedResult = {
-      passages,
+      version: 2,
       results,
       createdAt: new Date().toISOString(),
     };

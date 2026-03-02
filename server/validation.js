@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 const { z } = require("zod");
 
 const MAX_PASSAGES = 20;

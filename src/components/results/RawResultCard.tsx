@@ -1,5 +1,6 @@
 "use client";
 
+import { type ReactNode, useMemo } from "react";
 import CopyButton from "@/components/CopyButton";
 
 type RawResultStatus = "generating" | "completed" | "failed";
@@ -19,6 +20,11 @@ export default function RawResultCard({
   onRegenerate,
   onRetry,
 }: RawResultCardProps) {
+  const formattedBlocks = useMemo(
+    () => renderFormattedBlocks(outputText),
+    [outputText]
+  );
+
   if (status === "generating") {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm animate-pulse">
@@ -128,57 +134,114 @@ export default function RawResultCard({
 
       <div className="p-6 sm:p-8">
         <div className="prose prose-sm max-w-none prose-gray prose-headings:text-gray-900 prose-h3:text-lg prose-h3:font-black prose-strong:text-gray-800 prose-p:text-gray-700 prose-p:leading-relaxed prose-li:text-gray-700">
-          <div
-            className="whitespace-pre-wrap text-[15px] leading-[1.85] text-gray-800 font-medium"
-            dangerouslySetInnerHTML={{
-              __html: formatMarkdownToHtml(outputText),
-            }}
-          />
+          <div className="whitespace-pre-wrap text-[15px] leading-[1.85] text-gray-800 font-medium">
+            {formattedBlocks}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-/**
- * 간단한 마크다운 → HTML 변환 (서드파티 의존성 없이)
- */
-function formatMarkdownToHtml(text: string): string {
-  return (
-    text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      // 헤더
-      .replace(
-        /^### (.+)$/gm,
-        '<h3 class="text-lg font-black text-gray-900 mt-8 mb-4 first:mt-0">$1</h3>'
-      )
-      .replace(
-        /^## (.+)$/gm,
-        '<h2 class="text-xl font-black text-gray-900 mt-8 mb-4">$1</h2>'
-      )
-      // 볼드
-      .replace(
-        /\*\*\[(\d+)\]\.\s*(.+?)\*\*/g,
-        '<strong class="text-base text-blue-900">[$1]. $2</strong>'
-      )
-      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-gray-900">$1</strong>')
-      // 이탤릭 (리스트 마커 * 제외)
-      .replace(/(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)/g, "<em>$1</em>")
-      // 구분선
-      .replace(/^---$/gm, '<hr class="my-6 border-gray-200" />')
-      // 리스트 아이템 (들여쓰기 포함)
-      .replace(
-        /^\*\s{3}\*\*(.+?)\*\*\s*(.*)$/gm,
-        '<div class="pl-6 py-0.5 text-sm text-gray-600">• <strong class="text-gray-700">$1</strong> $2</div>'
-      )
-      .replace(
-        /^(\d+)\.\s+(.+)$/gm,
-        '<div class="py-1"><span class="text-blue-600 font-bold mr-1">$1.</span> $2</div>'
-      )
-      // 빈 줄을 줄바꿈으로
-      .replace(/\n\n/g, '<div class="h-3"></div>')
-      .replace(/\n/g, "<br />")
-  );
+function renderInlineText(text: string, keyPrefix: string): ReactNode[] {
+  const pattern = /(\*\*[^*]+?\*\*|\*[^*\s][^*]*?[^*\s]\*)/g;
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+  let tokenIndex = 0;
+
+  for (const match of text.matchAll(pattern)) {
+    const full = match[0];
+    const start = match.index ?? 0;
+
+    if (start > cursor) {
+      nodes.push(text.slice(cursor, start));
+    }
+
+    if (full.startsWith("**") && full.endsWith("**")) {
+      nodes.push(
+        <strong key={`${keyPrefix}-b-${tokenIndex}`} className="text-gray-900">
+          {full.slice(2, -2)}
+        </strong>
+      );
+      tokenIndex += 1;
+    } else if (full.startsWith("*") && full.endsWith("*")) {
+      nodes.push(
+        <em key={`${keyPrefix}-i-${tokenIndex}`}>{full.slice(1, -1)}</em>
+      );
+      tokenIndex += 1;
+    }
+
+    cursor = start + full.length;
+  }
+
+  if (cursor < text.length) {
+    nodes.push(text.slice(cursor));
+  }
+
+  return nodes;
+}
+
+function renderFormattedBlocks(text: string): ReactNode[] {
+  const lines = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\r\n/g, "\n")
+    .split("\n");
+
+  return lines.map((rawLine, index) => {
+    const line = rawLine.trimEnd();
+    const key = `line-${index}`;
+
+    if (line.trim().length === 0) {
+      return <div key={key} className="h-3" />;
+    }
+
+    if (line.startsWith("### ")) {
+      return (
+        <h3
+          key={key}
+          className="text-lg font-black text-gray-900 mt-8 mb-4 first:mt-0"
+        >
+          {renderInlineText(line.slice(4), key)}
+        </h3>
+      );
+    }
+
+    if (line.startsWith("## ")) {
+      return (
+        <h2 key={key} className="text-xl font-black text-gray-900 mt-8 mb-4">
+          {renderInlineText(line.slice(3), key)}
+        </h2>
+      );
+    }
+
+    if (line.trim() === "---") {
+      return <hr key={key} className="my-6 border-gray-200" />;
+    }
+
+    const nestedBulletMatch = line.match(/^\*\s{3}\*\*(.+?)\*\*\s*(.*)$/);
+    if (nestedBulletMatch) {
+      const [, title, rest] = nestedBulletMatch;
+      return (
+        <div key={key} className="pl-6 py-0.5 text-sm text-gray-600">
+          • <strong className="text-gray-700">{title}</strong>
+          {rest ? ` ${rest}` : ""}
+        </div>
+      );
+    }
+
+    const numberedMatch = line.match(/^(\d+)\.\s+(.+)$/);
+    if (numberedMatch) {
+      const [, number, content] = numberedMatch;
+      return (
+        <div key={key} className="py-1">
+          <span className="text-blue-600 font-bold mr-1">{number}.</span>
+          {renderInlineText(content, key)}
+        </div>
+      );
+    }
+
+    return <div key={key}>{renderInlineText(line, key)}</div>;
+  });
 }

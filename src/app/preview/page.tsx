@@ -13,11 +13,12 @@ import {
 } from "@/lib/types";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
+const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 
 interface SessionInputData {
   inputMode: InputMode;
-  textBlock: string;
-  cards: PassageInput[];
+  textBlock?: string;
+  cards?: PassageInput[];
   passages: string[];
   options: OutputOptionState;
   generationMode: GenerationMode;
@@ -43,6 +44,14 @@ export default function PreviewPage() {
         setIsLoading(false);
         return;
       }
+
+      const payloadAge = Date.now() - new Date(parsed.timestamp).getTime();
+      if (!Number.isFinite(payloadAge) || payloadAge > INPUT_MAX_AGE_MS) {
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        setIsLoading(false);
+        return;
+      }
+
       setInputData(parsed);
 
       const total = Math.min(20, parsed.passages.length);

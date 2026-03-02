@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ActionBar from "@/components/ActionBar";
 import CopyButton from "@/components/CopyButton";
 import RawResultCard from "@/components/results/RawResultCard";
-import { generatePassages, ApiResultItem } from "@/services/api";
+import { generatePassages, generatePassagesInChunks } from "@/services/api";
 import {
   hashPassages,
   getCachedResult,
@@ -19,13 +19,29 @@ import {
 } from "@/lib/types";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
+const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+const INITIAL_GENERATE_CHUNK_SIZE = Math.max(
+  1,
+  Math.floor(Number(process.env.NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE || 1))
+);
+
+function formatEta(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const remain = seconds % 60;
+
+  if (mins <= 0) {
+    return `${remain}초`;
+  }
+
+  return `${mins}분 ${remain}초`;
+}
 
 type ResultStatus = "pending" | "generating" | "completed" | "failed";
 
 interface SessionInputData {
   inputMode: InputMode;
-  textBlock: string;
-  cards: PassageInput[];
+  textBlock?: string;
+  cards?: PassageInput[];
   passages: string[];
   options: OutputOptionState;
   generationMode: GenerationMode;
@@ -46,11 +62,17 @@ export default function ResultsPage() {
   const [inputData, setInputData] = useState<SessionInputData | null>(null);
   const [results, setResults] = useState<ResultItem[]>([]);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [etaSeconds, setEtaSeconds] = useState<number | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
   const hasStartedRef = useRef(false);
+  const generationStartedAtRef = useRef<number | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isCancellingRef = useRef(false);
 
-  // 1) sessionStorage에서 데이터 읽기 + 캐시 확인 + API 호출
   useEffect(() => {
+    let isStillMounted = true;
     const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const init = async () => {
       const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
@@ -66,6 +88,13 @@ export default function ResultsPage() {
           setIsLoading(false);
           return;
         }
+
+        const payloadAge = Date.now() - new Date(parsed.timestamp).getTime();
+        if (!Number.isFinite(payloadAge) || payloadAge > INPUT_MAX_AGE_MS) {
+          sessionStorage.removeItem(SESSION_STORAGE_KEY);
+          setIsLoading(false);
+          return;
+        }
       } catch (e) {
         console.error("Failed to parse session storage", e);
         setIsLoading(false);
@@ -75,9 +104,14 @@ export default function ResultsPage() {
       setInputData(parsed);
       const total = Math.min(20, parsed.passages.length);
 
-      // 캐시 확인
-      const hash = await hashPassages(parsed.passages);
-      const cached = getCachedResult(hash);
+      let hash: string | null = null;
+      let cached: ReturnType<typeof getCachedResult> = null;
+      try {
+        hash = await hashPassages(parsed.passages);
+        cached = getCachedResult(hash);
+      } catch (error) {
+        console.warn("[results] Cache hash failed, bypassing cache", error);
+      }
 
       if (cached) {
         // 캐시 히트 → API 호출 없이 즉시 렌더링
@@ -100,8 +134,12 @@ export default function ResultsPage() {
         return;
       }
       hasStartedRef.current = true;
+      generationStartedAtRef.current = Date.now();
+      setEtaSeconds(null);
+      setApiError(null);
+      setIsCancelling(false);
+      isCancellingRef.current = false;
 
-      // 초기 상태: 모두 generating
       setResults(
         Array.from({ length: total }, (_, i) => ({
           id: `P${String(i + 1).padStart(2, "0")}`,
@@ -113,26 +151,67 @@ export default function ResultsPage() {
       setIsLoading(false);
 
       try {
-        const response = await generatePassages(
-          parsed.passages,
-          controller.signal
-        );
+        const response = await generatePassagesInChunks(parsed.passages, {
+          signal: controller.signal,
+          chunkSize: INITIAL_GENERATE_CHUNK_SIZE,
+          onChunkComplete: ({ chunkResults, processed, total: chunkTotal }) => {
+            if (!isStillMounted) return;
+
+            setResults((prev) =>
+              prev.map((r) => {
+                const apiResult = chunkResults.find(
+                  (ar) => ar.index === r.index
+                );
+                if (!apiResult) {
+                  return r;
+                }
+
+                return {
+                  ...r,
+                  status: "completed" as ResultStatus,
+                  outputText: apiResult.outputText,
+                  error: undefined,
+                };
+              })
+            );
+
+            const startedAt = generationStartedAtRef.current;
+            if (startedAt && processed > 0) {
+              const elapsed = Date.now() - startedAt;
+              const avgPerItem = elapsed / processed;
+              const remainingItems = Math.max(0, chunkTotal - processed);
+              setEtaSeconds(
+                Math.max(0, Math.round((avgPerItem * remainingItems) / 1000))
+              );
+            }
+          },
+        });
 
         // 캐시 저장
-        setCachedResult(hash, parsed.passages, response.results);
+        if (hash) {
+          setCachedResult(hash, response.results);
+        }
+
+        if (!isStillMounted) return;
 
         setResults((prev) =>
           prev.map((r) => {
             const apiResult = response.results.find(
-              (ar: ApiResultItem) => ar.index === r.index
+              (ar) => ar.index === r.index
             );
             if (apiResult) {
               return {
                 ...r,
                 status: "completed" as ResultStatus,
                 outputText: apiResult.outputText,
+                error: undefined,
               };
             }
+
+            if (r.status === "completed") {
+              return r;
+            }
+
             return {
               ...r,
               status: "failed" as ResultStatus,
@@ -140,27 +219,67 @@ export default function ResultsPage() {
             };
           })
         );
-      } catch (error) {
-        // AbortError는 무시 (정상적인 취소)
-        if (error instanceof Error && error.name === "AbortError") return;
+        setEtaSeconds(null);
+        setIsCancelling(false);
+        isCancellingRef.current = false;
+      } catch (err: unknown) {
+        if (!isStillMounted) return;
+        const error = err as Error;
 
-        const message =
-          error instanceof Error ? error.message : "알 수 없는 오류";
+        if (error.name === "AbortError") {
+          const abortedMessage = isCancellingRef.current
+            ? "생성이 취소되었습니다."
+            : "요청이 취소되었습니다.";
+          setApiError(abortedMessage);
+          setResults((prev) =>
+            prev.map((r) => {
+              if (r.status === "completed") {
+                return r;
+              }
+
+              return {
+                ...r,
+                status: "failed" as ResultStatus,
+                error: abortedMessage,
+              };
+            })
+          );
+          setEtaSeconds(null);
+          setIsCancelling(false);
+          isCancellingRef.current = false;
+          return;
+        }
+
+        const message = error.message || "알 수 없는 오류";
         setApiError(message);
         setResults((prev) =>
-          prev.map((r) => ({
-            ...r,
-            status: "failed" as ResultStatus,
-            error: message,
-          }))
+          prev.map((r) => {
+            if (r.status === "completed") {
+              return r;
+            }
+
+            return {
+              ...r,
+              status: "failed" as ResultStatus,
+              error: message,
+            };
+          })
         );
+        setEtaSeconds(null);
+        setIsCancelling(false);
+        isCancellingRef.current = false;
       }
     };
 
     init();
 
-    // cleanup: 언마운트/라우트 전환 시 요청 취소
-    return () => controller.abort();
+    return () => {
+      isStillMounted = false;
+      controller.abort();
+      hasStartedRef.current = false;
+      abortControllerRef.current = null;
+      generationStartedAtRef.current = null;
+    };
   }, []);
 
   // 3) 개별 재생성
@@ -212,6 +331,16 @@ export default function ResultsPage() {
     [handleRegenerate]
   );
 
+  const handleCancelGeneration = useCallback(() => {
+    if (!abortControllerRef.current) {
+      return;
+    }
+
+    isCancellingRef.current = true;
+    setIsCancelling(true);
+    abortControllerRef.current.abort();
+  }, []);
+
   // 로딩 중
   if (isLoading) {
     return (
@@ -239,7 +368,10 @@ export default function ResultsPage() {
 
   const total = results.length;
   const completed = results.filter((r) => r.status === "completed").length;
+  const generating = results.filter((r) => r.status === "generating").length;
+  const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
   const showPdf = inputData.options?.pdf === true;
+  const etaLabel = etaSeconds !== null ? formatEta(etaSeconds) : null;
 
   return (
     <div className="min-h-screen bg-[#fcfcfd]">
@@ -249,6 +381,16 @@ export default function ResultsPage() {
         onBack={() => router.push("/")}
       >
         <div className="flex items-center gap-2">
+          {generating > 0 && (
+            <button
+              type="button"
+              onClick={handleCancelGeneration}
+              disabled={isCancelling}
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-black text-white bg-red-500 rounded-xl hover:bg-red-600 disabled:opacity-60 disabled:hover:bg-red-500 transition-all"
+            >
+              {isCancelling ? "중단 중..." : "생성 중단"}
+            </button>
+          )}
           <CopyButton
             getText={() =>
               results
@@ -263,10 +405,29 @@ export default function ResultsPage() {
           {showPdf && (
             <button
               type="button"
-              onClick={() => router.push("/preview")}
-              className="inline-flex items-center justify-center px-5 py-2 text-xs font-black text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 hover:scale-[1.02] active:scale-[0.98]"
+              onClick={() => router.push("/compile")}
+              className="inline-flex items-center justify-center px-6 py-2.5 text-[13px] font-black text-white bg-[#5E35B1] rounded-xl hover:bg-[#4527A0] transition-all shadow-xl shadow-purple-100 hover:scale-[1.02] active:scale-[0.98] animate-in slide-in-from-right-4 duration-500"
             >
-              PDF 다운로드
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-2"
+              >
+                <title>합본 교안 작성 아이콘</title>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+              합본 교안 작성
             </button>
           )}
         </div>
@@ -280,6 +441,13 @@ export default function ResultsPage() {
           <p className="text-gray-500 font-medium">
             입력하신 지문을 바탕으로 분석된 결과입니다.
           </p>
+          {total > 0 && (
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              진행 {completed}/{total} ({progressPercent}%)
+              {generating > 0 ? ` · 생성 중 ${generating}` : ""}
+              {etaLabel && generating > 0 ? ` · 예상 ${etaLabel}` : ""}
+            </p>
+          )}
         </div>
 
         {apiError && (

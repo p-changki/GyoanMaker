@@ -1,69 +1,72 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 const { GoogleGenAI } = require("@google/genai");
 
-const MODEL_NAME = "gemini-2.5-pro";
+// 환경변수에서 모델명을 가져오거나 기본값으로 gemini-2.5-pro 사용
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
 
 /**
- * Gemini 클라이언트를 생성한다.
- *
- * - 기본(Cloud Run): Vertex AI 모드 (vertexai: true, ADC 인증)
- *   → GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION 필요
- *
- * - 로컬 테스트 전용: GOOGLE_API_KEY 가 설정되어 있으면 API key 모드로 폴백
- *   (운영 환경에서는 사용 금지)
+ * Gemini 클라이언트를 생성한다. (통합 SDK @google/genai 용)
  */
 function createGeminiClient() {
-  // 우선순위: GOOGLE_CLOUD_API_KEY > GOOGLE_API_KEY (하위호환)
   const apiKey = process.env.GOOGLE_CLOUD_API_KEY || process.env.GOOGLE_API_KEY;
 
-  if (apiKey) {
-    // 로컬 테스트 전용 — API key 모드
-    return new GoogleGenAI({ apiKey });
+  if (!apiKey) {
+    throw new Error("GOOGLE_API_KEY is missing in .env.local");
   }
 
-  // 운영(Cloud Run) — Vertex AI + ADC 모드
-  const project = process.env.GOOGLE_CLOUD_PROJECT;
-  const location = process.env.GOOGLE_CLOUD_LOCATION;
-
-  if (!project || !location) {
-    throw new Error(
-      "GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION must be set for Vertex AI mode."
-    );
-  }
-
-  return new GoogleGenAI({
-    vertexai: true,
-    project,
-    location,
-  });
+  return new GoogleGenAI({ apiKey });
 }
 
+/**
+ * 응답 객체에서 텍스트를 안전하게 추출한다.
+ */
 function extractText(response) {
-  if (typeof response?.text === "string") {
-    return response.text;
+  try {
+    if (typeof response?.text === "string") {
+      return response.text;
+    }
+    if (typeof response?.text === "function") {
+      return response.text();
+    }
+    const candidate = response?.candidates?.[0];
+    return candidate?.content?.parts?.[0]?.text || "";
+  } catch (e) {
+    console.error("[gemini] Error extracting text:", e.message);
+    return "";
   }
-
-  const parts = response?.candidates?.[0]?.content?.parts;
-  if (Array.isArray(parts)) {
-    return parts
-      .map((part) => (typeof part?.text === "string" ? part.text : ""))
-      .filter(Boolean)
-      .join("\n");
-  }
-
-  return "";
 }
 
+/**
+ * 단일 지문에 대한 교안을 생성한다.
+ */
 async function generateOnePassage(ai, systemPrompt, passage) {
-  const response = await ai.models.generateContent({
-    model: MODEL_NAME,
-    config: {
-      systemInstruction: systemPrompt,
-    },
-    contents: passage,
-  });
+  const startTime = Date.now();
+  console.log(`[gemini] >>> Start generating with ${MODEL_NAME}`);
+  console.log(
+    `[gemini] systemPrompt length: ${systemPrompt?.length || 0} chars`
+  );
 
-  return extractText(response).trim();
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      config: {
+        systemInstruction: systemPrompt,
+      },
+      contents: passage,
+    });
+
+    const text = extractText(response);
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(
+      `[gemini] <<< Success! Took ${duration}s, output: ${text.length} chars`
+    );
+
+    return text.trim();
+  } catch (error) {
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.error(`[gemini] !!! Failed after ${duration}s:`, error.message);
+    throw error;
+  }
 }
 
 module.exports = {
