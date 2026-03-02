@@ -323,6 +323,8 @@ npm run lint:fix      # 린트 오류 수정
 
 **현재 Cloud Run은 `promptSource: file` 방식으로 운영 중입니다.** 따라서 프롬프트를 수정할 때는 환경변수가 아닌 파일만 수정해야 합니다.
 
+> 보안 권장: 실제 Cloud Run 배포 URL과 API 키는 저장소(README, 코드, 예시 파일)에 기록하지 말고 Cloud Run/Vercel 환경변수로만 관리하세요.
+
 1. `server/system-prompt.txt` 파일을 직접 수정합니다.
 2. `git add`, `git commit`, `git push`를 통해 저장소에 반영합니다.
 3. 터미널에서 `gcloud run deploy --source .` 명령어로 재배포하면 즉시 반영됩니다.
@@ -392,6 +394,6 @@ gcloud projects add-iam-policy-binding your-project-id \
 ### 4. 배포 확인
 
 ```bash
-curl https://your-api-service-name-xxxxx-an.a.run.app/health
+curl "${CLOUDRUN_API_BASE_URL}/health"
 # {"ok":true}
 ```
