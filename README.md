@@ -6,9 +6,9 @@ An AI educational material compiler that analyzes English passages using **Googl
 
 ## 📸 Screenshots
 
-|       1. Dashboard       |   2. AI Analysis & Parsing   |    3. PDF Compile & Export     |
-| :----------------------: | :--------------------------: | :----------------------------: |
-| ![Main](docs/1_main.png) | ![Result](docs/2_result.png) | ![Compile](docs/3_compile.png) |
+|           1. Dashboard            |       2. AI Analysis & Parsing        |         3. PDF Compile & Export         |
+| :-------------------------------: | :-----------------------------------: | :-------------------------------------: |
+| ![Main](public/images/1_main.png) | ![Result](public/images/2_result.png) | ![Compile](public/images/3_compile.png) |
 
 ## 🌟 Key Features
 
@@ -112,9 +112,9 @@ Google Gemini 2.5 Pro를 활용하여 영어 지문을 분석하고, 실제 학�
 
 ## 📸 스크린샷 (Screenshots)
 
-|  1. 교안 생성 대시보드   |     2. AI 지문 분석 결과     |    3. 최종 교안 PDF 컴파일     |
-| :----------------------: | :--------------------------: | :----------------------------: |
-| ![Main](docs/1_main.png) | ![Result](docs/2_result.png) | ![Compile](docs/3_compile.png) |
+|       1. 교안 생성 대시보드       |         2. AI 지문 분석 결과          |         3. 최종 교안 PDF 컴파일         |
+| :-------------------------------: | :-----------------------------------: | :-------------------------------------: |
+| ![Main](public/images/1_main.png) | ![Result](public/images/2_result.png) | ![Compile](public/images/3_compile.png) |
 
 ## 🌟 주요 기능 (Key Features)
 
