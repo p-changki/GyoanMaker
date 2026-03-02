@@ -4,6 +4,12 @@ _▶ [🇰🇷 한국어 버전은 아래에 있습니다. (Korean version below
 
 An AI educational material compiler that analyzes English passages using **Google Gemini 2.5 Pro** and automatically generates a **high-quality, pixel-perfect printable UI** identical to real academy-distributed PDF handouts.
 
+## 📸 Screenshots
+
+|       1. Dashboard       |   2. AI Analysis & Parsing   |    3. PDF Compile & Export     |
+| :----------------------: | :--------------------------: | :----------------------------: |
+| ![Main](docs/1_main.png) | ![Result](docs/2_result.png) | ![Compile](docs/3_compile.png) |
+
 ## 🌟 Key Features
 
 ### 1. Pixel-Perfect UI Rendering
@@ -103,6 +109,12 @@ _(For advanced usage, architecture details, and Cloud Run deployment, please ref
 # 🚀 GyoanMaker (교안 메이커) - 한국어
 
 Google Gemini 2.5 Pro를 활용하여 영어 지문을 분석하고, 실제 학원 배포용 **PDF 교안과 픽셀 레벨로 동일한 고품질 인쇄용 UI**를 자동 생성하는 AI 교육 자료 컴파일러입니다.
+
+## 📸 스크린샷 (Screenshots)
+
+|  1. 교안 생성 대시보드   |     2. AI 지문 분석 결과     |    3. 최종 교안 PDF 컴파일     |
+| :----------------------: | :--------------------------: | :----------------------------: |
+| ![Main](docs/1_main.png) | ![Result](docs/2_result.png) | ![Compile](docs/3_compile.png) |
 
 ## 🌟 주요 기능 (Key Features)
 
