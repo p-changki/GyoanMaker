@@ -196,7 +196,7 @@ function ParsedHandoutViewPage1({
       {/* 1. Sentence Analysis (PDF Matching) */}
       <section className="mb-8 relative flex-1 w-full">
         <div className="inline-flex items-center justify-center bg-white text-[#5E35B1] text-sm font-bold px-3 py-1.5 border border-[#5E35B1] rounded-full mb-3 z-10 relative leading-none">
-          <span className="translate-y-[1px]">
+          <span className="translate-y-px">
             01. 구문 분석 및 해석 {pageNum > 1 ? `(계속)` : ""}
           </span>
         </div>
@@ -292,7 +292,7 @@ function ParsedHandoutViewPage2({
               className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
               style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
             >
-              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-[1px]">
+              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-px">
                 주제
               </h3>
             </div>
@@ -306,13 +306,35 @@ function ParsedHandoutViewPage2({
             </div>
           </div>
 
+          {/* Summary */}
+          {section.summary?.en && (
+            <div>
+              <div
+                className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
+                style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
+              >
+                <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-px">
+                  요약
+                </h3>
+              </div>
+              <div className="pl-1">
+                <p className="text-[13.5px] font-black text-[#111827] mb-1 leading-relaxed">
+                  {section.summary.en}
+                </p>
+                <p className="text-[12px] font-medium text-[#374151] tracking-tight">
+                  {section.summary.ko}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Flow */}
           <div>
             <div
               className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
               style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
             >
-              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-[1px]">
+              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-px">
                 내용 정리
               </h3>
             </div>
@@ -334,7 +356,7 @@ function ParsedHandoutViewPage2({
               className="inline-flex items-center justify-center bg-[#5E35B1] px-4 py-1.5 rounded-lg mb-3"
               style={{ boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
             >
-              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-[1px]">
+              <h3 className="text-[13px] font-bold text-white tracking-wide leading-none translate-y-px">
                 핵심 어휘
               </h3>
             </div>
