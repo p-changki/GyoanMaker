@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import ActionBar from "@/components/ActionBar";
 import CopyButton from "@/components/CopyButton";
 import RawResultCard from "@/components/results/RawResultCard";
-import { generatePassages, generatePassagesInChunks } from "@/services/api";
+import {
+  type ApiResultItem,
+  type GenerateChunkProgress,
+  generatePassages,
+  generatePassagesInChunks,
+} from "@/services/api";
 import {
   hashPassages,
   getCachedResult,
@@ -20,9 +25,10 @@ import {
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
 const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+const CHUNK_CONCURRENCY = 2;
 const INITIAL_GENERATE_CHUNK_SIZE = Math.max(
   1,
-  Math.floor(Number(process.env.NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE || 1))
+  Math.floor(Number(process.env.NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE || 2))
 );
 
 function formatEta(seconds: number): string {
@@ -68,6 +74,82 @@ export default function ResultsPage() {
   const generationStartedAtRef = useRef<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isCancellingRef = useRef(false);
+  const cacheHashRef = useRef<string | null>(null);
+  const cachedResultMapRef = useRef<Map<number, string>>(new Map());
+
+  const persistCachedResults = useCallback(() => {
+    const hash = cacheHashRef.current;
+    if (!hash) {
+      return;
+    }
+
+    const resultsForCache: ApiResultItem[] = Array.from(
+      cachedResultMapRef.current.entries()
+    )
+      .map(([index, outputText]) => ({ index, outputText }))
+      .sort((a, b) => a.index - b.index);
+
+    setCachedResult(hash, resultsForCache);
+  }, []);
+
+  const applyChunkProgress = useCallback(
+    (targetIndexes: number[], progress: GenerateChunkProgress) => {
+      const successResults = progress.chunkResults
+        .map((item) => {
+          const targetIndex = targetIndexes[item.index];
+          if (typeof targetIndex !== "number") {
+            return null;
+          }
+          return { index: targetIndex, outputText: item.outputText };
+        })
+        .filter((item): item is ApiResultItem => item !== null);
+
+      const failedIndexes = progress.failedIndices
+        .map((chunkIndex) => targetIndexes[chunkIndex])
+        .filter((index): index is number => typeof index === "number");
+
+      if (successResults.length > 0) {
+        successResults.forEach((item) => {
+          cachedResultMapRef.current.set(item.index, item.outputText);
+        });
+        persistCachedResults();
+      }
+
+      if (successResults.length === 0 && failedIndexes.length === 0) {
+        return;
+      }
+
+      const successMap = new Map(
+        successResults.map((item) => [item.index, item.outputText])
+      );
+      const failedSet = new Set(failedIndexes);
+
+      setResults((prev) =>
+        prev.map((item) => {
+          const successText = successMap.get(item.index);
+          if (typeof successText === "string") {
+            return {
+              ...item,
+              status: "completed" as ResultStatus,
+              outputText: successText,
+              error: undefined,
+            };
+          }
+
+          if (failedSet.has(item.index) && item.status !== "completed") {
+            return {
+              ...item,
+              status: "failed" as ResultStatus,
+              error: progress.errorMessage || "생성에 실패했습니다.",
+            };
+          }
+
+          return item;
+        })
+      );
+    },
+    [persistCachedResults]
+  );
 
   useEffect(() => {
     let isStillMounted = true;
@@ -95,8 +177,8 @@ export default function ResultsPage() {
           setIsLoading(false);
           return;
         }
-      } catch (e) {
-        console.error("Failed to parse session storage", e);
+      } catch (error) {
+        console.error("Failed to parse session storage", error);
         setIsLoading(false);
         return;
       }
@@ -104,35 +186,62 @@ export default function ResultsPage() {
       setInputData(parsed);
       const total = Math.min(20, parsed.passages.length);
 
-      let hash: string | null = null;
-      let cached: ReturnType<typeof getCachedResult> = null;
+      const cachedMap = new Map<number, string>();
       try {
-        hash = await hashPassages(parsed.passages);
-        cached = getCachedResult(hash);
+        const hash = await hashPassages(parsed.passages);
+        cacheHashRef.current = hash;
+
+        const cached = getCachedResult(hash);
+        if (cached) {
+          cached.results.forEach((item) => {
+            if (
+              item.index >= 0 &&
+              item.index < total &&
+              typeof item.outputText === "string" &&
+              item.outputText.trim().length > 0
+            ) {
+              cachedMap.set(item.index, item.outputText);
+            }
+          });
+        }
       } catch (error) {
+        cacheHashRef.current = null;
         console.warn("[results] Cache hash failed, bypassing cache", error);
       }
 
-      if (cached) {
-        // 캐시 히트 → API 호출 없이 즉시 렌더링
-        setResults(
-          Array.from({ length: total }, (_, i) => ({
+      cachedResultMapRef.current = cachedMap;
+
+      const pendingIndexes: number[] = [];
+      const initialResults: ResultItem[] = Array.from(
+        { length: total },
+        (_, i) => {
+          const cachedOutput = cachedMap.get(i) || "";
+          const status = cachedOutput ? "completed" : "generating";
+
+          if (!cachedOutput) {
+            pendingIndexes.push(i);
+          }
+
+          return {
             id: `P${String(i + 1).padStart(2, "0")}`,
             index: i,
-            status: "completed" as ResultStatus,
-            outputText:
-              cached.results.find((r) => r.index === i)?.outputText || "",
-          }))
-        );
-        setIsLoading(false);
+            status,
+            outputText: cachedOutput,
+          };
+        }
+      );
+
+      setResults(initialResults);
+      setIsLoading(false);
+
+      if (pendingIndexes.length === 0) {
         return;
       }
 
-      // 캐시 미스 + 중복 호출 가드
       if (hasStartedRef.current) {
-        setIsLoading(false);
         return;
       }
+
       hasStartedRef.current = true;
       generationStartedAtRef.current = Date.now();
       setEtaSeconds(null);
@@ -140,105 +249,86 @@ export default function ResultsPage() {
       setIsCancelling(false);
       isCancellingRef.current = false;
 
-      setResults(
-        Array.from({ length: total }, (_, i) => ({
-          id: `P${String(i + 1).padStart(2, "0")}`,
-          index: i,
-          status: "generating" as ResultStatus,
-          outputText: "",
-        }))
-      );
-      setIsLoading(false);
+      const pendingSet = new Set(pendingIndexes);
 
       try {
-        const response = await generatePassagesInChunks(parsed.passages, {
-          signal: controller.signal,
-          chunkSize: INITIAL_GENERATE_CHUNK_SIZE,
-          onChunkComplete: ({ chunkResults, processed, total: chunkTotal }) => {
-            if (!isStillMounted) return;
+        const response = await generatePassagesInChunks(
+          pendingIndexes.map((index) => parsed.passages[index]),
+          {
+            signal: controller.signal,
+            chunkSize: INITIAL_GENERATE_CHUNK_SIZE,
+            concurrency: CHUNK_CONCURRENCY,
+            onChunkComplete: (progress) => {
+              if (!isStillMounted) {
+                return;
+              }
 
-            setResults((prev) =>
-              prev.map((r) => {
-                const apiResult = chunkResults.find(
-                  (ar) => ar.index === r.index
+              applyChunkProgress(pendingIndexes, progress);
+
+              const startedAt = generationStartedAtRef.current;
+              if (startedAt && progress.processed > 0) {
+                const elapsed = Date.now() - startedAt;
+                const avgPerItem = elapsed / progress.processed;
+                const remainingItems = Math.max(
+                  0,
+                  progress.total - progress.processed
                 );
-                if (!apiResult) {
-                  return r;
-                }
+                setEtaSeconds(
+                  Math.max(0, Math.round((avgPerItem * remainingItems) / 1000))
+                );
+              }
+            },
+          }
+        );
 
-                return {
-                  ...r,
-                  status: "completed" as ResultStatus,
-                  outputText: apiResult.outputText,
-                  error: undefined,
-                };
-              })
-            );
-
-            const startedAt = generationStartedAtRef.current;
-            if (startedAt && processed > 0) {
-              const elapsed = Date.now() - startedAt;
-              const avgPerItem = elapsed / processed;
-              const remainingItems = Math.max(0, chunkTotal - processed);
-              setEtaSeconds(
-                Math.max(0, Math.round((avgPerItem * remainingItems) / 1000))
-              );
-            }
-          },
-        });
-
-        // 캐시 저장
-        if (hash) {
-          setCachedResult(hash, response.results);
+        if (!isStillMounted) {
+          return;
         }
 
-        if (!isStillMounted) return;
-
         setResults((prev) =>
-          prev.map((r) => {
-            const apiResult = response.results.find(
-              (ar) => ar.index === r.index
-            );
-            if (apiResult) {
-              return {
-                ...r,
-                status: "completed" as ResultStatus,
-                outputText: apiResult.outputText,
-                error: undefined,
-              };
-            }
-
-            if (r.status === "completed") {
-              return r;
+          prev.map((item) => {
+            if (!pendingSet.has(item.index) || item.status !== "generating") {
+              return item;
             }
 
             return {
-              ...r,
+              ...item,
               status: "failed" as ResultStatus,
               error: "결과를 찾을 수 없습니다.",
             };
           })
         );
+
+        if (response.failed.length > 0) {
+          setApiError(
+            `일부 지문 생성에 실패했습니다. 실패한 항목만 재시도하세요. (${response.failed.length}개)`
+          );
+        } else {
+          setApiError(null);
+        }
+
         setEtaSeconds(null);
         setIsCancelling(false);
         isCancellingRef.current = false;
-      } catch (err: unknown) {
-        if (!isStillMounted) return;
-        const error = err as Error;
+      } catch (error) {
+        if (!isStillMounted) {
+          return;
+        }
 
-        if (error.name === "AbortError") {
+        const requestError = error as Error;
+        if (requestError.name === "AbortError") {
           const abortedMessage = isCancellingRef.current
             ? "생성이 취소되었습니다."
             : "요청이 취소되었습니다.";
           setApiError(abortedMessage);
           setResults((prev) =>
-            prev.map((r) => {
-              if (r.status === "completed") {
-                return r;
+            prev.map((item) => {
+              if (!pendingSet.has(item.index) || item.status === "completed") {
+                return item;
               }
 
               return {
-                ...r,
+                ...item,
                 status: "failed" as ResultStatus,
                 error: abortedMessage,
               };
@@ -250,16 +340,16 @@ export default function ResultsPage() {
           return;
         }
 
-        const message = error.message || "알 수 없는 오류";
+        const message = requestError.message || "알 수 없는 오류";
         setApiError(message);
         setResults((prev) =>
-          prev.map((r) => {
-            if (r.status === "completed") {
-              return r;
+          prev.map((item) => {
+            if (!pendingSet.has(item.index) || item.status === "completed") {
+              return item;
             }
 
             return {
-              ...r,
+              ...item,
               status: "failed" as ResultStatus,
               error: message,
             };
@@ -280,16 +370,24 @@ export default function ResultsPage() {
       abortControllerRef.current = null;
       generationStartedAtRef.current = null;
     };
-  }, []);
+  }, [applyChunkProgress]);
 
   // 3) 개별 재생성
   const handleRegenerate = useCallback(
     async (index: number) => {
       if (!inputData) return;
 
+      cachedResultMapRef.current.delete(index);
+      persistCachedResults();
+
       setResults((prev) => {
         const next = [...prev];
-        next[index] = { ...next[index], status: "generating", outputText: "" };
+        next[index] = {
+          ...next[index],
+          status: "generating",
+          outputText: "",
+          error: undefined,
+        };
         return next;
       });
 
@@ -304,9 +402,15 @@ export default function ResultsPage() {
             ...next[index],
             status: "completed",
             outputText: apiResult?.outputText || "",
+            error: undefined,
           };
           return next;
         });
+
+        if (apiResult?.outputText) {
+          cachedResultMapRef.current.set(index, apiResult.outputText);
+          persistCachedResults();
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "알 수 없는 오류";
@@ -321,7 +425,7 @@ export default function ResultsPage() {
         });
       }
     },
-    [inputData]
+    [inputData, persistCachedResults]
   );
 
   const handleRetry = useCallback(
@@ -330,6 +434,110 @@ export default function ResultsPage() {
     },
     [handleRegenerate]
   );
+
+  const handleRetryFailedOnly = useCallback(async () => {
+    const failedIndexes = results
+      .filter((item) => item.status === "failed")
+      .map((item) => item.index);
+
+    if (!inputData || failedIndexes.length === 0) {
+      return;
+    }
+
+    const retrySet = new Set(failedIndexes);
+    const retryController = new AbortController();
+    abortControllerRef.current = retryController;
+    generationStartedAtRef.current = Date.now();
+    setApiError(null);
+    setEtaSeconds(null);
+    setIsCancelling(false);
+    isCancellingRef.current = false;
+
+    setResults((prev) =>
+      prev.map((item) => {
+        if (!retrySet.has(item.index)) {
+          return item;
+        }
+
+        return {
+          ...item,
+          status: "generating" as ResultStatus,
+          error: undefined,
+        };
+      })
+    );
+
+    try {
+      const response = await generatePassagesInChunks(
+        failedIndexes.map((index) => inputData.passages[index]),
+        {
+          signal: retryController.signal,
+          chunkSize: 1,
+          concurrency: CHUNK_CONCURRENCY,
+          onChunkComplete: (progress) => {
+            applyChunkProgress(failedIndexes, progress);
+
+            const startedAt = generationStartedAtRef.current;
+            if (startedAt && progress.processed > 0) {
+              const elapsed = Date.now() - startedAt;
+              const avgPerItem = elapsed / progress.processed;
+              const remainingItems = Math.max(
+                0,
+                progress.total - progress.processed
+              );
+              setEtaSeconds(
+                Math.max(0, Math.round((avgPerItem * remainingItems) / 1000))
+              );
+            }
+          },
+        }
+      );
+
+      setResults((prev) =>
+        prev.map((item) => {
+          if (!retrySet.has(item.index) || item.status !== "generating") {
+            return item;
+          }
+
+          return {
+            ...item,
+            status: "failed" as ResultStatus,
+            error: "결과를 찾을 수 없습니다.",
+          };
+        })
+      );
+
+      if (response.failed.length > 0) {
+        setApiError(
+          `재시도 후에도 실패한 지문이 있습니다. (${response.failed.length}개)`
+        );
+      } else {
+        setApiError(null);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "알 수 없는 오류";
+
+      setApiError(message);
+      setResults((prev) =>
+        prev.map((item) => {
+          if (!retrySet.has(item.index) || item.status === "completed") {
+            return item;
+          }
+
+          return {
+            ...item,
+            status: "failed" as ResultStatus,
+            error: message,
+          };
+        })
+      );
+    } finally {
+      setEtaSeconds(null);
+      setIsCancelling(false);
+      isCancellingRef.current = false;
+    }
+  }, [applyChunkProgress, inputData, results]);
 
   const handleCancelGeneration = useCallback(() => {
     if (!abortControllerRef.current) {
@@ -368,14 +576,20 @@ export default function ResultsPage() {
 
   const total = results.length;
   const completed = results.filter((r) => r.status === "completed").length;
+  const failed = results.filter((r) => r.status === "failed").length;
   const generating = results.filter((r) => r.status === "generating").length;
-  const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const processed = completed + failed;
+  const progressPercent = total > 0 ? Math.round((processed / total) * 100) : 0;
   const etaLabel = etaSeconds !== null ? formatEta(etaSeconds) : null;
+  const failedIds = results
+    .filter((r) => r.status === "failed")
+    .map((r) => r.id)
+    .join(", ");
 
   return (
     <div className="min-h-screen bg-[#fcfcfd]">
       <ActionBar
-        completed={completed}
+        completed={processed}
         total={total}
         onBack={() => router.push("/")}
       >
@@ -401,6 +615,16 @@ export default function ResultsPage() {
             className="bg-white border-gray-200 hover:border-gray-300 shadow-sm rounded-xl font-bold text-xs h-9 px-4"
             disabled={completed === 0}
           />
+          {failed > 0 && (
+            <button
+              type="button"
+              onClick={handleRetryFailedOnly}
+              disabled={generating > 0}
+              className="inline-flex items-center justify-center px-4 py-2 text-xs font-black text-white bg-amber-500 rounded-xl hover:bg-amber-600 disabled:opacity-60 disabled:hover:bg-amber-500 transition-all"
+            >
+              실패한 것만 재시도 ({failed})
+            </button>
+          )}
           <button
             type="button"
             onClick={() => router.push("/compile")}
@@ -440,7 +664,9 @@ export default function ResultsPage() {
           </p>
           {total > 0 && (
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              진행 {completed}/{total} ({progressPercent}%)
+              진행 {processed}/{total} ({progressPercent}%)
+              {completed > 0 ? ` · 완료 ${completed}` : ""}
+              {failed > 0 ? ` · 실패 ${failed}` : ""}
               {generating > 0 ? ` · 생성 중 ${generating}` : ""}
               {etaLabel && generating > 0 ? ` · 예상 ${etaLabel}` : ""}
             </p>
@@ -450,6 +676,12 @@ export default function ResultsPage() {
         {apiError && (
           <div className="mb-8 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800">
             <strong>API 오류:</strong> {apiError}
+          </div>
+        )}
+
+        {failedIds && (
+          <div className="mb-8 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
+            <strong>실패 항목:</strong> {failedIds}
           </div>
         )}
 
