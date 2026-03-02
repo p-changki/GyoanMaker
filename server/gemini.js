@@ -1,4 +1,9 @@
 const { GoogleGenAI } = require("@google/genai");
+const { validateOutputText } = require("./validators/validateOutput");
+const { validateVocabText } = require("./validators/validateVocab");
+
+const ENABLE_REPAIR = process.env.ENABLE_REPAIR !== "false";
+const REPAIR_MAX_ATTEMPTS = 1;
 
 // 환경변수에서 모델명을 가져오거나 기본값으로 gemini-2.5-pro 사용
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
@@ -77,7 +82,7 @@ async function generateOnePassage(ai, systemPrompt, passage) {
   );
 
   try {
-    const response = await ai.models.generateContent({
+    let response = await ai.models.generateContent({
       model: MODEL_NAME,
       config: {
         systemInstruction: systemPrompt,
@@ -85,14 +90,57 @@ async function generateOnePassage(ai, systemPrompt, passage) {
       contents: passage,
     });
 
-    const text = extractText(response);
+    let text = extractText(response);
+    let finalWarnings = [];
+
+    if (ENABLE_REPAIR) {
+      let attempt = 0;
+      while (attempt <= REPAIR_MAX_ATTEMPTS) {
+        const outRes = validateOutputText("check", text);
+        const vocabRes = validateVocabText("check", text);
+
+        const allErrors = [...outRes.errors, ...vocabRes.errors];
+        if (allErrors.length === 0) {
+          if (attempt > 0) {
+            console.log(`[gemini] <<< Retry success!`);
+          }
+          break; // PASS
+        }
+
+        if (attempt >= REPAIR_MAX_ATTEMPTS) {
+          console.warn(`[gemini] !!! Retry failed. Returns with warnings.`);
+          console.warn(
+            `[gemini] Errors: ${allErrors.slice(0, 2).join(", ")}${allErrors.length > 2 ? "..." : ""}`
+          );
+          finalWarnings = allErrors;
+          break; // 최종 실패 시 루프 탈출 (기존 text 유지 + warnings 추가)
+        }
+
+        attempt++;
+        console.warn(`[gemini] validation failed -> retrying once`);
+        console.warn(
+          `[gemini] Errors: ${allErrors.slice(0, 2).join(", ")}${allErrors.length > 2 ? "..." : ""}`
+        );
+
+        const repairInstruction = `\n\n[🚨 REPAIR INSTRUCTION 🚨]\n직전 출력에서 다음과 같은 규칙 위반이 있었습니다:\n${allErrors.map((e) => "- " + e).join("\n")}\n\n위 사항을 반드시 수정하여 전체 교안을 다시 작성하세요. 다른 내용은 잘 된 부분을 그대로 유지하십시오.`;
+
+        response = await ai.models.generateContent({
+          model: MODEL_NAME,
+          config: {
+            systemInstruction: systemPrompt + repairInstruction,
+          },
+          contents: passage,
+        });
+        text = extractText(response);
+      }
+    }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(
       `[gemini] <<< Success! Took ${duration}s, output: ${text.length} chars`
     );
 
-    return text.trim();
+    return { outputText: text.trim(), warnings: finalWarnings };
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.error(`[gemini] !!! Failed after ${duration}s:`, error.message);

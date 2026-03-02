@@ -10,8 +10,16 @@ async function processSequential(passages, generateOne) {
   const results = [];
 
   for (let index = 0; index < passages.length; index += 1) {
-    const outputText = await generateOne(passages[index], index);
-    results.push({ index, outputText });
+    const generated = await generateOne(passages[index], index);
+    if (typeof generated === "string") {
+      results.push({ index, outputText: generated });
+    } else {
+      results.push({
+        index,
+        outputText: generated.outputText,
+        warnings: generated.warnings,
+      });
+    }
   }
 
   return results;
@@ -31,11 +39,16 @@ async function processBoundedParallel(passages, generateOne, limit = 3) {
         return;
       }
 
-      const outputText = await generateOne(
-        passages[currentIndex],
-        currentIndex
-      );
-      results[currentIndex] = { index: currentIndex, outputText };
+      const generated = await generateOne(passages[currentIndex], currentIndex);
+      if (typeof generated === "string") {
+        results[currentIndex] = { index: currentIndex, outputText: generated };
+      } else {
+        results[currentIndex] = {
+          index: currentIndex,
+          outputText: generated.outputText,
+          warnings: generated.warnings,
+        };
+      }
     }
   }
 
