@@ -8,7 +8,10 @@ export type SectionKey =
   | "core_vocab"
   | "all";
 
-export function formatSectionText(result: PassageResult, section: SectionKey): string {
+export function formatSectionText(
+  result: PassageResult,
+  section: SectionKey
+): string {
   switch (section) {
     case "sentences":
       return formatSentences(result);
@@ -40,15 +43,9 @@ export function formatPassageText(result: PassageResult): string {
   return sections.filter(Boolean).join("\n\n") + "\n";
 }
 
-export function formatAllPassagesText(results: PassageResult[]): string {
-  return results.map((result) => formatPassageText(result)).join("\n");
-}
-
 function formatSentences(result: PassageResult): string {
   const header = "[문장별 구문 분석]";
-  const body = result.sentences
-    .map((s) => `${s.en}\n→ ${s.ko}`)
-    .join("\n");
+  const body = result.sentences.map((s) => `${s.en}\n→ ${s.ko}`).join("\n");
   return `${header}\n${body}`;
 }
 

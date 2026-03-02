@@ -29,7 +29,6 @@ export default function Home() {
   const [options, setOptions] = useState<OutputOptionState>({
     copyBlock: true,
     pdf: false,
-    docx: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -83,8 +82,6 @@ export default function Home() {
 
     const payload = {
       inputMode,
-      textBlock,
-      cards,
       passages: finalPassages,
       options,
       generationMode,

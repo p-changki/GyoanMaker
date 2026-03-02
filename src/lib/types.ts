@@ -53,7 +53,6 @@ export type GenerationMode = "basic" | "advanced";
 export interface OutputOptionState {
   copyBlock: boolean;
   pdf: boolean;
-  docx: boolean;
 }
 
 export interface PassageInput {
