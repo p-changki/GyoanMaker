@@ -188,19 +188,17 @@ export default function RawResultCard({
 
       <div className="p-6 sm:p-8">
         <div className="prose prose-sm max-w-none prose-gray prose-headings:text-gray-900 prose-h3:text-lg prose-h3:font-black prose-strong:text-gray-800 prose-p:text-gray-700 prose-p:leading-relaxed prose-li:text-gray-700">
-          <div className="relative">
-            <div
-              ref={contentRef}
-              className={`whitespace-pre-wrap text-[15px] leading-[1.85] text-gray-800 font-medium ${
-                shouldClamp ? "max-h-[700px] overflow-hidden" : ""
-              }`}
-            >
-              {formattedBlocks}
+          <div>
+            <div className="relative">
+              <div
+                ref={contentRef}
+                className={`whitespace-pre-wrap text-[15px] leading-[1.85] text-gray-800 font-medium ${
+                  shouldClamp ? "max-h-[700px] overflow-hidden" : ""
+                }`}
+              >
+                {formattedBlocks}
+              </div>
             </div>
-
-            {shouldClamp && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white via-white/95 to-transparent" />
-            )}
 
             {enableCollapse && isExpandable && (
               <div className="pt-4 flex justify-center">
