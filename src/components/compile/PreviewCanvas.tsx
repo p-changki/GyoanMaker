@@ -329,7 +329,10 @@ function ParsedHandoutViewPage2({
               }}
             />
           </div>
-          <span className="text-white text-[15px] font-black tracking-wide ml-32 z-30">
+          <span
+            className="text-white text-[15px] font-black tracking-wide ml-32 z-30"
+            style={{ fontFamily: "GmarketSans, sans-serif" }}
+          >
             <EditableSummaryTitleText />
           </span>
         </div>
@@ -424,7 +427,10 @@ function ParsedHandoutViewPage2({
 
             <table className="w-full text-left border-collapse border-t-[3px] border-b-[3px] border-[#5E35B1]">
               <thead>
-                <tr className="bg-[#5E35B1] text-white text-[11.5px] font-bold">
+                <tr
+                  className="bg-[#5E35B1] text-white text-[11.5px] font-bold"
+                  style={{ fontFamily: "GmarketSans, sans-serif" }}
+                >
                   <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">
                     핵심 어휘
                   </th>
@@ -711,6 +717,7 @@ const EditableSummaryTitleText = memo(function EditableSummaryTitleText() {
           }
         }}
         className="bg-transparent text-white text-[15px] font-black tracking-wide outline-none border-0 p-0 m-0 w-[200px]"
+        style={{ fontFamily: "GmarketSans, sans-serif" }}
       />
     );
   }
