@@ -257,7 +257,7 @@ export default function CompilePage() {
     URL.revokeObjectURL(url);
   }, []);
 
-  const handleExportPDF = useCallback(async () => {
+  const handleExportPDF = useCallback(async (customFileName?: string) => {
     const sections = useHandoutStore.getState().sections;
     const exportIds = Object.keys(sections)
       .sort()
@@ -385,7 +385,13 @@ export default function CompilePage() {
         return;
       }
 
-      pdf.save("GyoanMaker_Export.pdf");
+      const finalFileName = customFileName?.trim()
+        ? customFileName.trim().toLowerCase().endsWith(".pdf")
+          ? customFileName.trim()
+          : `${customFileName.trim()}.pdf`
+        : "GyoanMaker_Export.pdf";
+
+      pdf.save(finalFileName);
     } catch (error) {
       console.error("Failed to export PDF", error);
       alert("PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");

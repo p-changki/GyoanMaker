@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 
 interface ControlPanelProps {
   onApplyTemplate: () => void;
   onCopyAll: () => void;
   onDownloadTxt: () => void;
-  onExportPdf: () => void;
+  onExportPdf: (customFileName?: string) => void;
   isExportingPdf: boolean;
   exportCurrent: number;
   exportTotal: number;
@@ -27,6 +28,8 @@ export default function ControlPanel({
   const isReady = useHandoutStore((state) =>
     Object.values(state.sections).some((section) => section.isParsed)
   );
+
+  const [pdfFileName, setPdfFileName] = useState("");
 
   return (
     <aside className="w-full h-full bg-white border-l border-gray-200 overflow-y-auto p-6 flex flex-col">
@@ -109,9 +112,17 @@ export default function ControlPanel({
           <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
             PDF Export
           </p>
+          <input
+            type="text"
+            placeholder="저장할 파일명 입력 (선택)"
+            value={pdfFileName}
+            onChange={(e) => setPdfFileName(e.target.value)}
+            disabled={!isReady || isExportingPdf}
+            className="w-full px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-medium placeholder-gray-400 focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] transition-all disabled:bg-gray-50 disabled:text-gray-400 shadow-sm"
+          />
           <button
             type="button"
-            onClick={onExportPdf}
+            onClick={() => onExportPdf(pdfFileName)}
             disabled={!isReady || isExportingPdf}
             className="w-full flex items-center justify-center gap-3 py-3.5 bg-gray-50 border border-dashed border-gray-300 text-gray-400 rounded-xl font-bold text-xs cursor-pointer disabled:cursor-not-allowed"
           >

@@ -8,7 +8,7 @@ interface CompileLayoutProps {
   onApplyTemplate: () => void;
   onCopyAll: () => void;
   onDownloadTxt: () => void;
-  onExportPdf: () => void;
+  onExportPdf: (customFileName?: string) => void;
   isExportingPdf: boolean;
   exportCurrent: number;
   exportTotal: number;
