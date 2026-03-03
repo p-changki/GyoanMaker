@@ -38,18 +38,91 @@ function splitSentences(summaryEn) {
 }
 
 function extractTopicEnglish(outputText) {
-  const topicMatch = outputText.match(
+  const labeledMatch = outputText.match(
     /2\.\s*주제문\s*\(Topic Sentence\)[\s\S]*?English:\s*(.+?)\nKorean:/
   );
-  return topicMatch ? topicMatch[1].trim() : null;
+  if (labeledMatch) {
+    return labeledMatch[1].trim();
+  }
+
+  const topicSectionMatch = outputText.match(
+    /2\.\s*주제문\s*\(Topic Sentence\)[\s\S]*?(?=3\.\s*본문 요약|$)/
+  );
+  if (!topicSectionMatch) {
+    return null;
+  }
+
+  const topicLines = topicSectionMatch[0]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .filter((line) => !/^2\.\s*주제문/.test(line))
+    .filter((line) => !/^English:/i.test(line))
+    .filter((line) => !/^Korean:/i.test(line));
+
+  return topicLines.length > 0 ? topicLines[0] : null;
 }
 
 function extractSummaryEnglish(outputText) {
-  const summaryMatch = outputText.match(
+  const labeledMatch = outputText.match(
     /3\.\s*본문 요약\s*\(Summary\)[\s\S]*?English:\s*([\s\S]*?)\nKorean:/
   );
-  // 줄바꿈(\n)을 살려두어야 splitSentences 에서 우선 분리 가능 (기존 replace(/\s+/g, ' ') 삭제)
-  return summaryMatch ? summaryMatch[1].trim() : null;
+  if (labeledMatch) {
+    return labeledMatch[1].trim();
+  }
+
+  const lines = extractSummaryContentLines(outputText);
+  return lines.length > 0 ? lines[0] : null;
+}
+
+function extractSummaryKorean(outputText) {
+  const labeledMatch = outputText.match(
+    /3\.\s*본문 요약\s*\(Summary\)[\s\S]*?Korean:\s*([\s\S]*?)(?=4\.\s*글의 흐름|$)/
+  );
+  if (labeledMatch) {
+    return labeledMatch[1].trim();
+  }
+
+  const lines = extractSummaryContentLines(outputText);
+  return lines.length > 1 ? lines[1] : null;
+}
+
+function extractSummaryContentLines(outputText) {
+  const sectionMatch = outputText.match(
+    /3\.\s*본문 요약\s*\(Summary\)[\s\S]*?(?=4\.\s*글의 흐름|$)/
+  );
+
+  if (!sectionMatch) {
+    return [];
+  }
+
+  return sectionMatch[0]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .filter((line) => !/^3\.\s*본문 요약/.test(line))
+    .map((line) => line.replace(/^\s*(English|Korean):\s*/i, ""))
+    .filter((line) => line.length > 0);
+}
+
+function extractFlowLines(outputText) {
+  const sectionMatch = outputText.match(
+    /4\.\s*글의 흐름 4단 정리\s*\(Logical Flow\)[\s\S]*?(?=5\.\s*핵심 어휘|$)/
+  );
+
+  if (!sectionMatch) {
+    return [];
+  }
+
+  return sectionMatch[0]
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .filter((line) => !/^4\.\s*글의 흐름/.test(line))
+    .map((line) => ({
+      raw: line,
+      text: line.replace(/^\d+\.\s*/, "").trim(),
+    }));
 }
 
 function validateOutputText(name, outputText) {
@@ -68,9 +141,14 @@ function validateOutputText(name, outputText) {
   }
 
   const summaryEn = extractSummaryEnglish(outputText);
+  const summaryKo = extractSummaryKorean(outputText);
   if (!summaryEn) {
     errors.push("Summary English 라인을 찾지 못했습니다.");
   } else {
+    if (/\n/.test(summaryEn)) {
+      errors.push("Summary English 줄바꿈 위반: 한 줄로 작성해야 합니다.");
+    }
+
     const summarySentences = splitSentences(summaryEn);
     info.push(`Summary 문장수: ${summarySentences.length}`);
 
@@ -97,6 +175,29 @@ function validateOutputText(name, outputText) {
     }
   }
 
+  if (summaryKo && /\n/.test(summaryKo)) {
+    errors.push("Summary Korean 줄바꿈 위반: 한 줄로 작성해야 합니다.");
+  }
+
+  const flowLines = extractFlowLines(outputText);
+  info.push(`Flow 항목수: ${flowLines.length}`);
+
+  if (flowLines.length !== 4) {
+    errors.push(`Flow 항목 수 위반: ${flowLines.length}개 (허용 4)`);
+  }
+
+  flowLines.forEach((line, index) => {
+    if (/^\d+\./.test(line.raw)) {
+      errors.push(
+        `Flow ${index + 1}번째 줄 형식 위반: 번호 인덱스 제거 필요 ("${line.raw}")`
+      );
+    }
+
+    if (!line.text) {
+      errors.push(`Flow ${index + 1}번째 줄 내용이 비어 있습니다.`);
+    }
+  });
+
   return {
     name,
     passed: errors.length === 0,
@@ -111,4 +212,5 @@ module.exports = {
   splitSentences,
   extractTopicEnglish,
   extractSummaryEnglish,
+  extractFlowLines,
 };

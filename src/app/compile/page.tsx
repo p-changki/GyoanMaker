@@ -7,6 +7,7 @@ import CompileLayout from "@/components/compile/CompileLayout";
 import { generatePassages, type ApiResultItem } from "@/services/api";
 import { CompiledHandout, HandoutSection } from "@/types/handout";
 import { parseHandoutSection } from "@/lib/parseHandout";
+import { normalizeHandoutRawText } from "@/lib/normalizeHandoutRawText";
 import {
   getCachedResult,
   hashPassages,
@@ -18,6 +19,10 @@ const INPUT_STORAGE_KEY = "gyoanmaker:input";
 const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 const COMPILED_PREFIX = "gyoanmaker:compiled:";
 const TOTAL_SECTIONS = 20;
+
+function stripTopicSummaryLanguageLabels(text: string): string {
+  return normalizeHandoutRawText(text);
+}
 
 interface CompileInputData {
   passages: string[];
@@ -201,12 +206,29 @@ export default function CompilePage() {
       .sort()
       .map((id) => {
         const s = sections[id];
-        if (!s.isParsed) return `【${id}】\n${s.rawText}`;
+        if (!s.isParsed)
+          return `【${id}】\n${stripTopicSummaryLanguageLabels(s.rawText)}`;
 
         let text = `【${id}】\n\n`;
-        text += `[주제]\nEn: ${s.topic.en}\nKo: ${s.topic.ko}\n\n`;
-        text += `[요약]\nEn: ${s.summary.en}\nKo: ${s.summary.ko}\n\n`;
-        text += `[문장 분석]\n${s.sentences.map((p) => `${p.en}\n${p.ko}`).join("\n\n")}`;
+        text += `[문장별 구문 분석 및 해석]\n영어 섹션\n`;
+        text += `${s.sentences.map((p) => p.en).join("\n")}\n`;
+        text += `한글 섹션\n${s.sentences.map((p) => p.ko).join("\n")}\n\n`;
+        text += `[주제문]\n${s.topic.en}\n${s.topic.ko}\n\n`;
+        text += `[본문 요약]\n${s.summary.en}\n${s.summary.ko}\n\n`;
+        text += `[글의 흐름 4단 정리]\n${s.flow.map((step) => step.text).join("\n")}\n\n`;
+        text += `[핵심 어휘 및 확장]\n`;
+        text += s.vocabulary
+          .map((vocab, index) => {
+            const synonyms = vocab.synonyms
+              .map((entry) => `${entry.word} ${entry.meaning}`.trim())
+              .join("\n");
+            const antonyms = vocab.antonyms
+              .map((entry) => `${entry.word} ${entry.meaning}`.trim())
+              .join("\n");
+
+            return `${index + 1}. ${vocab.word} ${vocab.meaning}\n유의어\n${synonyms}\n반의어\n${antonyms}`;
+          })
+          .join("\n\n");
         return text;
       })
       .join("\n\n" + "=".repeat(30) + "\n\n");
@@ -222,7 +244,7 @@ export default function CompilePage() {
       .sort()
       .map((id) => {
         const s = sections[id];
-        return `【${id}】\n${s.isParsed ? "" : "(미파싱 원문)\n"}${s.rawText}`;
+        return `【${id}】\n${s.isParsed ? "" : "(미파싱 원문)\n"}${stripTopicSummaryLanguageLabels(s.rawText)}`;
       })
       .join("\n\n" + "=".repeat(30) + "\n\n");
 

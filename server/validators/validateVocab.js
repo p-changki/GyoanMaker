@@ -3,71 +3,164 @@ function extractCoreVocabularySection(outputText) {
   return match ? match[0] : null;
 }
 
-function splitItems(sectionText) {
-  return sectionText
-    .split(/\n(?=\d+\.)/)
-    .map((block) => block.trim())
-    .filter((block) => {
-      const firstLine = block.split("\n")[0]?.trim() || "";
-      if (!/^\d+\./.test(firstLine)) {
-        return false;
-      }
-      if (/^5\.\s*핵심 어휘 및 확장/.test(firstLine)) {
-        return false;
-      }
-      return true;
-    });
-}
-
 function stripLabelPrefix(line, label) {
   return line
-    .replace(new RegExp(`^${label}\\(\\d+\\):\\s*`), "")
-    .replace(new RegExp(`^${label}:\\s*`), "")
+    .replace(new RegExp(`^${label}(?:\\(\\d+\\))?\\s*:?\\s*`), "")
     .trim();
 }
 
-function parseRelatedLine({ line, label, expectedCount, itemNumber, errors }) {
-  if (!line) {
-    errors.push(`${itemNumber}번 항목 ${label} 라인이 없습니다.`);
+function parseHeadEntry(line) {
+  const withoutNumber = line.replace(/^\d+\.\s*/, "").trim();
+  if (!withoutNumber) return null;
+  if (/^핵심 어휘 및 확장/.test(withoutNumber)) return null;
+  if (/^(유의어|반의어)/.test(withoutNumber)) return null;
+
+  const pairMatch = withoutNumber.match(/^([^\s()]+)\s+(.+)$/);
+  if (!pairMatch) return null;
+
+  return {
+    word: pairMatch[1].trim(),
+    meaning: pairMatch[2].trim(),
+    raw: line.trim(),
+  };
+}
+
+function parseRelatedEntries(body) {
+  if (!body) return [];
+
+  return body
+    .split(/,\s*/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+    .map((entry) => {
+      const plainMatch = entry.match(/^([^\s()]+)\s+(.+)$/);
+      if (plainMatch) {
+        return {
+          word: plainMatch[1].trim(),
+          meaning: plainMatch[2].trim(),
+          raw: entry,
+        };
+      }
+
+      const parenMatch = entry.match(/^(.+?)\s*\(([^()]+)\)$/);
+      if (parenMatch) {
+        return {
+          word: parenMatch[1].trim(),
+          meaning: parenMatch[2].trim(),
+          raw: entry,
+          usedParenFormat: true,
+        };
+      }
+
+      return {
+        word: entry,
+        meaning: "",
+        raw: entry,
+        invalid: true,
+      };
+    });
+}
+
+function splitItems(sectionText) {
+  const lines = sectionText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const items = [];
+  let current = null;
+  let currentMode = null;
+
+  const commitCurrent = () => {
+    if (current) {
+      items.push(current);
+      current = null;
+      currentMode = null;
+    }
+  };
+
+  for (const line of lines) {
+    if (/^5\.\s*핵심 어휘 및 확장/.test(line)) {
+      continue;
+    }
+
+    const headEntry = parseHeadEntry(line);
+    if (headEntry) {
+      commitCurrent();
+      current = {
+        head: headEntry,
+        synonyms: [],
+        antonyms: [],
+        metaLabelUsed: false,
+      };
+      continue;
+    }
+
+    if (!current) {
+      continue;
+    }
+
+    const synonymMatch = line.match(/^유의어(?:\((\d+)\))?\s*:?(.*)$/);
+    if (synonymMatch) {
+      currentMode = "syn";
+      if (synonymMatch[1]) {
+        current.metaLabelUsed = true;
+      }
+
+      const body = stripLabelPrefix(line, "유의어");
+      const entries = parseRelatedEntries(body);
+      if (entries.length > 0) {
+        current.synonyms.push(...entries);
+      }
+      continue;
+    }
+
+    const antonymMatch = line.match(/^반의어(?:\((\d+)\))?\s*:?(.*)$/);
+    if (antonymMatch) {
+      currentMode = "ant";
+      if (antonymMatch[1]) {
+        current.metaLabelUsed = true;
+      }
+
+      const body = stripLabelPrefix(line, "반의어");
+      const entries = parseRelatedEntries(body);
+      if (entries.length > 0) {
+        current.antonyms.push(...entries);
+      }
+      continue;
+    }
+
+    const entries = parseRelatedEntries(line);
+    if (currentMode === "syn") {
+      current.synonyms.push(...entries);
+    } else if (currentMode === "ant") {
+      current.antonyms.push(...entries);
+    }
+  }
+
+  commitCurrent();
+  return items;
+}
+
+function validateEntryMeaning({ itemNumber, label, index, entry, errors }) {
+  if (entry.invalid || !entry.word || !entry.meaning) {
+    errors.push(
+      `${itemNumber}번 항목 ${label} ${index + 1} 형식 오류: "${entry.raw}" (필수: 단어 한글뜻1개)`
+    );
     return;
   }
 
-  const body = stripLabelPrefix(line, label);
-  const entries = body
-    .split(/,\s*/)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
-
-  if (entries.length !== expectedCount) {
+  if (entry.usedParenFormat || /[()]/.test(entry.raw)) {
     errors.push(
-      `${itemNumber}번 항목 ${label} 개수 위반: ${entries.length}개 (필수 ${expectedCount}개)`
+      `${itemNumber}번 항목 ${label} ${index + 1} 형식 위반: 괄호 표기 금지 ("${entry.raw}")`
     );
   }
 
-  entries.forEach((entry, index) => {
-    const match = entry.match(/^(.+?)\s*\(([^()]+)\)$/);
-
-    if (!match) {
-      errors.push(
-        `${itemNumber}번 항목 ${label} ${index + 1} 형식 오류: "${entry}" (필수: 단어 (뜻))`
-      );
-      return;
-    }
-
-    const meaning = match[2].trim();
-    if (meaning.length === 0) {
-      errors.push(
-        `${itemNumber}번 항목 ${label} ${index + 1} 뜻 누락: "${entry}"`
-      );
-      return;
-    }
-
-    if (/[,/]/.test(meaning)) {
-      errors.push(
-        `${itemNumber}번 항목 ${label} ${index + 1} 뜻 오류: "${meaning}" (복수 뜻 금지)`
-      );
-    }
-  });
+  if (/[,/]/.test(entry.meaning)) {
+    errors.push(
+      `${itemNumber}번 항목 ${label} ${index + 1} 뜻 오류: "${entry.meaning}" (복수 뜻 금지)`
+    );
+  }
 }
 
 function validateVocabText(name, outputText) {
@@ -92,50 +185,57 @@ function validateVocabText(name, outputText) {
     errors.push(`Core Vocabulary 항목 수 위반: ${items.length}개 (필수 4개)`);
   }
 
-  items.forEach((block, index) => {
+  items.forEach((item, index) => {
     const itemNumber = index + 1;
-    const lines = block
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
 
-    const headLine = lines.find((line) => /^\d+\./.test(line));
-    if (!headLine) {
-      errors.push(`${itemNumber}번 항목 시작 라인을 찾지 못했습니다.`);
-      return;
-    }
-
-    const headMatch = headLine.match(/^\d+\.\s*(.+?)\s*\(([^()]+)\)\s*$/);
-    if (!headMatch) {
+    if (item.metaLabelUsed) {
       errors.push(
-        `${itemNumber}번 항목 형식 오류: "${headLine}" (필수: [숫자]. 단어 (뜻))`
+        `${itemNumber}번 항목 라벨 형식 위반: 유의어(3)/반의어(2) 같은 개수 표기 금지`
       );
-    } else {
-      const meaning = headMatch[2].trim();
-      if (/[,/]/.test(meaning)) {
-        errors.push(
-          `${itemNumber}번 항목 뜻 오류: "${meaning}" (복수 뜻 금지)`
-        );
-      }
     }
 
-    const synonymLine = lines.find((line) => line.includes("유의어"));
-    const antonymLine = lines.find((line) => line.includes("반의어"));
+    if (/[()]/.test(item.head.raw)) {
+      errors.push(
+        `${itemNumber}번 항목 형식 위반: 괄호 표기 금지 ("${item.head.raw}")`
+      );
+    }
 
-    parseRelatedLine({
-      line: synonymLine,
-      label: "유의어",
-      expectedCount: 3,
-      itemNumber,
-      errors,
+    if (/[,/]/.test(item.head.meaning)) {
+      errors.push(
+        `${itemNumber}번 항목 뜻 오류: "${item.head.meaning}" (복수 뜻 금지)`
+      );
+    }
+
+    if (item.synonyms.length !== 3) {
+      errors.push(
+        `${itemNumber}번 항목 유의어 개수 위반: ${item.synonyms.length}개 (필수 3개)`
+      );
+    }
+
+    if (item.antonyms.length !== 2) {
+      errors.push(
+        `${itemNumber}번 항목 반의어 개수 위반: ${item.antonyms.length}개 (필수 2개)`
+      );
+    }
+
+    item.synonyms.forEach((entry, relatedIndex) => {
+      validateEntryMeaning({
+        itemNumber,
+        label: "유의어",
+        index: relatedIndex,
+        entry,
+        errors,
+      });
     });
 
-    parseRelatedLine({
-      line: antonymLine,
-      label: "반의어",
-      expectedCount: 2,
-      itemNumber,
-      errors,
+    item.antonyms.forEach((entry, relatedIndex) => {
+      validateEntryMeaning({
+        itemNumber,
+        label: "반의어",
+        index: relatedIndex,
+        entry,
+        errors,
+      });
     });
   });
 
@@ -151,5 +251,5 @@ module.exports = {
   validateVocabText,
   extractCoreVocabularySection,
   splitItems,
-  parseRelatedLine,
+  parseRelatedEntries,
 };

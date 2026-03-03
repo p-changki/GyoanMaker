@@ -45,13 +45,15 @@ export function formatPassageText(result: PassageResult): string {
 
 function formatSentences(result: PassageResult): string {
   const header = "[문장별 구문 분석]";
-  const body = result.sentences.map((s) => `${s.en}\n→ ${s.ko}`).join("\n");
+  const enBlock = result.sentences.map((s) => s.en).join("\n");
+  const koBlock = result.sentences.map((s) => s.ko).join("\n");
+  const body = `영어 섹션\n${enBlock}\n한글 섹션\n${koBlock}`;
   return `${header}\n${body}`;
 }
 
 function formatTopicSentence(result: PassageResult): string {
   const header = "[주제문]";
-  const body = `EN: ${result.topic_sentence.en}\nKO: ${result.topic_sentence.ko}`;
+  const body = `${result.topic_sentence.en}\n${result.topic_sentence.ko}`;
   return `${header}\n${body}`;
 }
 
@@ -59,15 +61,13 @@ function formatSummary(result: PassageResult): string {
   const header = "[요약]";
   const enSummary = result.summary.en.join(" ");
   const koSummary = result.summary.ko.join(" ");
-  const body = `EN: ${enSummary}\nKO: ${koSummary}`;
+  const body = `${enSummary}\n${koSummary}`;
   return `${header}\n${body}`;
 }
 
 function formatFlow4(result: PassageResult): string {
   const header = "[글의 흐름 4단 정리]";
-  const body = result.flow_4
-    .map((item, index) => `${index + 1}. [${item.label}] ${item.text}`)
-    .join("\n");
+  const body = result.flow_4.map((item) => item.text).join("\n");
   return `${header}\n${body}`;
 }
 
@@ -80,21 +80,19 @@ function formatCoreVocab(result: PassageResult): string {
 }
 
 function formatVocabItem(item: CoreVocabItem, index: number): string {
-  let text = `${index}. ${item.word} (${item.meaning_ko})`;
+  let text = `${index}. ${item.word} ${item.meaning_ko}`;
 
   if (item.synonyms.length > 0) {
-    text += `\n   ▸ 유의어: ${formatRelatedList(item.synonyms)}`;
+    text += `\n유의어\n${formatRelatedList(item.synonyms)}`;
   }
 
   if (item.antonyms.length > 0) {
-    text += `\n   ▸ 반의어: ${formatRelatedList(item.antonyms)}`;
+    text += `\n반의어\n${formatRelatedList(item.antonyms)}`;
   }
 
   return text;
 }
 
 function formatRelatedList(related: VocabRelated[]): string {
-  return related
-    .map((r) => `${r.word} (${r.meaning_ko}) [${r.level}]`)
-    .join(", ");
+  return related.map((r) => `${r.word} ${r.meaning_ko}`).join("\n");
 }

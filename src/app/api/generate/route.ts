@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEFAULT_PROXY_TIMEOUT_MS = 55000;
+const DEFAULT_PROXY_TIMEOUT_MS = 120000;
 const LOCAL_PROXY_TIMEOUT_MS = 10 * 60 * 1000;
 const DEFAULT_PROXY_RATE_LIMIT_WINDOW_MS = 60_000;
 const DEFAULT_PROXY_RATE_LIMIT_MAX = 20;

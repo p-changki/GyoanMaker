@@ -85,6 +85,11 @@ const SectionCanvasItem = memo(function SectionCanvasItem({
     sentenceChunks.push([]);
   }
 
+  const sentencePages = sentenceChunks.map((chunk, chunkIdx) => ({
+    chunk,
+    pageNum: chunkIdx + 1,
+  }));
+
   return (
     <div
       className={`flex flex-col gap-12 transition-all duration-500 ${
@@ -93,18 +98,18 @@ const SectionCanvasItem = memo(function SectionCanvasItem({
       data-export-id={id}
     >
       {/* 1페이지들을 청크 개수만큼 반복 생성 */}
-      {sentenceChunks.map((chunk, index) => (
+      {sentencePages.map((page) => (
         <div
-          key={`${id}-page1-${index}`}
-          id={`section-${id}-page1-${index}`}
-          data-pdf-part={`page1-${index}`}
+          key={`${id}-page1-${page.pageNum}`}
+          id={`section-${id}-page1-${page.pageNum}`}
+          data-pdf-part={`page1-${page.pageNum}`}
           className="bg-white rounded-[2px] overflow-hidden min-h-[1123px] flex flex-col relative"
           style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
         >
           <ParsedHandoutViewPage1
             section={section}
-            sentencesChunk={chunk}
-            pageNum={index + 1}
+            sentencesChunk={page.chunk}
+            pageNum={page.pageNum}
           />
         </div>
       ))}
@@ -392,9 +397,9 @@ function ParsedHandoutViewPage2({
                       </td>
                       <td className="px-3 py-2 text-[#4B5563] border-r border-[#5E35B1]/20 align-middle font-normal">
                         {vocab.synonyms.length > 0
-                          ? vocab.synonyms.map((s, idx) => (
+                          ? vocab.synonyms.map((s) => (
                               <div
-                                key={`syn-${idx}`}
+                                key={`syn-${vocab.word}-${s.word}-${s.meaning}`}
                                 className="mb-1 last:mb-0"
                               >
                                 {s.word} {s.meaning}
@@ -404,9 +409,9 @@ function ParsedHandoutViewPage2({
                       </td>
                       <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
                         {vocab.antonyms.length > 0
-                          ? vocab.antonyms.map((a, idx) => (
+                          ? vocab.antonyms.map((a) => (
                               <div
-                                key={`ant-${idx}`}
+                                key={`ant-${vocab.word}-${a.word}-${a.meaning}`}
                                 className="mb-1 last:mb-0"
                               >
                                 {a.word} {a.meaning}

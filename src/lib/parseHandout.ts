@@ -5,9 +5,6 @@ import {
   VocabRelated,
 } from "../types/handout";
 
-/**
- * AI 응답 텍스트(PlainText)를 각 섹션별로 파싱하여 구조화된 객체로 반환한다.
- */
 export function parseHandoutSection(
   passageId: string,
   text: string | undefined
@@ -28,25 +25,13 @@ export function parseHandoutSection(
   try {
     const section = { ...defaultSection };
 
-    // 1. 문장별 분석 파싱 (1. 문장별 구문 분석 및 해석)
     const sentenceSectionMatch = text.match(
       /1\. 문장별 구문 분석 및 해석[\s\S]*?(?=2\. 주제문|$)/
     );
     if (sentenceSectionMatch) {
-      const lines = sentenceSectionMatch[0]
-        .split("\n")
-        .filter((l) => l.trim().length > 0)
-        .slice(1);
-      const sentences: SentencePair[] = [];
-      for (let i = 0; i < lines.length; i += 2) {
-        if (lines[i] && lines[i + 1]) {
-          sentences.push({ en: lines[i].trim(), ko: lines[i + 1].trim() });
-        }
-      }
-      section.sentences = sentences;
+      section.sentences = parseSentenceSection(sentenceSectionMatch[0]);
     }
 
-    // 2. 주제문 파싱 (2. 주제문)
     const topicSectionMatch = text.match(
       /2\. 주제문[\s\S]*?(?=3\. 본문 요약|$)/
     );
@@ -54,11 +39,22 @@ export function parseHandoutSection(
       const topicContent = topicSectionMatch[0];
       const enMatch = topicContent.match(/English:\s*(.+)/i);
       const koMatch = topicContent.match(/Korean:\s*(.+)/i);
-      if (enMatch) section.topic.en = enMatch[1].trim();
-      if (koMatch) section.topic.ko = koMatch[1].trim();
+
+      if (enMatch || koMatch) {
+        if (enMatch) section.topic.en = normalizeInline(enMatch[1]);
+        if (koMatch) section.topic.ko = normalizeInline(koMatch[1]);
+      } else {
+        const topicLines = topicContent
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+          .filter((line) => !/^2\.\s*주제문/.test(line));
+
+        if (topicLines[0]) section.topic.en = normalizeInline(topicLines[0]);
+        if (topicLines[1]) section.topic.ko = normalizeInline(topicLines[1]);
+      }
     }
 
-    // 3. 본문 요약 파싱 (3. 본문 요약)
     const summarySectionMatch = text.match(
       /3\. 본문 요약[\s\S]*?(?=4\. 글의 흐름|$)/
     );
@@ -68,78 +64,47 @@ export function parseHandoutSection(
         /English:\s*([\s\S]*?)(?=Korean:|$)/i
       );
       const koMatch = summaryContent.match(/Korean:\s*([\s\S]*?)$/i);
-      if (enMatch) section.summary.en = enMatch[1].trim();
-      if (koMatch) section.summary.ko = koMatch[1].trim();
+
+      if (enMatch || koMatch) {
+        if (enMatch) section.summary.en = normalizeInline(enMatch[1]);
+        if (koMatch) section.summary.ko = normalizeInline(koMatch[1]);
+      } else {
+        const summaryLines = summaryContent
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+          .filter((line) => !/^3\.\s*본문 요약/.test(line));
+
+        if (summaryLines[0])
+          section.summary.en = normalizeInline(summaryLines[0]);
+        if (summaryLines[1])
+          section.summary.ko = normalizeInline(summaryLines[1]);
+      }
     }
 
-    // 4. 글의 흐름 파싱 (4. 글의 흐름 4단 정리)
     const flowSectionMatch = text.match(
       /4\. 글의 흐름 4단 정리[\s\S]*?(?=5\. 핵심 어휘|$)/
     );
     if (flowSectionMatch) {
       const flowLines = flowSectionMatch[0]
         .split("\n")
-        .filter((l) => /^\d+\./.test(l.trim()))
-        .map((l) => l.trim());
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .filter((line) => !/^4\.\s*글의 흐름/.test(line))
+        .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+        .filter((line) => line.length > 0);
 
-      section.flow = flowLines.map((line) => {
-        const parts = line.match(/^(\d+)\.\s*(.+)$/);
-        return {
-          index: parts ? parseInt(parts[1]) : 0,
-          text: parts ? parts[2].trim() : line,
-        };
-      });
+      section.flow = flowLines.map((line, index) => ({
+        index: index + 1,
+        text: line,
+      }));
     }
 
-    // 5. 핵심 어휘 파싱 (5. 핵심 어휘 및 확장)
     const vocabSectionMatch = text.match(/5\. 핵심 어휘 및 확장[\s\S]*$/);
     if (vocabSectionMatch) {
-      const vocabBlocks = vocabSectionMatch[0].split(/\n(?=\d+\.)/);
-      const vocabulary: VocabItem[] = [];
-
-      for (const block of vocabBlocks) {
-        const lines = block
-          .split("\n")
-          .map((l) => l.trim())
-          .filter((l) => l.length > 0);
-        const mainLine = lines.find((l) => /^\d+\./.test(l));
-        if (!mainLine) continue;
-
-        if (/^\d+\.\s*핵심 어휘 및 확장/.test(mainLine)) continue;
-
-        // 1. homeostatsis (항상성) 혹은 1. homeostatsis(항상성) 모두 대응
-        const mainParts = mainLine.match(/^\d+\.\s*(.*?)[\s]*\((.*?)\)$/);
-
-        if (!mainParts) {
-          continue;
-        }
-
-        const item: VocabItem = {
-          index: vocabulary.length + 1,
-          word: mainParts[1].trim(),
-          meaning: mainParts[2].trim(),
-          synonyms: [],
-          antonyms: [],
-        };
-
-        const synLine = lines.find((l) => l.includes("유의어"));
-        if (synLine) {
-          const synString = synLine.replace(/유의어\(\d+\):\s*/, "");
-          item.synonyms = parseVocabList(synString);
-        }
-
-        const antLine = lines.find((l) => l.includes("반의어"));
-        if (antLine) {
-          const antString = antLine.replace(/반의어\(\d+\):\s*/, "");
-          item.antonyms = parseVocabList(antString);
-        }
-
-        vocabulary.push(item);
-      }
-      section.vocabulary = vocabulary;
+      section.vocabulary = parseVocabularySection(vocabSectionMatch[0]);
     }
 
-    // 파싱 성공 조건: 주요 섹션 중 하나라도 채워졌으면 true
     if (
       section.sentences.length > 0 ||
       section.topic.en ||
@@ -149,24 +114,260 @@ export function parseHandoutSection(
     }
 
     return section;
-  } catch (e) {
-    console.error(`Failed to parse section ${passageId}`, e);
+  } catch (error) {
+    console.error(`Failed to parse section ${passageId}`, error);
     return defaultSection;
   }
 }
 
-/**
- * "단어 (뜻), 단어 (뜻)" 형태의 문자열을 VocabRelated 배열로 변환
- */
-function parseVocabList(str: string): VocabRelated[] {
-  return str
-    .split(/,\s*/)
-    .map((part) => {
-      const match = part.match(/(.+?)\s*\((.+?)\)/);
-      if (match) {
-        return { word: match[1].trim(), meaning: match[2].trim() };
+function normalizeInline(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function parseSentenceSection(sentenceSection: string): SentencePair[] {
+  const allLines = sentenceSection
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const contentLines = allLines.filter(
+    (line) => !/^1\.\s*문장별 구문 분석 및 해석/.test(line)
+  );
+
+  if (contentLines.length === 0) {
+    return [];
+  }
+
+  const englishMarkerIndex = contentLines.findIndex((line) =>
+    /^영어\s*섹션/.test(line)
+  );
+  const koreanMarkerIndex = contentLines.findIndex((line) =>
+    /^한글\s*섹션/.test(line)
+  );
+
+  let enLines: string[] = [];
+  let koLines: string[] = [];
+
+  if (
+    englishMarkerIndex >= 0 &&
+    koreanMarkerIndex >= 0 &&
+    englishMarkerIndex < koreanMarkerIndex
+  ) {
+    enLines = contentLines.slice(englishMarkerIndex + 1, koreanMarkerIndex);
+    koLines = contentLines.slice(koreanMarkerIndex + 1);
+  } else {
+    const firstKoreanIndex = contentLines.findIndex((line) =>
+      isLikelyKorean(line)
+    );
+    const groupedByLanguage =
+      firstKoreanIndex > 0 &&
+      contentLines
+        .slice(0, firstKoreanIndex)
+        .every((line) => isLikelyEnglish(line)) &&
+      contentLines
+        .slice(firstKoreanIndex)
+        .every((line) => isLikelyKorean(line));
+
+    if (groupedByLanguage) {
+      enLines = contentLines.slice(0, firstKoreanIndex);
+      koLines = contentLines.slice(firstKoreanIndex);
+    } else {
+      for (let i = 0; i < contentLines.length; i += 2) {
+        const enLine = contentLines[i];
+        const koLine = contentLines[i + 1];
+        if (enLine && koLine) {
+          enLines.push(enLine);
+          koLines.push(koLine);
+        }
       }
-      return { word: part.trim(), meaning: "" };
-    })
-    .filter((v) => v.word.length > 0 && v.meaning.length > 0);
+    }
+  }
+
+  const pairCount = Math.min(enLines.length, koLines.length);
+  const sentences: SentencePair[] = [];
+
+  for (let i = 0; i < pairCount; i += 1) {
+    const en = stripLeadingIndex(enLines[i]);
+    const ko = stripLeadingIndex(koLines[i]);
+
+    if (en && ko) {
+      sentences.push({ en, ko });
+    }
+  }
+
+  return sentences;
+}
+
+function isLikelyEnglish(line: string): boolean {
+  return /[A-Za-z]/.test(line) && !/[가-힣]/.test(line);
+}
+
+function isLikelyKorean(line: string): boolean {
+  return /[가-힣]/.test(line);
+}
+
+function stripLeadingIndex(line: string): string {
+  return line
+    .replace(/^[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳❶❷❸❹❺❻❼❽❾❿⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴\s]+/, "")
+    .replace(/^\d+[.)]\s*/, "")
+    .trim();
+}
+
+function parseVocabularySection(vocabSection: string): VocabItem[] {
+  const lines = vocabSection
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .filter((line) => !/^5\.\s*핵심 어휘 및 확장/.test(line));
+
+  const vocabulary: VocabItem[] = [];
+  let currentItem: VocabItem | null = null;
+  let mode: "syn" | "ant" | null = null;
+
+  for (const line of lines) {
+    const synonymMatch = line.match(/^유의어(?:\(\d+\))?\s*:?(.*)$/);
+    if (synonymMatch) {
+      if (!currentItem) {
+        continue;
+      }
+
+      mode = "syn";
+      const entries = parseRelatedEntries(synonymMatch[1]);
+      if (entries.length > 0) {
+        currentItem.synonyms.push(...entries);
+      }
+      continue;
+    }
+
+    const antonymMatch = line.match(/^반의어(?:\(\d+\))?\s*:?(.*)$/);
+    if (antonymMatch) {
+      if (!currentItem) {
+        continue;
+      }
+
+      mode = "ant";
+      const entries = parseRelatedEntries(antonymMatch[1]);
+      if (entries.length > 0) {
+        currentItem.antonyms.push(...entries);
+      }
+      continue;
+    }
+
+    if (currentItem && mode && !/^\d+\./.test(line)) {
+      const entries = parseRelatedEntries(line);
+      if (entries.length > 0) {
+        if (mode === "syn") {
+          currentItem.synonyms.push(...entries);
+        } else {
+          currentItem.antonyms.push(...entries);
+        }
+      }
+      continue;
+    }
+
+    const headEntry = parseVocabHeadLine(line, true);
+    if (headEntry) {
+      if (currentItem) {
+        vocabulary.push(currentItem);
+      }
+
+      currentItem = {
+        index: vocabulary.length + 1,
+        word: headEntry.word,
+        meaning: normalizeMeaning(headEntry.meaning),
+        synonyms: [],
+        antonyms: [],
+      };
+      mode = null;
+      continue;
+    }
+
+    if (!currentItem) {
+      continue;
+    }
+
+    const entries = parseRelatedEntries(line);
+    if (entries.length === 0) {
+      continue;
+    }
+
+    if (mode === "syn") {
+      currentItem.synonyms.push(...entries);
+    } else if (mode === "ant") {
+      currentItem.antonyms.push(...entries);
+    }
+  }
+
+  if (currentItem) {
+    vocabulary.push(currentItem);
+  }
+
+  return vocabulary;
+}
+
+function parseVocabHeadLine(
+  line: string,
+  requireNumberPrefix = false
+): { word: string; meaning: string } | null {
+  if (requireNumberPrefix && !/^\d+\./.test(line)) {
+    return null;
+  }
+
+  const body = line.replace(/^\d+\.\s*/, "").trim();
+  if (!body) return null;
+  if (/^(유의어|반의어)/.test(body)) return null;
+
+  const parenMatch = body.match(/^(.+?)\s*\(([^()]+)\)\s*$/);
+  if (parenMatch) {
+    return {
+      word: parenMatch[1].trim(),
+      meaning: parenMatch[2].trim(),
+    };
+  }
+
+  const plainMatch = body.match(/^([^\s()]+)\s+(.+)$/);
+  if (plainMatch) {
+    return {
+      word: plainMatch[1].trim(),
+      meaning: plainMatch[2].trim(),
+    };
+  }
+
+  return null;
+}
+
+function parseRelatedEntries(raw: string): VocabRelated[] {
+  const normalized = raw.trim();
+  if (!normalized) return [];
+
+  return normalized
+    .split(/,\s*/)
+    .map((part) => parseRelatedEntry(part.trim()))
+    .filter((entry): entry is VocabRelated => entry !== null);
+}
+
+function parseRelatedEntry(entry: string): VocabRelated | null {
+  if (!entry) return null;
+
+  const parenMatch = entry.match(/^(.+?)\s*\(([^()]+)\)\s*$/);
+  if (parenMatch) {
+    return {
+      word: parenMatch[1].trim(),
+      meaning: normalizeMeaning(parenMatch[2].trim()),
+    };
+  }
+
+  const plainMatch = entry.match(/^([^\s()]+)\s+(.+)$/);
+  if (plainMatch) {
+    return {
+      word: plainMatch[1].trim(),
+      meaning: normalizeMeaning(plainMatch[2].trim()),
+    };
+  }
+
+  return null;
+}
+
+function normalizeMeaning(meaning: string): string {
+  return meaning.replace(/[()]/g, "").replace(/\s+/g, " ").trim();
 }

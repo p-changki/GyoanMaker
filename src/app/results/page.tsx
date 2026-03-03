@@ -22,6 +22,7 @@ import {
   OutputOptionState,
   GenerationMode,
 } from "@/lib/types";
+import { normalizeHandoutRawText } from "@/lib/normalizeHandoutRawText";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
 const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
@@ -40,6 +41,10 @@ function formatEta(seconds: number): string {
   }
 
   return `${mins}분 ${remain}초`;
+}
+
+function stripTopicSummaryLanguageLabels(text: string): string {
+  return normalizeHandoutRawText(text);
 }
 
 type ResultStatus = "pending" | "generating" | "completed" | "failed";
@@ -608,7 +613,10 @@ export default function ResultsPage() {
             getText={() =>
               results
                 .filter((r) => r.status === "completed")
-                .map((r) => `【${r.id}】\n${r.outputText}`)
+                .map(
+                  (r) =>
+                    `【${r.id}】\n${stripTopicSummaryLanguageLabels(r.outputText)}`
+                )
                 .join("\n\n---\n\n")
             }
             label="전체 복사"
@@ -692,6 +700,7 @@ export default function ResultsPage() {
               passageId={item.id}
               outputText={item.outputText}
               status={item.status === "pending" ? "generating" : item.status}
+              enableCollapse={results.length > 1}
               onRegenerate={() => handleRegenerate(index)}
               onRetry={() => handleRetry(index)}
             />
