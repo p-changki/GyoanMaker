@@ -17,7 +17,7 @@ function getRepairMaxAttempts() {
 const REPAIR_MAX_ATTEMPTS = getRepairMaxAttempts();
 
 // 환경변수에서 모델명을 가져오거나 기본값으로 gemini-2.5-pro 사용
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
 
 /**
  * 현재 인증 모드를 반환한다.
