@@ -2,6 +2,22 @@ import { getDb } from "./firebase-admin";
 
 export type UserStatus = "pending" | "approved" | "rejected";
 
+/**
+ * 관리자 이메일 여부 확인
+ * ADMIN_EMAILS 환경변수(쉼표 구분)와 비교한다.
+ */
+export function isAdmin(email: string | null | undefined): boolean {
+  if (!email) return false;
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (adminEmails.length === 0) {
+    console.warn("[users] ADMIN_EMAILS not configured. Admin access denied.");
+  }
+  return adminEmails.includes(email.toLowerCase());
+}
+
 export interface AppUser {
   email: string;
   name: string | null;

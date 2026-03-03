@@ -5,10 +5,15 @@ import {
   VocabRelated,
 } from "../types/handout";
 
+const MAX_PARSE_TEXT_LENGTH = 50_000;
+
 export function parseHandoutSection(
   passageId: string,
   text: string | undefined
 ): HandoutSection {
+  // 과도한 입력으로 인한 Regex 성능 저하 방지
+  const safeText = text?.slice(0, MAX_PARSE_TEXT_LENGTH);
+
   const defaultSection: HandoutSection = {
     passageId,
     sentences: [],
@@ -16,23 +21,23 @@ export function parseHandoutSection(
     summary: { en: "", ko: "" },
     flow: [],
     vocabulary: [],
-    rawText: text || "",
+    rawText: safeText || "",
     isParsed: false,
   };
 
-  if (!text) return defaultSection;
+  if (!safeText) return defaultSection;
 
   try {
     const section = { ...defaultSection };
 
-    const sentenceSectionMatch = text.match(
+    const sentenceSectionMatch = safeText.match(
       /1\. 문장별 구문 분석 및 해석[\s\S]*?(?=2\. 주제문|$)/
     );
     if (sentenceSectionMatch) {
       section.sentences = parseSentenceSection(sentenceSectionMatch[0]);
     }
 
-    const topicSectionMatch = text.match(
+    const topicSectionMatch = safeText.match(
       /2\. 주제문[\s\S]*?(?=3\. 본문 요약|$)/
     );
     if (topicSectionMatch) {
@@ -55,7 +60,7 @@ export function parseHandoutSection(
       }
     }
 
-    const summarySectionMatch = text.match(
+    const summarySectionMatch = safeText.match(
       /3\. 본문 요약[\s\S]*?(?=4\. 글의 흐름|$)/
     );
     if (summarySectionMatch) {
@@ -82,7 +87,7 @@ export function parseHandoutSection(
       }
     }
 
-    const flowSectionMatch = text.match(
+    const flowSectionMatch = safeText.match(
       /4\. 글의 흐름 4단 정리[\s\S]*?(?=5\. 핵심 어휘|$)/
     );
     if (flowSectionMatch) {
@@ -100,7 +105,7 @@ export function parseHandoutSection(
       }));
     }
 
-    const vocabSectionMatch = text.match(/5\. 핵심 어휘 및 확장[\s\S]*$/);
+    const vocabSectionMatch = safeText.match(/5\. 핵심 어휘 및 확장[\s\S]*$/);
     if (vocabSectionMatch) {
       section.vocabulary = parseVocabularySection(vocabSectionMatch[0]);
     }

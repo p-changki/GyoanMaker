@@ -44,13 +44,10 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const user = session.user as any;
-
   // /admin 경로: 관리자만 접근 허용
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     const adminEmails = getAdminEmails();
-    if (!user.email || !adminEmails.has(user.email.toLowerCase())) {
+    if (!session.user.email || !adminEmails.has(session.user.email.toLowerCase())) {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
@@ -58,7 +55,7 @@ export default auth((req) => {
 
   // 인증됐지만 미승인 → 승인 대기 페이지
   // 주의: Edge Runtime이므로 DB를 직접 조회하지 않고 토큰에 담긴 'approved' 플래그를 확인합니다.
-  if (!user.approved) {
+  if (!session.user.approved) {
     return NextResponse.redirect(new URL("/pending", req.url));
   }
 

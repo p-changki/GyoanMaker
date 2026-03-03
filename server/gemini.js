@@ -11,7 +11,7 @@ function getRepairMaxAttempts() {
   }
 
   const parsed = Math.floor(raw);
-  return Math.min(1, Math.max(0, parsed));
+  return Math.max(0, Math.min(3, parsed)); // 0~3 범위로 제한 (clamp 관용 패턴)
 }
 
 const REPAIR_MAX_ATTEMPTS = getRepairMaxAttempts();
