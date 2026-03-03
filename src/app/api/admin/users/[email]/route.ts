@@ -2,16 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { updateUserStatus, deleteUser, type UserStatus } from "@/lib/users";
-
-function isAdmin(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return adminEmails.includes(email.toLowerCase());
-}
+import { updateUserStatus, deleteUser, isAdmin, type UserStatus } from "@/lib/users";
 
 /**
  * PATCH /api/admin/users/[email] — 사용자 상태 변경
@@ -31,7 +22,10 @@ export async function PATCH(
   const status = body.status as UserStatus;
 
   if (!["approved", "rejected", "pending"].includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    return NextResponse.json(
+      { error: { code: "INVALID_STATUS", message: "Status must be one of: approved, rejected, pending" } },
+      { status: 400 }
+    );
   }
 
   const targetEmail = decodeURIComponent(email);

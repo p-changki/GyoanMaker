@@ -37,7 +37,9 @@ function getProxyRateLimitMax(): number {
 function getClientAddress(req: NextRequest): string {
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor && forwardedFor.trim().length > 0) {
-    return forwardedFor.split(",")[0].trim();
+    // 마지막 IP를 사용: Vercel/Cloud Run 등 신뢰된 프록시가 추가한 실제 클라이언트 IP
+    const ips = forwardedFor.split(",").map((ip) => ip.trim()).filter(Boolean);
+    return ips[ips.length - 1] ?? "unknown";
   }
 
   const realIp = req.headers.get("x-real-ip");
@@ -199,7 +201,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.error(`[api/generate][${requestId}] Proxy error:`, error);
+    const errName = error instanceof Error ? error.name : "UnknownError";
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[api/generate][${requestId}] Proxy error: [${errName}] ${errMsg}`);
     return jsonWithRequestId(
       requestId,
       {

@@ -85,10 +85,19 @@ export function getCachedResult(hash: string): CachedResult | null {
       return null;
     }
 
+    // 배열 각 요소가 { index: number, outputText: string } 형태인지 검증
+    const validResults = (parsed.results as unknown[]).filter(
+      (item): item is ApiResultItem =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as ApiResultItem).index === "number" &&
+        typeof (item as ApiResultItem).outputText === "string"
+    );
+
     return {
       version: typeof parsed.version === "number" ? parsed.version : 1,
       createdAt: parsed.createdAt,
-      results: parsed.results as ApiResultItem[],
+      results: validResults,
     };
   } catch {
     return null;
