@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { HandoutSection } from "@/types/handout";
 import {
   DEFAULT_CUSTOM_HEADER_TEXT,
