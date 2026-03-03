@@ -49,3 +49,6 @@ next-env.d.ts
 
 # editor local settings
 .sisyphus/
+
+# Local environment secrets
+.env.local

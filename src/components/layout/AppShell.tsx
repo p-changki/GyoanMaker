@@ -3,9 +3,16 @@
 import { usePathname } from "next/navigation";
 import Header from "./Header";
 
+const AUTH_PATHS = ["/login", "/pending"];
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
   const isFullWidth = pathname === "/compile";
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fc]">
