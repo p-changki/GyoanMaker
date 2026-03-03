@@ -26,11 +26,8 @@ import { normalizeHandoutRawText } from "@/lib/normalizeHandoutRawText";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
 const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
-const CHUNK_CONCURRENCY = 2;
-const INITIAL_GENERATE_CHUNK_SIZE = Math.max(
-  1,
-  Math.floor(Number(process.env.NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE || 2))
-);
+const CHUNK_CONCURRENCY = 1;
+const INITIAL_GENERATE_CHUNK_SIZE = 1;
 
 function formatEta(seconds: number): string {
   const mins = Math.floor(seconds / 60);
