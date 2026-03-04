@@ -10,6 +10,11 @@ function stripLabelPrefix(line, label) {
 }
 
 function parseHeadEntry(line) {
+  // Head entries MUST start with a number prefix (e.g., "1. consistent 일관된")
+  // Without this check, synonym/antonym lines like "systematic 체계적인" are
+  // misidentified as new head entries.
+  if (!/^\d+\./.test(line)) return null;
+
   const withoutNumber = line.replace(/^\d+\.\s*/, "").trim();
   if (!withoutNumber) return null;
   if (/^핵심 어휘 및 확장/.test(withoutNumber)) return null;
