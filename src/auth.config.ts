@@ -1,5 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
+import "@/lib/types";
 
 /**
  * 미들웨어(Edge Runtime)와 공유할 수 있는 가벼운 NextAuth 설정.
@@ -29,10 +30,8 @@ export const authConfig = {
     },
     session({ session, token }) {
       if (session.user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const user = session.user as any;
-        user.approved = token.approved ?? false;
-        user.userStatus = token.userStatus ?? "pending";
+        session.user.approved = token.approved ?? false;
+        session.user.userStatus = token.userStatus ?? "pending";
       }
       return session;
     },

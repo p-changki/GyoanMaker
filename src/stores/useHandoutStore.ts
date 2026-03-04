@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { useCallback } from "react";
 import { CompiledHandout, HandoutSection } from "@/types/handout";
 
 export const DEFAULT_CUSTOM_HEADER_TEXT = "고1 25년 9월 모의고사";
@@ -86,5 +87,5 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
 }));
 
 export function useSection(id: string): HandoutSection | undefined {
-  return useHandoutStore((state) => state.sections[id]);
+  return useHandoutStore(useCallback((state) => state.sections[id], [id]));
 }

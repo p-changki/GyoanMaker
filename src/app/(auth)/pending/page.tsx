@@ -60,7 +60,6 @@ export default function PendingPage() {
             type="button"
             onClick={async () => {
               const res = await update();
-              // @ts-expect-error - approved property exists in our custom session
               if (res?.user?.approved) {
                 window.location.href = "/generate";
               } else {

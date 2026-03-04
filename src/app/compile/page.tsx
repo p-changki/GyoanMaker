@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import CompileLayout from "@/components/compile/CompileLayout";
@@ -60,6 +60,7 @@ export default function CompilePage() {
     current: 0,
     total: 0,
   });
+  const isApplyingRef = useRef(false);
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
   const setApplying = useHandoutStore((state) => state.setApplying);
@@ -150,6 +151,17 @@ export default function CompilePage() {
     },
   });
 
+  // M1: PDF 내보내기 중 페이지 이탈 경고
+  useEffect(() => {
+    if (!isExportingPdf) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "PDF 내보내기가 진행 중입니다. 페이지를 떠나시겠습니까?";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isExportingPdf]);
+
   const isLoading =
     inputQuery.isLoading ||
     (inputQuery.data !== null &&
@@ -158,6 +170,8 @@ export default function CompilePage() {
 
   // 2. 템플릿 적용 (파싱 실행)
   const handleApplyTemplate = useCallback(async () => {
+    if (isApplyingRef.current) return; // 중복 실행 즉시 차단
+    isApplyingRef.current = true;
     setApplying(true);
     setProgress(0);
 
@@ -195,6 +209,7 @@ export default function CompilePage() {
     } catch (error) {
       console.error("Failed to apply compile template", error);
     } finally {
+      isApplyingRef.current = false;
       setApplying(false);
     }
   }, [compileQuery.data?.hash, setApplying, setProgress, updateSection]);
@@ -368,8 +383,11 @@ export default function CompilePage() {
 
           capturedCount += 1;
 
-          canvas.width = 0;
-          canvas.height = 0;
+          // M2: canvas 컨텍스트 정리 후 크기 초기화로 메모리 반환 유도
+          const ctx = canvas.getContext("2d");
+          ctx?.clearRect(0, 0, canvas.width, canvas.height);
+          canvas.width = 1;
+          canvas.height = 1;
 
           await new Promise((resolve) => setTimeout(resolve, 100));
         } // end of inner loop for pages

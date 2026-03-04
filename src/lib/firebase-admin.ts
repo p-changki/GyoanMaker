@@ -25,15 +25,19 @@ export function getDb(): Firestore {
     );
   }
 
-  if (getApps().length === 0) {
-    const serviceAccount: ServiceAccount = {
-      projectId,
-      clientEmail,
-      privateKey,
-    };
-    initializeApp({ credential: cert(serviceAccount) });
+  try {
+    if (getApps().length === 0) {
+      const serviceAccount: ServiceAccount = {
+        projectId,
+        clientEmail,
+        privateKey,
+      };
+      initializeApp({ credential: cert(serviceAccount) });
+    }
+    _db = getFirestore();
+    return _db;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Firebase Admin 초기화 실패: ${message}`);
   }
-
-  _db = getFirestore();
-  return _db;
 }
