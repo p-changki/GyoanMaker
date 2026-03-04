@@ -19,8 +19,19 @@ export default function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  if (status === "loading") {
+    return <div className="w-8 h-8" />;
+  }
+
   if (status !== "authenticated" || !session?.user) {
-    return null;
+    return (
+      <a
+        href="/login"
+        className="px-5 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+      >
+        로그인
+      </a>
+    );
   }
 
   const user = session.user;
@@ -94,7 +105,7 @@ export default function UserMenu() {
             )}
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="w-full text-left px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-xl transition-colors flex items-center gap-2"
             >
               <svg

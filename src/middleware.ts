@@ -23,6 +23,11 @@ function getAdminEmails(): Set<string> {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
+  // 루트 랜딩 페이지는 공개 (startsWith 사용 시 모든 경로 통과 방지)
+  if (pathname === "/") {
+    return NextResponse.next();
+  }
+
   // 공개 경로는 항상 통과
   const publicPaths = [
     "/login",

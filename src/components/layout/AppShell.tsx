@@ -8,7 +8,7 @@ const AUTH_PATHS = ["/login", "/pending"];
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
-  const isFullWidth = pathname === "/compile";
+  const isFullWidth = pathname === "/compile" || pathname === "/";
 
   if (isAuthPage) {
     return <>{children}</>;
