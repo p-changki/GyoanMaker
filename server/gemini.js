@@ -19,6 +19,42 @@ const REPAIR_MAX_ATTEMPTS = getRepairMaxAttempts();
 // 환경변수에서 모델명을 가져오거나 기본값으로 gemini-2.5-pro 사용
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
 
+// 429 retry configuration
+const RETRY_MAX = 3;
+const RETRY_BASE_DELAY_MS = 10_000; // 10s initial backoff
+const REPAIR_DELAY_MS = Number(process.env.REPAIR_DELAY_MS) || 15_000; // 15s delay before repair
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function is429Error(error) {
+  if (error?.status === 429 || error?.code === 429) return true;
+  const msg = error?.message || "";
+  return msg.includes("429") || msg.includes("RESOURCE_EXHAUSTED");
+}
+
+/**
+ * Gemini API call with exponential backoff for 429 errors.
+ */
+async function callWithRetry(ai, config) {
+  for (let i = 0; i <= RETRY_MAX; i++) {
+    try {
+      return await ai.models.generateContent(config);
+    } catch (error) {
+      if (is429Error(error) && i < RETRY_MAX) {
+        const delay = RETRY_BASE_DELAY_MS * Math.pow(2, i);
+        console.warn(
+          `[gemini] 429 rate limited -> waiting ${delay / 1000}s before retry ${i + 1}/${RETRY_MAX}`
+        );
+        await sleep(delay);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 /**
  * 현재 인증 모드를 반환한다.
  * - "vertex": GOOGLE_CLOUD_PROJECT가 있을 때 Vertex AI ADC 방식
@@ -93,7 +129,7 @@ async function generateOnePassage(ai, systemPrompt, passage) {
   );
 
   try {
-    let response = await ai.models.generateContent({
+    let response = await callWithRetry(ai, {
       model: MODEL_NAME,
       config: {
         systemInstruction: systemPrompt,
@@ -136,7 +172,12 @@ async function generateOnePassage(ai, systemPrompt, passage) {
         const repairErrors = allErrors.slice(0, 8);
         const repairInstruction = `\n\n[REPAIR INSTRUCTION]\n직전 출력의 규칙 위반 항목:\n${repairErrors.map((e) => "- " + e).join("\n")}\n\n위반된 섹션(Topic/Summary/Core Vocabulary)만 교정하고, 이미 규칙을 만족한 다른 섹션은 변경하지 마십시오.`;
 
-        response = await ai.models.generateContent({
+        console.log(
+          `[gemini] waiting ${REPAIR_DELAY_MS / 1000}s before repair call...`
+        );
+        await sleep(REPAIR_DELAY_MS);
+
+        response = await callWithRetry(ai, {
           model: MODEL_NAME,
           config: {
             systemInstruction: systemPrompt + repairInstruction,
