@@ -452,7 +452,7 @@ export default function CompilePage() {
           <p className="text-sm text-gray-600 font-medium">{errorMessage}</p>
           <button
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/generate")}
             className="px-6 py-2 bg-[#5E35B1] text-white rounded-xl font-bold text-sm"
           >
             홈으로 이동
@@ -471,7 +471,7 @@ export default function CompilePage() {
           </p>
           <button
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/generate")}
             className="px-6 py-2 bg-[#5E35B1] text-white rounded-xl font-bold text-sm"
           >
             홈으로 이동

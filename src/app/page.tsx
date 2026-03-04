@@ -1,332 +1,184 @@
-"use client";
+import LandingCta from "@/components/landing/LandingCta";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import {
-  splitTextBlockIntoPassages,
-  passagesToCards,
-  cardsToPassages,
-  passagesToTextBlock,
-} from "@/lib/parsePassages";
-import {
-  InputMode,
-  PassageInput as PassageInputType,
-  GenerationMode,
-  OutputOptionState,
-} from "@/lib/types";
-import PassageInput from "@/components/PassageInput";
-import PassageCard from "@/components/PassageCard";
-
-const SESSION_STORAGE_KEY = "gyoanmaker:input";
-
-export default function Home() {
-  const router = useRouter();
-
-  const [inputMode, setInputMode] = useState<InputMode>("text");
-  const [textBlock, setTextBlock] = useState("");
-  const [cards, setCards] = useState<PassageInputType[]>([]);
-  const [generationMode, setGenerationMode] = useState<GenerationMode>("basic");
-  const [options, setOptions] = useState<OutputOptionState>({
-    copyBlock: true,
-    pdf: false,
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const passageCount = useMemo(() => {
-    if (inputMode === "text") {
-      return splitTextBlockIntoPassages(textBlock).length;
-    }
-    return cards.filter((c) => c.text.trim().length > 0).length;
-  }, [inputMode, textBlock, cards]);
-
-  const isSubmitDisabled = passageCount === 0 || passageCount > 20;
-
-  const handleToggleMode = (mode: InputMode) => {
-    if (mode === inputMode) return;
-
-    if (mode === "cards") {
-      const passages = splitTextBlockIntoPassages(textBlock);
-      setCards(passagesToCards(passages));
-    } else {
-      const passages = cardsToPassages(cards);
-      setTextBlock(passagesToTextBlock(passages));
-    }
-    setInputMode(mode);
-  };
-
-  const handleAddCard = () => {
-    if (cards.length >= 20) return;
-    const newId = `p${String(cards.length + 1).padStart(2, "0")}`;
-    setCards([...cards, { id: newId, text: "" }]);
-  };
-
-  const handleUpdateCard = (index: number, text: string) => {
-    const newCards = [...cards];
-    newCards[index] = { ...newCards[index], text };
-    setCards(newCards);
-  };
-
-  const handleRemoveCard = (index: number) => {
-    const newCards = cards.filter((_, i) => i !== index);
-    setCards(newCards);
-  };
-
-  const handleSubmit = () => {
-    if (isSubmitDisabled || isSubmitting) return;
-    setIsSubmitting(true);
-
-    const finalPassages =
-      inputMode === "text"
-        ? splitTextBlockIntoPassages(textBlock)
-        : cardsToPassages(cards);
-
-    const payload = {
-      inputMode,
-      passages: finalPassages,
-      options,
-      generationMode,
-      timestamp: new Date().toISOString(),
-    };
-
-    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
-    router.push("/results");
-  };
-
+export default function LandingPage() {
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12 sm:py-16 space-y-10 sm:space-y-12">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
-          교안 생성하기
-        </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-          영어 지문을 입력하여 맞춤형 교안을 자동으로 생성하세요.{" "}
-          <br className="hidden sm:block" />
-          교육 전문가를 위한 프리미엄 교안 제작 도구입니다.
-        </p>
-      </div>
-
-      <div className="flex justify-center">
-        <div className="bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-2xl flex shadow-inner">
-          <button
-            type="button"
-            onClick={() => handleToggleMode("text")}
-            className={`px-8 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              inputMode === "text"
-                ? "bg-white text-blue-600 shadow-md scale-[1.02]"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-            }`}
-          >
-            텍스트 블록
-          </button>
-          <button
-            type="button"
-            onClick={() => handleToggleMode("cards")}
-            className={`px-8 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              inputMode === "cards"
-                ? "bg-white text-blue-600 shadow-md scale-[1.02]"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-            }`}
-          >
-            카드 모드
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white border border-gray-200/60 rounded-[2rem] p-6 sm:p-10 shadow-premium">
-        {inputMode === "text" ? (
-          <PassageInput
-            value={textBlock}
-            onChange={setTextBlock}
-            passageCount={passageCount}
-          />
-        ) : (
-          <div className="space-y-8">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <h2 className="text-lg font-bold text-gray-800">지문 목록</h2>
-              <span
-                className={`text-sm font-bold px-3 py-1 rounded-full ${passageCount > 20 ? "bg-red-50 text-red-500" : "bg-blue-50 text-blue-600"}`}
-              >
-                감지된 지문: {passageCount} / 20
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {cards.map((card, index) => (
-                <PassageCard
-                  key={card.id}
-                  index={index}
-                  text={card.text}
-                  onChange={(text) => handleUpdateCard(index, text)}
-                  onRemove={() => handleRemoveCard(index)}
-                />
-              ))}
-              {cards.length < 20 && (
-                <button
-                  type="button"
-                  onClick={handleAddCard}
-                  className="h-48 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/30 transition-all group"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center mb-3 group-hover:bg-blue-50 group-hover:scale-110 transition-all">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <title>지문 추가 아이콘</title>
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </div>
-                  <span className="text-sm font-bold">지문 추가</span>
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>생성 모드 아이콘</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">생성 모드</h3>
-          </div>
-          <div className="space-y-4">
-            <label className="flex items-center p-4 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer group transition-all hover:border-blue-200">
-              <input
-                type="radio"
-                name="generationMode"
-                checked={generationMode === "basic"}
-                onChange={() => setGenerationMode("basic")}
-                className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+    <div className="w-full">
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-[#f0f4ff] via-[#f8f9fc] to-[#eef2ff] py-24 sm:py-32">
+        <div className="mx-auto max-w-[1100px] px-4 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-8">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <title>AI</title>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
               />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-900">
-                  기본 모드
-                </span>
-                <span className="block text-xs text-gray-500 mt-0.5">
-                  표준적인 교안 구성 요소를 생성합니다.
-                </span>
-              </div>
-            </label>
-            <label className="flex items-center p-4 rounded-xl border border-gray-100 bg-gray-50/50 cursor-not-allowed opacity-60">
-              <input
-                type="radio"
-                name="generationMode"
-                disabled
-                className="w-5 h-5 text-gray-300 border-gray-300"
-              />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-400">
-                  심화 모드 (준비 중)
-                </span>
-                <span className="block text-xs text-gray-400 mt-0.5">
-                  더 상세한 분석과 추가 학습 자료를 포함합니다.
-                </span>
-              </div>
-            </label>
+            </svg>
+            AI 기반 교안 자동 생성
           </div>
-        </div>
-
-        <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <title>출력 옵션 아이콘</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">출력 옵션</h3>
-          </div>
-          <div className="space-y-4">
-            <label className="flex items-center p-4 rounded-xl border border-gray-100 bg-gray-50/50 cursor-not-allowed opacity-80">
-              <input
-                type="checkbox"
-                checked={true}
-                disabled
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-700">
-                  복사용 텍스트 블록
-                </span>
-                <span className="block text-xs text-gray-500 mt-0.5">
-                  결과 페이지에서 즉시 복사 가능합니다.
-                </span>
-              </div>
-            </label>
-            <label className="flex items-center p-4 rounded-xl border border-gray-200 cursor-pointer group transition-all hover:border-blue-200 hover:bg-blue-50/10">
-              <input
-                type="checkbox"
-                checked={options.pdf}
-                onChange={(e) =>
-                  setOptions({ ...options, pdf: e.target.checked })
-                }
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                  PDF 다운로드
-                </span>
-                <span className="block text-xs text-gray-500 mt-0.5">
-                  인쇄 및 보관용 PDF 파일을 생성합니다.
-                </span>
-              </div>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center space-y-6 pt-8">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitDisabled || isSubmitting}
-          className={`w-full md:w-80 py-5 rounded-2xl text-xl font-black transition-all shadow-xl ${
-            isSubmitDisabled || isSubmitting
-              ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-              : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.03] active:scale-[0.97] shadow-blue-200"
-          }`}
-        >
-          {isSubmitting ? "생성 중..." : "교안 생성하기"}
-        </button>
-        {passageCount > 20 && (
-          <p className="text-sm text-red-500 font-bold bg-red-50 px-4 py-2 rounded-full">
-            지문은 최대 20개까지만 입력 가능합니다.
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            영어 지문 분석부터
+            <br />
+            <span className="text-blue-600">교안 출력까지, 한 번에</span>
+          </h1>
+          <p className="mt-6 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+            영어 지문을 입력하면 AI가 문장 분석, 핵심 어휘, 요약까지 자동으로
+            생성합니다. 인쇄용 PDF로 바로 출력하세요.
           </p>
-        )}
-      </div>
+          <div className="mt-10">
+            <LandingCta />
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 sm:py-24 bg-white">
+        <div className="mx-auto max-w-[1100px] px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+              핵심 기능
+            </h2>
+            <p className="mt-4 text-gray-500 text-lg">
+              교안 제작에 필요한 모든 것을 AI가 처리합니다
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <title>지문 분석</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">지문 분석</h3>
+              <p className="text-gray-500 leading-relaxed">
+                영어 지문의 문장별 한영 대조 번역과 주제문을 자동으로
+                식별합니다.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-indigo-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <title>어휘 생성</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                핵심 어휘 & 요약
+              </h3>
+              <p className="text-gray-500 leading-relaxed">
+                B2/C1 수준 핵심 어휘의 동의어·반의어와 지문 요약을 자동
+                생성합니다.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-4 hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-emerald-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <title>PDF 출력</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">PDF 출력</h3>
+              <p className="text-gray-500 leading-relaxed">
+                학원 형식에 맞는 인쇄용 교안을 PDF로 바로 다운로드합니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section className="py-20 sm:py-24 bg-gradient-to-b from-[#f8f9fc] to-white">
+        <div className="mx-auto max-w-[1100px] px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+              사용 방법
+            </h2>
+            <p className="mt-4 text-gray-500 text-lg">
+              3단계로 교안을 완성하세요
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-700 text-2xl font-extrabold">
+                1
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">지문 입력</h3>
+              <p className="text-gray-500">
+                영어 지문을 텍스트로 붙여넣거나 카드 형태로 개별 입력합니다.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 text-2xl font-extrabold">
+                2
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">AI 분석</h3>
+              <p className="text-gray-500">
+                AI가 문장 분석, 어휘 추출, 요약, 글의 흐름까지 자동으로
+                생성합니다.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 text-2xl font-extrabold">
+                3
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">편집 & 출력</h3>
+              <p className="text-gray-500">
+                결과를 확인하고 인라인 편집 후 인쇄용 PDF로 다운로드합니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

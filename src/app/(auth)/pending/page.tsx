@@ -61,7 +61,7 @@ export default function PendingPage() {
             onClick={async () => {
               const res = await update();
               if (res?.user?.approved) {
-                window.location.href = "/";
+                window.location.href = "/generate";
               } else {
                 alert("아직 승인 대기 중입니다. 잠시 후 다시 시도해 주세요.");
               }
@@ -73,7 +73,7 @@ export default function PendingPage() {
 
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="w-full py-3 rounded-xl border border-gray-200 text-gray-400 text-xs font-medium hover:bg-gray-50 transition-all"
           >
             다른 계정으로 로그인

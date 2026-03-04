@@ -592,7 +592,7 @@ export default function ResultsPage() {
         <p className="text-gray-600">입력된 데이터가 없습니다.</p>
         <button
           type="button"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/generate")}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
           처음으로 돌아가기
@@ -618,7 +618,7 @@ export default function ResultsPage() {
       <ActionBar
         completed={processed}
         total={total}
-        onBack={() => router.push("/")}
+        onBack={() => router.push("/generate")}
       >
         <div className="flex items-center gap-2">
           {generating > 0 && (

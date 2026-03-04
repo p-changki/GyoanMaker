@@ -7,7 +7,7 @@ import { Suspense, useState } from "react";
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/generate";
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = () => {
