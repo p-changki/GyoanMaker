@@ -13,7 +13,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@gyoanmaker/shared": "^0.1.0",
+    "@gyoanmaker/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
     "firebase-admin": "^13.7.0",

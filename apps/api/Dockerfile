@@ -1,32 +1,34 @@
 FROM node:20.9-alpine AS builder
 WORKDIR /workspace
 
-COPY package.json package-lock.json turbo.json tsconfig.base.json ./
+RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
 
-RUN npm run build --workspace @gyoanmaker/api
+RUN pnpm --filter @gyoanmaker/api build
 
 FROM node:20.9-alpine AS runner
 WORKDIR /workspace
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
+RUN corepack enable && corepack prepare pnpm@10.17.1 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 
-RUN npm ci --omit=dev --workspace @gyoanmaker/api
+RUN pnpm install --frozen-lockfile --prod --filter @gyoanmaker/api
 
 COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
-COPY --from=builder /workspace/apps/api/system-prompt.txt ./apps/api/system-prompt.txt
-COPY --from=builder /workspace/apps/api/system-prompt-basic.txt ./apps/api/system-prompt-basic.txt
 
 WORKDIR /workspace/apps/api
-EXPOSE 4000
+EXPOSE 8080
 
 CMD ["node", "dist/server.js"]
