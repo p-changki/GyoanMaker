@@ -79,7 +79,7 @@ const SectionCanvasItem = memo(function SectionCanvasItem({ id }: { id: string }
   }
 
   const sentences = section.sentences || [];
-  const chunkSize = 7;
+  const chunkSize = 10;
   const sentenceChunks = [];
   for (let i = 0; i < sentences.length; i += chunkSize) {
     sentenceChunks.push(sentences.slice(i, i + chunkSize));

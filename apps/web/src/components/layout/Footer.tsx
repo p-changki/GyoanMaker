@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="border-t border-gray-200 bg-[#f8f9fc]">
-      <div className="mx-auto max-w-[1100px] px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+      <div className="mx-auto max-w-screen-2xl px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
         <p>&copy; {new Date().getFullYear()} 교안 생성기</p>
         <nav className="flex items-center gap-4">
           <Link

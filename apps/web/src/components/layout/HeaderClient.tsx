@@ -27,7 +27,7 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
 
   return (
     <header className="relative z-60 border-b border-gray-200 bg-white">
-      <div className="mx-auto max-w-[1100px] px-4 flex items-center justify-between h-20 md:h-28">
+      <div className="mx-auto max-w-screen-2xl px-6 flex items-center justify-between h-20 md:h-28">
         {/* Logo */}
         <Link href="/" className="shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -38,8 +38,8 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
           />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-5">
+        {/* Desktop nav + user menu */}
+        <div className="hidden md:flex items-center gap-5">
           {navLinks.map(({ href, label }) => (
             <Link
               key={href}
@@ -49,10 +49,6 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
               {label}
             </Link>
           ))}
-        </nav>
-
-        {/* Desktop user menu */}
-        <div className="hidden md:block">
           <UserMenu user={user} />
         </div>
 

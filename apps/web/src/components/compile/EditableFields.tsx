@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DEFAULT_ANALYSIS_TITLE_TEXT,
   DEFAULT_CUSTOM_HEADER_TEXT,
@@ -8,6 +9,8 @@ import {
   useHandoutStore,
 } from "@/stores/useHandoutStore";
 import { PencilHintIcon } from "./EditableHintBanner";
+import { THEME_PRESETS } from "@gyoanmaker/shared/types";
+import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 
 export const HEADER_TEXT_STORAGE_KEY = "gyoanmaker:header-text";
 export const ANALYSIS_TITLE_STORAGE_KEY = "gyoanmaker:analysis-title";
@@ -37,223 +40,235 @@ export function normalizeSummaryTitle(value: string): string {
   return normalized.slice(0, 40);
 }
 
-export const EditableHeaderText = memo(function EditableHeaderText() {
-  const customHeaderText = useHandoutStore((state) => state.customHeaderText);
-  const setCustomHeaderText = useHandoutStore((state) => state.setCustomHeaderText);
+/* ─── Reusable Edit Modal ─── */
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(customHeaderText);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+function EditFieldModal({
+  label,
+  value,
+  maxLength,
+  themeColor = "#5E35B1",
+  onConfirm,
+  onClose,
+}: {
+  label: string;
+  value: string;
+  maxLength: number;
+  themeColor?: string;
+  onConfirm: (value: string) => void;
+  onClose: () => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-      const length = inputRef.current?.value.length ?? 0;
-      inputRef.current?.setSelectionRange(length, length);
-    }
-  }, [isEditing]);
+    inputRef.current?.focus();
+    const len = inputRef.current?.value.length ?? 0;
+    inputRef.current?.setSelectionRange(len, len);
+  }, []);
 
-  const commitEdit = useCallback(() => {
-    const nextValue = normalizeHeaderText(draft);
-    setCustomHeaderText(nextValue);
-    sessionStorage.setItem(HEADER_TEXT_STORAGE_KEY, nextValue);
-    setIsEditing(false);
-  }, [draft, setCustomHeaderText]);
-
-  const handleCancel = useCallback(() => {
-    setDraft(customHeaderText);
-    setIsEditing(false);
-  }, [customHeaderText]);
-
-  if (isEditing) {
-    return (
-      <input
-        type="text"
-        value={draft}
-        ref={inputRef}
-        maxLength={40}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commitEdit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commitEdit();
-          }
-
-          if (event.key === "Escape") {
-            event.preventDefault();
-            handleCancel();
-          }
-        }}
-        className="w-full bg-transparent text-white text-[14px] font-bold outline-none border-0 p-0 m-0 text-center"
-        style={{ fontFamily: "GmarketSans, sans-serif" }}
-      />
-    );
-  }
+  const handleConfirm = useCallback(() => {
+    onConfirm(draft);
+  }, [draft, onConfirm]);
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(customHeaderText);
-        setIsEditing(true);
-      }}
-      className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
-      style={{ fontFamily: "GmarketSans, sans-serif" }}
-      aria-label="헤더 텍스트 편집"
+    createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40"
+      onClick={onClose}
     >
-      <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
-        {customHeaderText}
-      </span>
-      <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
-    </button>
+      <div
+        className="bg-white rounded-2xl shadow-2xl p-8 w-[400px] max-w-[90vw] space-y-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+          {label}
+        </p>
+        <input
+          ref={inputRef}
+          type="text"
+          value={draft}
+          maxLength={maxLength}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleConfirm();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              onClose();
+            }
+          }}
+          className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none text-center"
+          style={{ ...(draft !== value ? {} : {}), }} // focus styles via onFocus
+          onFocus={(e) => { e.currentTarget.style.borderColor = themeColor; e.currentTarget.style.boxShadow = `0 0 0 1px ${themeColor}`; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.boxShadow = ""; }}
+        />
+        <div className="flex gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="px-4 py-2 text-xs font-bold text-white rounded-lg transition-colors"
+            style={{ backgroundColor: themeColor }}
+          >
+            적용
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+    )
+  );
+}
+
+/* ─── Editable Header Text ─── */
+
+export const EditableHeaderText = memo(function EditableHeaderText() {
+  const themePreset = useTemplateSettingsStore((s) => s.themePreset);
+  const themeColor = THEME_PRESETS[themePreset].primary;
+  const customHeaderText = useHandoutStore((state) => state.customHeaderText);
+  const setCustomHeaderText = useHandoutStore((state) => state.setCustomHeaderText);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleConfirm = useCallback(
+    (value: string) => {
+      const next = normalizeHeaderText(value);
+      setCustomHeaderText(next);
+      sessionStorage.setItem(HEADER_TEXT_STORAGE_KEY, next);
+      setIsOpen(false);
+    },
+    [setCustomHeaderText]
+  );
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        style={{ fontFamily: "GmarketSans, sans-serif" }}
+        aria-label="헤더 텍스트 편집"
+      >
+        <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
+          {customHeaderText}
+        </span>
+        <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
+      </button>
+      {isOpen && (
+        <EditFieldModal
+          label="헤더 텍스트"
+          value={customHeaderText}
+          maxLength={40}
+          themeColor={themeColor}
+          onConfirm={handleConfirm}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
+    </>
   );
 });
+
+/* ─── Editable Analysis Title ─── */
 
 export const EditableAnalysisTitle = memo(function EditableAnalysisTitle({
   pageNum,
 }: {
   pageNum: number;
 }) {
+  const themePreset = useTemplateSettingsStore((s) => s.themePreset);
+  const themeColor = THEME_PRESETS[themePreset].primary;
   const analysisTitleText = useHandoutStore((state) => state.analysisTitleText);
   const setAnalysisTitleText = useHandoutStore((state) => state.setAnalysisTitleText);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(analysisTitleText);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-      const length = inputRef.current?.value.length ?? 0;
-      inputRef.current?.setSelectionRange(length, length);
-    }
-  }, [isEditing]);
-
-  const commitEdit = useCallback(() => {
-    const nextValue = normalizeAnalysisTitle(draft);
-    setAnalysisTitleText(nextValue);
-    sessionStorage.setItem(ANALYSIS_TITLE_STORAGE_KEY, nextValue);
-    setIsEditing(false);
-  }, [draft, setAnalysisTitleText]);
-
-  const handleCancel = useCallback(() => {
-    setDraft(analysisTitleText);
-    setIsEditing(false);
-  }, [analysisTitleText]);
-
-  if (isEditing) {
-    return (
-      <input
-        type="text"
-        value={draft}
-        ref={inputRef}
-        maxLength={80}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commitEdit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commitEdit();
-          }
-
-          if (event.key === "Escape") {
-            event.preventDefault();
-            handleCancel();
-          }
-        }}
-        className="bg-transparent text-[#5E35B1] font-bold outline-none flex-1 p-0 m-0 min-w-[150px] text-center"
-      />
-    );
-  }
+  const handleConfirm = useCallback(
+    (value: string) => {
+      const next = normalizeAnalysisTitle(value);
+      setAnalysisTitleText(next);
+      sessionStorage.setItem(ANALYSIS_TITLE_STORAGE_KEY, next);
+      setIsOpen(false);
+    },
+    [setAnalysisTitleText]
+  );
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(analysisTitleText);
-        setIsEditing(true);
-      }}
-      className="group/edit bg-transparent border-0 p-0 m-0 text-[#5E35B1] font-bold hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
-      aria-label="구문 분석 제목 편집"
-    >
-      <span className="border-b border-dashed border-transparent group-hover/edit:border-[#5E35B1]/40 transition-colors">
-        {analysisTitleText} {pageNum > 1 ? "(계속)" : ""}
-      </span>
-      <PencilHintIcon className="text-[#5E35B1]/0 group-hover/edit:text-[#5E35B1]/50" />
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="group/edit bg-transparent border-0 p-0 m-0 font-bold hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
+        style={{ color: "inherit" }}
+        aria-label="구문 분석 제목 편집"
+      >
+        <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
+          {analysisTitleText} {pageNum > 1 ? "(계속)" : ""}
+        </span>
+        <PencilHintIcon className="opacity-0 group-hover/edit:opacity-50" />
+      </button>
+      {isOpen && (
+        <EditFieldModal
+          label="구문 분석 제목"
+          value={analysisTitleText}
+          maxLength={80}
+          themeColor={themeColor}
+          onConfirm={handleConfirm}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
+    </>
   );
 });
 
+/* ─── Editable Summary Title ─── */
+
 export const EditableSummaryTitleText = memo(function EditableSummaryTitleText() {
+  const themePreset = useTemplateSettingsStore((s) => s.themePreset);
+  const themeColor = THEME_PRESETS[themePreset].primary;
   const summaryTitleText = useHandoutStore((state) => state.summaryTitleText);
   const setSummaryTitleText = useHandoutStore((state) => state.setSummaryTitleText);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [draft, setDraft] = useState(summaryTitleText);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-      const length = inputRef.current?.value.length ?? 0;
-      inputRef.current?.setSelectionRange(length, length);
-    }
-  }, [isEditing]);
-
-  const commitEdit = useCallback(() => {
-    const nextValue = normalizeSummaryTitle(draft);
-    setSummaryTitleText(nextValue);
-    sessionStorage.setItem(SUMMARY_TITLE_STORAGE_KEY, nextValue);
-    setIsEditing(false);
-  }, [draft, setSummaryTitleText]);
-
-  const handleCancel = useCallback(() => {
-    setDraft(summaryTitleText);
-    setIsEditing(false);
-  }, [summaryTitleText]);
-
-  if (isEditing) {
-    return (
-      <input
-        type="text"
-        value={draft}
-        ref={inputRef}
-        maxLength={40}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commitEdit}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commitEdit();
-          }
-
-          if (event.key === "Escape") {
-            event.preventDefault();
-            handleCancel();
-          }
-        }}
-        className="bg-transparent text-white text-[15px] font-black tracking-wide outline-none border-0 p-0 m-0 w-[200px]"
-        style={{ fontFamily: "GmarketSans, sans-serif" }}
-      />
-    );
-  }
+  const handleConfirm = useCallback(
+    (value: string) => {
+      const next = normalizeSummaryTitle(value);
+      setSummaryTitleText(next);
+      sessionStorage.setItem(SUMMARY_TITLE_STORAGE_KEY, next);
+      setIsOpen(false);
+    },
+    [setSummaryTitleText]
+  );
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        setDraft(summaryTitleText);
-        setIsEditing(true);
-      }}
-      className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
-      aria-label="요약 제목 편집"
-    >
-      <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
-        {summaryTitleText}
-      </span>
-      <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        aria-label="요약 제목 편집"
+      >
+        <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
+          {summaryTitleText}
+        </span>
+        <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
+      </button>
+      {isOpen && (
+        <EditFieldModal
+          label="요약 제목"
+          value={summaryTitleText}
+          maxLength={40}
+          themeColor={themeColor}
+          onConfirm={handleConfirm}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
+    </>
   );
 });
 
