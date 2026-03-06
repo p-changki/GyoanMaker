@@ -163,9 +163,28 @@ function validateEntryMeaning({ itemNumber, label, index, entry, errors }) {
   }
 }
 
-function validateVocabText(name, outputText) {
+// Validation thresholds by content level
+const VOCAB_THRESHOLDS = {
+  advanced: {
+    vocabCount: 4,
+    synonymsMin: 3,
+    synonymsMax: 3,
+    antonymsMin: 2,
+    antonymsMax: 2,
+  },
+  basic: {
+    vocabCount: 4,
+    synonymsMin: 2,
+    synonymsMax: 2,
+    antonymsMin: 1,
+    antonymsMax: 1,
+  },
+};
+
+function validateVocabText(name, outputText, level = "advanced") {
   const errors = [];
   const info = [];
+  const t = VOCAB_THRESHOLDS[level] || VOCAB_THRESHOLDS.advanced;
 
   const section = extractCoreVocabularySection(outputText);
   if (!section) {
@@ -181,8 +200,10 @@ function validateVocabText(name, outputText) {
   const items = splitItems(section);
   info.push(`핵심 어휘 항목 수: ${items.length}`);
 
-  if (items.length !== 4) {
-    errors.push(`Core Vocabulary 항목 수 위반: ${items.length}개 (필수 4개)`);
+  if (items.length !== t.vocabCount) {
+    errors.push(
+      `Core Vocabulary 항목 수 위반: ${items.length}개 (필수 ${t.vocabCount}개)`
+    );
   }
 
   items.forEach((item, index) => {
@@ -206,15 +227,21 @@ function validateVocabText(name, outputText) {
       );
     }
 
-    if (item.synonyms.length !== 3) {
+    if (
+      item.synonyms.length < t.synonymsMin ||
+      item.synonyms.length > t.synonymsMax
+    ) {
       errors.push(
-        `${itemNumber}번 항목 유의어 개수 위반: ${item.synonyms.length}개 (필수 3개)`
+        `${itemNumber}번 항목 유의어 개수 위반: ${item.synonyms.length}개 (허용 ${t.synonymsMin}~${t.synonymsMax})`
       );
     }
 
-    if (item.antonyms.length !== 2) {
+    if (
+      item.antonyms.length < t.antonymsMin ||
+      item.antonyms.length > t.antonymsMax
+    ) {
       errors.push(
-        `${itemNumber}번 항목 반의어 개수 위반: ${item.antonyms.length}개 (필수 2개)`
+        `${itemNumber}번 항목 반의어 개수 위반: ${item.antonyms.length}개 (허용 ${t.antonymsMin}~${t.antonymsMax})`
       );
     }
 

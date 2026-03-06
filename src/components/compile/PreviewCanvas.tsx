@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HandoutSection } from "@/types/handout";
 import {
   DEFAULT_CUSTOM_HEADER_TEXT,
@@ -38,11 +38,6 @@ function normalizeSummaryTitle(value: string): string {
   return normalized.slice(0, 40);
 }
 
-const ids = Array.from(
-  { length: 20 },
-  (_, i) => `P${String(i + 1).padStart(2, "0")}`
-);
-
 export default function PreviewCanvas() {
   const setCustomHeaderText = useHandoutStore(
     (state) => state.setCustomHeaderText
@@ -73,13 +68,26 @@ export default function PreviewCanvas() {
     }
   }, [setCustomHeaderText, setAnalysisTitleText, setSummaryTitleText]);
 
+  const sections = useHandoutStore((state) => state.sections);
+  const activeIds = useMemo(
+    () =>
+      Object.keys(sections)
+        .filter((id) => {
+          const s = sections[id];
+          return s && s.rawText.trim().length > 0;
+        })
+        .sort(),
+    [sections]
+  );
+
   return (
     <div
       id="preview-canvas-root"
       className="h-full overflow-auto bg-[#F9FAFB] px-8 py-6"
     >
+      <EditableHintBanner />
       <div className="w-full space-y-12">
-        {ids.map((id) => (
+        {activeIds.map((id) => (
           <SectionCanvasItem key={id} id={id} />
         ))}
       </div>
@@ -319,6 +327,7 @@ function ParsedHandoutViewPage2({
         >
           {/* The Avatar overlapping the top left edge */}
           <div className="absolute -top-[40px] left-6 w-[90px] h-[90px] z-20">
+            {/* eslint-disable-next-line @next/next/no-img-element -- PDF canvas preview, next/image optimization unnecessary */}
             <img
               src="/images/avatar.png"
               alt="Teacher Avatar"
@@ -557,11 +566,14 @@ const EditableHeaderText = memo(function EditableHeaderText() {
         setDraft(customHeaderText);
         setIsEditing(true);
       }}
-      className="bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap"
+      className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
       style={{ fontFamily: "GmarketSans, sans-serif" }}
       aria-label="헤더 텍스트 편집"
     >
-      {customHeaderText}
+      <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
+        {customHeaderText}
+      </span>
+      <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
     </button>
   );
 });
@@ -658,10 +670,13 @@ const EditableAnalysisTitle = memo(function EditableAnalysisTitle({
         setDraft(analysisTitleText);
         setIsEditing(true);
       }}
-      className="bg-transparent border-0 p-0 m-0 text-[#5E35B1] font-bold hover:opacity-80 transition-opacity"
+      className="group/edit bg-transparent border-0 p-0 m-0 text-[#5E35B1] font-bold hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
       aria-label="구문 분석 제목 편집"
     >
-      {analysisTitleText} {pageNum > 1 ? `(계속)` : ""}
+      <span className="border-b border-dashed border-transparent group-hover/edit:border-[#5E35B1]/40 transition-colors">
+        {analysisTitleText} {pageNum > 1 ? `(계속)` : ""}
+      </span>
+      <PencilHintIcon className="text-[#5E35B1]/0 group-hover/edit:text-[#5E35B1]/50" />
     </button>
   );
 });
@@ -729,10 +744,71 @@ const EditableSummaryTitleText = memo(function EditableSummaryTitleText() {
         setDraft(summaryTitleText);
         setIsEditing(true);
       }}
-      className="bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap"
+      className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
       aria-label="요약 제목 편집"
     >
-      {summaryTitleText}
+      <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
+        {summaryTitleText}
+      </span>
+      <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
     </button>
   );
 });
+
+function EditableHintBanner() {
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) return null;
+
+  return (
+    <div className="mb-6 flex items-center gap-3 bg-[#5E35B1]/5 border border-[#5E35B1]/15 rounded-xl px-4 py-3">
+      <PencilHintIcon className="text-[#5E35B1]/60 w-4! h-4!" />
+      <p className="text-xs text-[#5E35B1]/80 font-medium flex-1">
+        <strong className="font-bold">
+          교안 제목을 클릭하여 수정할 수 있습니다.
+        </strong>{" "}
+        헤더 텍스트, 구문 분석 제목, 요약 제목을 마우스로 클릭하면 편집 모드로
+        전환됩니다.
+      </p>
+      <button
+        type="button"
+        onClick={() => setDismissed(true)}
+        className="text-[#5E35B1]/40 hover:text-[#5E35B1]/70 transition-colors p-1"
+        aria-label="안내 닫기"
+      >
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function PencilHintIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={`w-3 h-3 shrink-0 transition-colors ${className ?? ""}`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+      />
+    </svg>
+  );
+}

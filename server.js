@@ -170,7 +170,12 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/generate", generateRateLimit, requireApiKey, async (req, res) => {
-  const systemPrompt = getSystemPrompt();
+  const validated = validateGenerateRequest(req.body);
+  if (!validated.ok) {
+    return sendError(res, validated.status, validated.code, validated.message);
+  }
+
+  const systemPrompt = getSystemPrompt(validated.level);
   if (!systemPrompt) {
     return sendError(
       res,
@@ -178,11 +183,6 @@ app.post("/generate", generateRateLimit, requireApiKey, async (req, res) => {
       "SERVER_MISCONFIGURED",
       "SYSTEM_PROMPT or SYSTEM_PROMPT_B64 environment variable is required."
     );
-  }
-
-  const validated = validateGenerateRequest(req.body);
-  if (!validated.ok) {
-    return sendError(res, validated.status, validated.code, validated.message);
   }
 
   let ai;
@@ -195,7 +195,7 @@ app.post("/generate", generateRateLimit, requireApiKey, async (req, res) => {
 
   try {
     const generateOne = (passage) =>
-      generateOnePassage(ai, systemPrompt, passage);
+      generateOnePassage(ai, systemPrompt, passage, { model: validated.model, level: validated.level });
 
     const results =
       PROCESSING_MODE === "parallel"

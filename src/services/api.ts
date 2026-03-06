@@ -31,6 +31,8 @@ interface GenerateInChunksOptions {
   signal?: AbortSignal;
   chunkSize?: number;
   concurrency?: number;
+  level?: string;
+  model?: string;
   onChunkComplete?: (progress: GenerateChunkProgress) => void;
 }
 
@@ -98,16 +100,24 @@ function createRequestId(): string {
 
 export async function generatePassages(
   passages: string[],
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: { level?: string; model?: string }
 ): Promise<GenerateResponse> {
   const requestId = createRequestId();
+  const body: Record<string, unknown> = { passages };
+  if (options?.level) {
+    body.level = options.level;
+  }
+  if (options?.model) {
+    body.model = options.model;
+  }
   const res = await fetch(`${API_BASE_URL}/generate`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Request-ID": requestId,
     },
-    body: JSON.stringify({ passages }),
+    body: JSON.stringify(body),
     signal,
   });
 
@@ -135,7 +145,7 @@ export async function generatePassagesInChunks(
   passages: string[],
   options: GenerateInChunksOptions = {}
 ): Promise<GenerateResponse> {
-  const { signal, onChunkComplete } = options;
+  const { signal, onChunkComplete, level, model } = options;
   const initialChunkSize = Math.max(1, Math.floor(options.chunkSize ?? 1));
   const concurrency = Math.max(1, Math.floor(options.concurrency ?? 1));
   const mergedResults: ApiResultItem[] = [];
@@ -194,7 +204,10 @@ export async function generatePassagesInChunks(
       });
 
       try {
-        const response = await generatePassages(chunkPassages, signal);
+        const response = await generatePassages(chunkPassages, signal, {
+          level,
+          model,
+        });
         const chunkResults = response.results
           .map((result) => {
             const globalIndex = indices[result.index];

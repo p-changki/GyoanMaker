@@ -20,7 +20,8 @@ import {
   InputMode,
   PassageInput,
   OutputOptionState,
-  GenerationMode,
+  ContentLevel,
+  ModelTier,
 } from "@/lib/types";
 import { normalizeHandoutRawText } from "@/lib/normalizeHandoutRawText";
 
@@ -28,6 +29,8 @@ const SESSION_STORAGE_KEY = "gyoanmaker:input";
 const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 const CHUNK_CONCURRENCY = 1;
 const INITIAL_GENERATE_CHUNK_SIZE = 1;
+const FLASH_CHUNK_CONCURRENCY = 2;
+const FLASH_GENERATE_CHUNK_SIZE = 3;
 
 function formatEta(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -52,7 +55,8 @@ interface SessionInputData {
   cards?: PassageInput[];
   passages: string[];
   options: OutputOptionState;
-  generationMode: GenerationMode;
+  level: ContentLevel;
+  model: ModelTier;
   timestamp: string;
 }
 
@@ -179,6 +183,14 @@ export default function ResultsPage() {
           setIsLoading(false);
           return;
         }
+
+        parsed = {
+          ...parsed,
+          inputMode: parsed.inputMode ?? "text",
+          options: parsed.options ?? { copyBlock: false, pdf: false },
+          level: parsed.level ?? "advanced",
+          model: parsed.model ?? "pro",
+        };
       } catch (error) {
         console.error("Failed to parse session storage", error);
         setIsLoading(false);
@@ -253,13 +265,23 @@ export default function ResultsPage() {
 
       const pendingSet = new Set(pendingIndexes);
 
+      const isFlashModel = parsed.model === "flash";
+      const chunkSize = isFlashModel
+        ? FLASH_GENERATE_CHUNK_SIZE
+        : INITIAL_GENERATE_CHUNK_SIZE;
+      const concurrency = isFlashModel
+        ? FLASH_CHUNK_CONCURRENCY
+        : CHUNK_CONCURRENCY;
+
       try {
         const response = await generatePassagesInChunks(
           pendingIndexes.map((index) => parsed.passages[index]),
           {
             signal: controller.signal,
-            chunkSize: INITIAL_GENERATE_CHUNK_SIZE,
-            concurrency: CHUNK_CONCURRENCY,
+            chunkSize,
+            concurrency,
+            level: parsed.level,
+            model: parsed.model,
             onChunkComplete: (progress) => {
               if (!isStillMounted) {
                 return;
@@ -395,7 +417,10 @@ export default function ResultsPage() {
 
       try {
         const passage = inputData.passages[index];
-        const response = await generatePassages([passage]);
+        const response = await generatePassages([passage], undefined, {
+          level: inputData.level,
+          model: inputData.model,
+        });
         const apiResult = response.results[0];
 
         setResults((prev) => {
@@ -470,12 +495,17 @@ export default function ResultsPage() {
     );
 
     try {
+      const retryIsFlash = inputData.model === "flash";
       const response = await generatePassagesInChunks(
         failedIndexes.map((index) => inputData.passages[index]),
         {
           signal: retryController.signal,
-          chunkSize: 1,
-          concurrency: CHUNK_CONCURRENCY,
+          chunkSize: retryIsFlash ? FLASH_GENERATE_CHUNK_SIZE : 1,
+          concurrency: retryIsFlash
+            ? FLASH_CHUNK_CONCURRENCY
+            : CHUNK_CONCURRENCY,
+          level: inputData.level,
+          model: inputData.model,
           onChunkComplete: (progress) => {
             applyChunkProgress(failedIndexes, progress);
 

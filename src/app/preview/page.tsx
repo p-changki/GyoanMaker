@@ -9,7 +9,8 @@ import {
   InputMode,
   PassageInput,
   OutputOptionState,
-  GenerationMode,
+  ContentLevel,
+  ModelTier,
 } from "@/lib/types";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
@@ -21,7 +22,8 @@ interface SessionInputData {
   cards?: PassageInput[];
   passages: string[];
   options: OutputOptionState;
-  generationMode: GenerationMode;
+  level: ContentLevel;
+  model: ModelTier;
   timestamp: string;
 }
 
