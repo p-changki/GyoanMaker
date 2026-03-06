@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { getQuotaStatus, incrementUsage } from "@/lib/quota";
 
 const MAX_WORDS_PER_PASSAGE = 400;
 const MAX_TOTAL_WORDS = 5000;
@@ -218,6 +220,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Quota check (requires authenticated user)
+    const session = await auth();
+    const userEmail = session?.user?.email;
+    const passageCount = Array.isArray(passages) ? passages.length : 1;
+
+    if (userEmail) {
+      const quota = await getQuotaStatus(userEmail);
+      if (!quota.canGenerate) {
+        const isDaily = quota.daily.count >= quota.limits.dailyLimit;
+        return jsonWithRequestId(
+          requestId,
+          {
+            error: {
+              code: "QUOTA_EXCEEDED",
+              message: isDaily
+                ? `일일 사용 한도(${quota.limits.dailyLimit}회)를 초과했습니다.`
+                : `월간 사용 한도(${quota.limits.monthlyLimit}회)를 초과했습니다.`,
+            },
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const response = await fetch(`${baseUrl}/generate`, {
       method: "POST",
       headers: {
@@ -242,6 +268,18 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
+
+    // Increment quota usage on success
+    if (userEmail) {
+      try {
+        await incrementUsage(userEmail, passageCount);
+      } catch (quotaErr) {
+        console.error(
+          `[api/generate][${requestId}] Failed to increment quota: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
+        );
+      }
+    }
+
     return jsonWithRequestId(requestId, data);
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") {

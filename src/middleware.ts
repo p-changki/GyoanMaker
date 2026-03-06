@@ -32,6 +32,8 @@ export default auth((req) => {
   const publicPaths = [
     "/login",
     "/pending",
+    "/privacy",
+    "/terms",
     "/api/auth",
     "/_next",
     "/favicon.ico",
@@ -52,7 +54,10 @@ export default auth((req) => {
   // /admin 경로: 관리자만 접근 허용
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     const adminEmails = getAdminEmails();
-    if (!session.user.email || !adminEmails.has(session.user.email.toLowerCase())) {
+    if (
+      !session.user.email ||
+      !adminEmails.has(session.user.email.toLowerCase())
+    ) {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();

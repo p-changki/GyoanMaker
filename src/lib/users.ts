@@ -1,4 +1,5 @@
 import { getDb } from "./firebase-admin";
+import { DEFAULT_QUOTA } from "./quota";
 
 export type UserStatus = "pending" | "approved" | "rejected";
 
@@ -62,6 +63,9 @@ export async function findOrCreateUser(
   if (existing) return existing;
 
   const now = new Date().toISOString();
+  const today = new Date().toISOString().slice(0, 10);
+  const month = new Date().toISOString().slice(0, 7);
+
   const newUser: AppUser = {
     email: key,
     name,
@@ -71,7 +75,17 @@ export async function findOrCreateUser(
     updatedAt: now,
   };
 
-  await getDb().collection(COLLECTION).doc(key).set(newUser);
+  await getDb()
+    .collection(COLLECTION)
+    .doc(key)
+    .set({
+      ...newUser,
+      quota: DEFAULT_QUOTA,
+      usage: {
+        daily: { count: 0, key: today },
+        monthly: { count: 0, key: month },
+      },
+    });
   console.log(`[users] new pending user: ${key}`);
   return newUser;
 }
