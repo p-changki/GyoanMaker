@@ -209,7 +209,7 @@ export function useChunkGeneration() {
           return;
         }
 
-        setResults((prev) => markIndexesFailed(prev, pendingSet, "결과를 찾을 수 없습니다.", false));
+        setResults((prev) => markIndexesFailed(prev, pendingSet, "결과를 찾을 수 없습니다.", true));
         setApiError(
           response.failed.length > 0
             ? `일부 지문 생성에 실패했습니다. 실패한 항목만 재시도하세요. (${response.failed.length}개)`
