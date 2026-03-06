@@ -67,7 +67,7 @@ export default function CompilePage() {
 
   const inputQuery = useQuery<CompileInputData | null>({
     queryKey: ["compile", "input"],
-    staleTime: Infinity,
+    staleTime: 0,
     gcTime: Infinity,
     queryFn: async () => {
       const stored = sessionStorage.getItem(INPUT_STORAGE_KEY);
