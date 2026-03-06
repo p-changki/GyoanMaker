@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import SectionNav from "./SectionNav";
 import PreviewCanvas from "./PreviewCanvas";
 import ControlPanel from "./ControlPanel";
@@ -29,22 +30,53 @@ export default function CompileLayout({
   exportCurrent,
   exportTotal,
 }: CompileLayoutProps) {
+  const [isNavOpen, setIsNavOpen] = useState(false);
+
   return (
     <div className="h-screen flex flex-col bg-white overflow-hidden">
-      {/* Top Header Placeholder (Global Header is already on the page) */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Toggle button — fixed left edge */}
+        <button
+          type="button"
+          onClick={() => setIsNavOpen(!isNavOpen)}
+          className="absolute top-4 left-3 z-30 w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-purple-50 hover:border-[#5E35B1] transition-colors group"
+          title={isNavOpen ? "목록 닫기" : "지문 목록"}
+        >
+          <svg
+            className={`w-4 h-4 text-gray-500 group-hover:text-[#5E35B1] transition-transform ${isNavOpen ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Navigation (260px 고정) */}
-        <div className="w-[260px] shrink-0">
-          <SectionNav />
+        {/* Backdrop overlay */}
+        {isNavOpen && (
+          <div
+            className="absolute inset-0 bg-black/20 z-20"
+            onClick={() => setIsNavOpen(false)}
+          />
+        )}
+
+        {/* Left: Navigation — slide-over drawer */}
+        <div
+          className={`absolute top-0 left-0 h-full w-[260px] z-20 bg-white shadow-xl transition-transform duration-200 ease-out ${
+            isNavOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="pt-14">
+            <SectionNav onNavigate={() => setIsNavOpen(false)} />
+          </div>
         </div>
 
-        {/* Center: Preview Canvas (flex-1, min-w-0 필수) */}
+        {/* Center: Preview Canvas (flex-1, min-w-0) */}
         <div className="flex-1 min-w-0">
           <PreviewCanvas />
         </div>
 
-        {/* Right: Control Panel (320px 고정) */}
+        {/* Right: Control Panel (320px) */}
         <div className="w-[320px] shrink-0">
           <ControlPanel
             onApplyTemplate={onApplyTemplate}

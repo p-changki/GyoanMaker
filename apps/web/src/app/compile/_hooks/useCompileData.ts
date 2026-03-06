@@ -7,6 +7,9 @@ import { generatePassages } from "@/services/api";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { getCachedResult, hashPassages, setCachedResult } from "@/services/cache";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
+import type { TemplateSettings } from "@gyoanmaker/shared/types";
+import { DEFAULT_TEMPLATE_SETTINGS } from "@gyoanmaker/shared/types";
 import {
   COMPILED_PREFIX,
   INPUT_MAX_AGE_MS,
@@ -73,6 +76,32 @@ export function useCompileData() {
       };
     },
   });
+
+  // Load user template settings
+  const templateQuery = useQuery<TemplateSettings>({
+    queryKey: ["templateSettings"],
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const res = await fetch("/api/template-settings");
+      if (!res.ok) return DEFAULT_TEMPLATE_SETTINGS;
+      return res.json() as Promise<TemplateSettings>;
+    },
+  });
+
+  useEffect(() => {
+    if (templateQuery.data) {
+      useTemplateSettingsStore.getState().loadSettings(templateQuery.data);
+
+      // Apply default texts only for new handouts (not saved ones)
+      if (!handoutId) {
+        const t = templateQuery.data;
+        const hs = useHandoutStore.getState();
+        if (t.defaultHeaderText) hs.setCustomHeaderText(t.defaultHeaderText);
+        if (t.defaultAnalysisTitle) hs.setAnalysisTitleText(t.defaultAnalysisTitle);
+        if (t.defaultSummaryTitle) hs.setSummaryTitleText(t.defaultSummaryTitle);
+      }
+    }
+  }, [templateQuery.data, handoutId]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
