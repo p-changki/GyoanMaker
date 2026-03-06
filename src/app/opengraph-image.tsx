@@ -5,7 +5,12 @@ export const alt = "GyoanMaker - AI 영어 교안 자동 생성";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OgImage() {
+export default async function OgImage() {
+  // 한글 렌더링 에러(500) 방지를 위해 ttf 폰트 동적 로드
+  const fontData = await fetch(
+    "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/packages/pretendard/dist/public/static/Pretendard-ExtraBold.ttf"
+  ).then((res) => res.arrayBuffer());
+
   return new ImageResponse(
     <div
       style={{
@@ -17,7 +22,7 @@ export default function OgImage() {
         justifyContent: "center",
         background:
           "linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f8f9ff 100%)",
-        fontFamily: "sans-serif",
+        fontFamily: '"Pretendard"',
       }}
     >
       {/* Logo area */}
@@ -83,6 +88,16 @@ export default function OgImage() {
         AI가 문장 분석 · 핵심 어휘 · 요약을 자동 생성합니다
       </div>
     </div>,
-    { ...size }
+    {
+      ...size,
+      fonts: [
+        {
+          name: "Pretendard",
+          data: fontData,
+          style: "normal",
+          weight: 800,
+        },
+      ],
+    }
   );
 }
