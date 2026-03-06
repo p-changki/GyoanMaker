@@ -125,9 +125,34 @@ function extractFlowLines(outputText) {
     }));
 }
 
-function validateOutputText(name, outputText) {
+// Validation thresholds by content level
+const THRESHOLDS = {
+  advanced: {
+    topicMin: 16,
+    topicMax: 18,
+    summarySentences: 2,
+    summarySentencesMin: 2,
+    summarySentencesMax: 2,
+    sentenceWordsMin: 12,
+    sentenceWordsMax: 15,
+    summaryTotalMax: 28,
+  },
+  basic: {
+    topicMin: 10,
+    topicMax: 14,
+    summarySentences: 2,
+    summarySentencesMin: 2,
+    summarySentencesMax: 2,
+    sentenceWordsMin: 8,
+    sentenceWordsMax: 12,
+    summaryTotalMax: 22,
+  },
+};
+
+function validateOutputText(name, outputText, level = "advanced") {
   const errors = [];
   const info = [];
+  const t = THRESHOLDS[level] || THRESHOLDS.advanced;
 
   const topicEn = extractTopicEnglish(outputText);
   if (!topicEn) {
@@ -135,8 +160,10 @@ function validateOutputText(name, outputText) {
   } else {
     const topicWords = countWords(topicEn);
     info.push(`Topic 단어수: ${topicWords}`);
-    if (topicWords < 16 || topicWords > 18) {
-      errors.push(`Topic 단어 수 위반: ${topicWords}단어 (허용 16~18)`);
+    if (topicWords < t.topicMin || topicWords > t.topicMax) {
+      errors.push(
+        `Topic 단어 수 위반: ${topicWords}단어 (허용 ${t.topicMin}~${t.topicMax})`
+      );
     }
   }
 
@@ -152,26 +179,31 @@ function validateOutputText(name, outputText) {
     const summarySentences = splitSentences(summaryEn);
     info.push(`Summary 문장수: ${summarySentences.length}`);
 
-    if (summarySentences.length !== 2) {
+    if (
+      summarySentences.length < t.summarySentencesMin ||
+      summarySentences.length > t.summarySentencesMax
+    ) {
       errors.push(
-        `Summary 문장 수 위반: ${summarySentences.length}문장 (허용 2)`
+        `Summary 문장 수 위반: ${summarySentences.length}문장 (허용 ${t.summarySentencesMin}~${t.summarySentencesMax})`
       );
     }
 
     summarySentences.forEach((sentence, index) => {
       const words = countWords(sentence);
       info.push(`  - [문장 ${index + 1}] 단어수: ${words}`);
-      if (words < 12 || words > 15) {
+      if (words < t.sentenceWordsMin || words > t.sentenceWordsMax) {
         errors.push(
-          `Summary ${index + 1}번째 문장 단어 수 위반: ${words}단어 (허용 12~15)`
+          `Summary ${index + 1}번째 문장 단어 수 위반: ${words}단어 (허용 ${t.sentenceWordsMin}~${t.sentenceWordsMax})`
         );
       }
     });
 
     const totalWords = countWords(summaryEn);
     info.push(`Summary 총 단어수: ${totalWords}`);
-    if (totalWords > 28) {
-      errors.push(`Summary 총 단어 수 위반: ${totalWords}단어 (허용 <= 28)`);
+    if (totalWords > t.summaryTotalMax) {
+      errors.push(
+        `Summary 총 단어 수 위반: ${totalWords}단어 (허용 <= ${t.summaryTotalMax})`
+      );
     }
   }
 

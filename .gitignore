@@ -53,6 +53,10 @@ next-env.d.ts
 # Local environment secrets
 .env.local
 
+# Local docs & temp
+docs/
+tmp/
+
 # Claude Code
 CLAUDE.md
 .claude/

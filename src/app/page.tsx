@@ -29,8 +29,8 @@ export default function LandingPage() {
             <span className="text-blue-600">교안 출력까지, 한 번에</span>
           </h1>
           <p className="mt-6 text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
-            영어 지문을 입력하면 AI가 문장 분석, 핵심 어휘, 요약까지 자동으로
-            생성합니다. 인쇄용 PDF로 바로 출력하세요.
+            영어 지문을 입력하고 난이도를 선택하면 AI가 문장 분석, 핵심 어휘,
+            요약까지 자동으로 생성합니다. 인쇄용 PDF로 바로 출력하세요.
           </p>
           <div className="mt-10">
             <LandingCta />
@@ -95,11 +95,11 @@ export default function LandingPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900">
-                핵심 어휘 & 요약
+                난이도별 맞춤 교안
               </h3>
               <p className="text-gray-500 leading-relaxed">
-                B2/C1 수준 핵심 어휘의 동의어·반의어와 지문 요약을 자동
-                생성합니다.
+                상위권(B2~C1)과 기초(A2~B1) 난이도를 선택하여 학생 수준에 맞는
+                어휘·요약을 자동 생성합니다.
               </p>
             </div>
 
@@ -159,10 +159,12 @@ export default function LandingPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-700 text-2xl font-extrabold">
                 2
               </div>
-              <h3 className="text-lg font-bold text-gray-900">AI 분석</h3>
+              <h3 className="text-lg font-bold text-gray-900">
+                옵션 선택 & AI 분석
+              </h3>
               <p className="text-gray-500">
-                AI가 문장 분석, 어휘 추출, 요약, 글의 흐름까지 자동으로
-                생성합니다.
+                난이도와 생성 모드(정밀/빠른)를 선택하면 AI가 문장 분석, 어휘,
+                요약을 자동으로 생성합니다.
               </p>
             </div>
 

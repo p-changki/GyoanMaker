@@ -18,11 +18,14 @@ const REPAIR_MAX_ATTEMPTS = getRepairMaxAttempts();
 
 // 환경변수에서 모델명을 가져오거나 기본값으로 gemini-2.5-pro 사용
 const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-pro";
+const FLASH_MODEL_NAME = process.env.GEMINI_FLASH_MODEL || "gemini-2.5-flash";
 
 // 429 retry configuration
 const RETRY_MAX = 3;
 const RETRY_BASE_DELAY_MS = 10_000; // 10s initial backoff
 const REPAIR_DELAY_MS = Number(process.env.REPAIR_DELAY_MS) || 15_000; // 15s delay before repair
+const FLASH_REPAIR_DELAY_MS =
+  Number(process.env.FLASH_REPAIR_DELAY_MS) || 5_000; // 5s for flash mode
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -117,20 +120,37 @@ function extractText(response) {
 
 /**
  * 단일 지문에 대한 교안을 생성한다.
+ *
+ * @param {object} ai - Gemini client
+ * @param {string} systemPrompt - level에 맞는 시스템 프롬프트 (호출자가 결정)
+ * @param {string} passage - 영어 지문
+ * @param {object} options
+ * @param {string} options.model - "pro" | "flash" (Gemini 모델 선택)
+ * @param {string} options.level - "advanced" | "basic" (검증 임계값 결정)
  */
-async function generateOnePassage(ai, systemPrompt, passage) {
+async function generateOnePassage(
+  ai,
+  systemPrompt,
+  passage,
+  { model = "pro", level = "advanced" } = {}
+) {
   const startTime = Date.now();
   const authMode = getAuthMode();
+  const isFlash = model === "flash";
+  const modelName = isFlash ? FLASH_MODEL_NAME : MODEL_NAME;
+  const repairDelay = isFlash ? FLASH_REPAIR_DELAY_MS : REPAIR_DELAY_MS;
+
   console.log(
-    `[gemini] >>> Start generating with ${MODEL_NAME} (authMode: ${authMode})`
+    `[gemini] >>> Start generating with ${modelName} (authMode: ${authMode}, level: ${level}, model: ${model})`
   );
+
   console.log(
     `[gemini] systemPrompt length: ${systemPrompt?.length || 0} chars`
   );
 
   try {
     let response = await callWithRetry(ai, {
-      model: MODEL_NAME,
+      model: modelName,
       config: {
         systemInstruction: systemPrompt,
       },
@@ -143,8 +163,9 @@ async function generateOnePassage(ai, systemPrompt, passage) {
     if (ENABLE_REPAIR) {
       let attempt = 0;
       while (attempt <= REPAIR_MAX_ATTEMPTS) {
-        const outRes = validateOutputText("check", text);
-        const vocabRes = validateVocabText("check", text);
+        // Validate using level-based thresholds
+        const outRes = validateOutputText("check", text, level);
+        const vocabRes = validateVocabText("check", text, level);
 
         const allErrors = [...outRes.errors, ...vocabRes.errors];
         if (allErrors.length === 0) {
@@ -173,12 +194,12 @@ async function generateOnePassage(ai, systemPrompt, passage) {
         const repairInstruction = `\n\n[REPAIR INSTRUCTION]\n직전 출력의 규칙 위반 항목:\n${repairErrors.map((e) => "- " + e).join("\n")}\n\n위반된 섹션(Topic/Summary/Core Vocabulary)만 교정하고, 이미 규칙을 만족한 다른 섹션은 변경하지 마십시오.`;
 
         console.log(
-          `[gemini] waiting ${REPAIR_DELAY_MS / 1000}s before repair call...`
+          `[gemini] waiting ${repairDelay / 1000}s before repair call...`
         );
-        await sleep(REPAIR_DELAY_MS);
+        await sleep(repairDelay);
 
         response = await callWithRetry(ai, {
-          model: MODEL_NAME,
+          model: modelName,
           config: {
             systemInstruction: systemPrompt + repairInstruction,
           },

@@ -51,7 +51,11 @@ export interface PassageResult {
 
 export type InputMode = "text" | "cards";
 
-export type GenerationMode = "basic" | "advanced";
+/** @deprecated Use ContentLevel + ModelTier instead */
+export type GenerationMode = "basic" | "flash";
+
+export type ContentLevel = "advanced" | "basic";
+export type ModelTier = "pro" | "flash";
 
 export interface OutputOptionState {
   copyBlock: boolean;

@@ -1,15 +1,22 @@
 "use client";
 
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 
-const ids = Array.from(
-  { length: 20 },
-  (_, i) => `P${String(i + 1).padStart(2, "0")}`
-);
-
 export default function SectionNav() {
+  const sections = useHandoutStore((state) => state.sections);
   const setActiveId = useHandoutStore((state) => state.setActiveId);
+
+  const activeIds = useMemo(
+    () =>
+      Object.keys(sections)
+        .filter((id) => {
+          const s = sections[id];
+          return s && s.rawText.trim().length > 0;
+        })
+        .sort(),
+    [sections]
+  );
 
   const onNavigate = useCallback(
     (id: string) => {
@@ -29,12 +36,12 @@ export default function SectionNav() {
           Section List
         </h2>
         <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase">
-          Total 20 Passages
+          Total {activeIds.length} Passages
         </p>
       </div>
 
       <nav className="flex-1 p-3 space-y-1">
-        {ids.map((id) => (
+        {activeIds.map((id) => (
           <SectionNavItem key={id} id={id} onNavigate={onNavigate} />
         ))}
       </nav>

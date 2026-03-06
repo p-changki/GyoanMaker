@@ -1,11 +1,10 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useMemo, useRef, useState } from "react";
 import CopyButton from "@/components/CopyButton";
 import { normalizeHandoutRawText } from "@/lib/normalizeHandoutRawText";
 
 const COLLAPSE_LINE_THRESHOLD = 30;
-const COLLAPSE_HEIGHT_THRESHOLD_PX = 700;
 
 type RawResultStatus = "generating" | "completed" | "failed";
 
@@ -37,41 +36,27 @@ export default function RawResultCard({
   );
 
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isExpandable, setIsExpandable] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!enableCollapse) {
-      setIsCollapsed(false);
-      return;
-    }
-
-    if (status === "generating") {
+  // Reset collapsed when status changes to "generating" (render-time state sync)
+  const [prevStatus, setPrevStatus] = useState(status);
+  if (prevStatus !== status) {
+    setPrevStatus(status);
+    if (enableCollapse && status === "generating") {
       setIsCollapsed(true);
     }
-  }, [enableCollapse, status]);
+  }
 
-  useEffect(() => {
-    if (!enableCollapse) {
-      setIsExpandable(false);
-      return;
-    }
-
-    const node = contentRef.current;
+  // Derive expandability from line count (pure computation)
+  const isExpandable = useMemo(() => {
+    if (!enableCollapse) return false;
     const lineCount = displayText
       .split(/\r?\n/)
       .filter((line) => line.trim().length > 0).length;
-    const exceedsByLineCount = lineCount > COLLAPSE_LINE_THRESHOLD;
-
-    if (!node) {
-      setIsExpandable(exceedsByLineCount);
-      return;
-    }
-
-    const exceedsByHeight = node.scrollHeight > COLLAPSE_HEIGHT_THRESHOLD_PX;
-    setIsExpandable(exceedsByLineCount || exceedsByHeight);
+    return lineCount > COLLAPSE_LINE_THRESHOLD;
   }, [displayText, enableCollapse]);
 
+  // enableCollapse=false → shouldClamp=false (no setState needed)
   const shouldClamp = enableCollapse && isExpandable && isCollapsed;
 
   const handleRegenerateClick = () => {

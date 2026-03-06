@@ -18,7 +18,6 @@ import { useHandoutStore } from "@/stores/useHandoutStore";
 const INPUT_STORAGE_KEY = "gyoanmaker:input";
 const INPUT_MAX_AGE_MS = 2 * 60 * 60 * 1000;
 const COMPILED_PREFIX = "gyoanmaker:compiled:";
-const TOTAL_SECTIONS = 20;
 
 function stripTopicSummaryLanguageLabels(text: string): string {
   return normalizeHandoutRawText(text);
@@ -34,9 +33,8 @@ function createInitialSections(
 ): Record<string, HandoutSection> {
   const sections: Record<string, HandoutSection> = {};
 
-  for (let i = 0; i < TOTAL_SECTIONS; i += 1) {
-    const id = `P${String(i + 1).padStart(2, "0")}`;
-    const rawText = results.find((item) => item.index === i)?.outputText || "";
+  for (const item of results) {
+    const id = `P${String(item.index + 1).padStart(2, "0")}`;
 
     sections[id] = {
       passageId: id,
@@ -45,7 +43,7 @@ function createInitialSections(
       summary: { en: "", ko: "" },
       flow: [],
       vocabulary: [],
-      rawText,
+      rawText: item.outputText || "",
       isParsed: false,
     };
   }

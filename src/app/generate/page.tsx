@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import GenerateGuideModal from "@/components/GenerateGuideModal";
 import {
   splitTextBlockIntoPassages,
   passagesToCards,
   cardsToPassages,
   passagesToTextBlock,
+  validatePassageLimits,
+  type PassageLimitError,
 } from "@/lib/parsePassages";
 import {
   InputMode,
   PassageInput as PassageInputType,
-  GenerationMode,
+  ContentLevel,
+  ModelTier,
   OutputOptionState,
 } from "@/lib/types";
 import PassageInput from "@/components/PassageInput";
@@ -25,21 +29,32 @@ export default function GeneratePage() {
   const [inputMode, setInputMode] = useState<InputMode>("text");
   const [textBlock, setTextBlock] = useState("");
   const [cards, setCards] = useState<PassageInputType[]>([]);
-  const [generationMode, setGenerationMode] = useState<GenerationMode>("basic");
+  const [contentLevel, setContentLevel] = useState<ContentLevel>("advanced");
+  const [modelTier, setModelTier] = useState<ModelTier>("pro");
   const [options, setOptions] = useState<OutputOptionState>({
     copyBlock: true,
     pdf: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const handleCloseGuide = useCallback(() => setIsGuideOpen(false), []);
 
-  const passageCount = useMemo(() => {
+  const finalPassages = useMemo(() => {
     if (inputMode === "text") {
-      return splitTextBlockIntoPassages(textBlock).length;
+      return splitTextBlockIntoPassages(textBlock);
     }
-    return cards.filter((c) => c.text.trim().length > 0).length;
+    return cardsToPassages(cards);
   }, [inputMode, textBlock, cards]);
 
-  const isSubmitDisabled = passageCount === 0 || passageCount > 20;
+  const passageCount = finalPassages.length;
+
+  const limitError: PassageLimitError | null = useMemo(
+    () => validatePassageLimits(finalPassages),
+    [finalPassages]
+  );
+
+  const isSubmitDisabled =
+    passageCount === 0 || passageCount > 20 || limitError !== null;
 
   const handleToggleMode = (mode: InputMode) => {
     if (mode === inputMode) return;
@@ -75,16 +90,12 @@ export default function GeneratePage() {
     if (isSubmitDisabled || isSubmitting) return;
     setIsSubmitting(true);
 
-    const finalPassages =
-      inputMode === "text"
-        ? splitTextBlockIntoPassages(textBlock)
-        : cardsToPassages(cards);
-
     const payload = {
       inputMode,
       passages: finalPassages,
       options,
-      generationMode,
+      level: contentLevel,
+      model: modelTier,
       timestamp: new Date().toISOString(),
     };
 
@@ -191,12 +202,84 @@ export default function GeneratePage() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 난이도 선택 */}
+        <div className="bg-white border border-gray-200/60 rounded-2xl p-6 shadow-premium space-y-4">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-blue-600"
+                className="w-3.5 h-3.5 text-emerald-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>난이도 아이콘</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+            </div>
+            <h3 className="text-sm font-bold text-gray-900">난이도</h3>
+          </div>
+          <div className="space-y-3">
+            <label
+              className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-emerald-300 ${
+                contentLevel === "advanced"
+                  ? "border-emerald-400 bg-emerald-50/40 ring-1 ring-emerald-400/30"
+                  : "border-gray-200"
+              }`}
+            >
+              <input
+                type="radio"
+                name="contentLevel"
+                checked={contentLevel === "advanced"}
+                onChange={() => setContentLevel("advanced")}
+                className="w-4 h-4 mt-0.5 text-emerald-600 border-gray-300 focus:ring-emerald-500"
+              />
+              <div className="ml-3 min-w-0">
+                <span className="block text-sm font-bold text-gray-900">
+                  상위권 (Advanced)
+                </span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  수능/TEPS 1등급 대비, B2~C1 고급 어휘
+                </span>
+              </div>
+            </label>
+            <label
+              className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-emerald-300 ${
+                contentLevel === "basic"
+                  ? "border-emerald-400 bg-emerald-50/40 ring-1 ring-emerald-400/30"
+                  : "border-gray-200"
+              }`}
+            >
+              <input
+                type="radio"
+                name="contentLevel"
+                checked={contentLevel === "basic"}
+                onChange={() => setContentLevel("basic")}
+                className="w-4 h-4 mt-0.5 text-emerald-600 border-gray-300 focus:ring-emerald-500"
+              />
+              <div className="ml-3 min-w-0">
+                <span className="block text-sm font-bold text-gray-900">
+                  기초 (Basic)
+                </span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  내신 중하위권 대비, A2~B1 쉬운 어휘
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* 생성 모드 선택 */}
+        <div className="bg-white border border-gray-200/60 rounded-2xl p-6 shadow-premium space-y-4">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+              <svg
+                className="w-3.5 h-3.5 text-blue-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -210,50 +293,64 @@ export default function GeneratePage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">생성 모드</h3>
+            <h3 className="text-sm font-bold text-gray-900">생성 모드</h3>
           </div>
-          <div className="space-y-4">
-            <label className="flex items-center p-4 rounded-xl border border-blue-100 bg-blue-50/30 cursor-pointer group transition-all hover:border-blue-200">
+          <div className="space-y-3">
+            <label
+              className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-blue-300 ${
+                modelTier === "pro"
+                  ? "border-blue-400 bg-blue-50/40 ring-1 ring-blue-400/30"
+                  : "border-gray-200"
+              }`}
+            >
               <input
                 type="radio"
-                name="generationMode"
-                checked={generationMode === "basic"}
-                onChange={() => setGenerationMode("basic")}
-                className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                name="modelTier"
+                checked={modelTier === "pro"}
+                onChange={() => setModelTier("pro")}
+                className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
-              <div className="ml-4">
+              <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">
-                  기본 모드
+                  정밀 모드 (Pro)
                 </span>
-                <span className="block text-xs text-gray-500 mt-0.5">
-                  표준적인 교안 구성 요소를 생성합니다.
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  높은 정확도, 지문당 30~60초
                 </span>
               </div>
             </label>
-            <label className="flex items-center p-4 rounded-xl border border-gray-100 bg-gray-50/50 cursor-not-allowed opacity-60">
+            <label
+              className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-blue-300 ${
+                modelTier === "flash"
+                  ? "border-blue-400 bg-blue-50/40 ring-1 ring-blue-400/30"
+                  : "border-gray-200"
+              }`}
+            >
               <input
                 type="radio"
-                name="generationMode"
-                disabled
-                className="w-5 h-5 text-gray-300 border-gray-300"
+                name="modelTier"
+                checked={modelTier === "flash"}
+                onChange={() => setModelTier("flash")}
+                className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-400">
-                  심화 모드 (준비 중)
+              <div className="ml-3 min-w-0">
+                <span className="block text-sm font-bold text-gray-900">
+                  빠른 모드 (Flash)
                 </span>
-                <span className="block text-xs text-gray-400 mt-0.5">
-                  더 상세한 분석과 추가 학습 자료를 포함합니다.
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
+                  빠른 생성, 지문당 5~10초
                 </span>
               </div>
             </label>
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200/60 rounded-[2rem] p-8 shadow-premium space-y-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+        {/* 출력 옵션 */}
+        <div className="bg-white border border-gray-200/60 rounded-2xl p-6 shadow-premium space-y-4">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-indigo-600"
+                className="w-3.5 h-3.5 text-violet-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -267,39 +364,55 @@ export default function GeneratePage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900">출력 옵션</h3>
+            <h3 className="text-sm font-bold text-gray-900">출력 옵션</h3>
           </div>
-          <div className="space-y-4">
-            <label className="flex items-center p-4 rounded-xl border border-gray-100 bg-gray-50/50 cursor-not-allowed opacity-80">
-              <input
-                type="checkbox"
-                checked={true}
-                disabled
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-700">
+          <div className="space-y-3">
+            <div className="flex items-start p-3.5 rounded-xl border border-violet-400 bg-violet-50/40 ring-1 ring-violet-400/30">
+              <div className="w-4 h-4 mt-0.5 rounded bg-violet-600 flex items-center justify-center shrink-0">
+                <svg
+                  className="w-2.5 h-2.5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  viewBox="0 0 24 24"
+                >
+                  <title>체크</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3 min-w-0">
+                <span className="block text-sm font-bold text-gray-900">
                   복사용 텍스트 블록
                 </span>
-                <span className="block text-xs text-gray-500 mt-0.5">
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
                   결과 페이지에서 즉시 복사 가능합니다.
                 </span>
               </div>
-            </label>
-            <label className="flex items-center p-4 rounded-xl border border-gray-200 cursor-pointer group transition-all hover:border-blue-200 hover:bg-blue-50/10">
+            </div>
+            <label
+              className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-violet-300 ${
+                options.pdf
+                  ? "border-violet-400 bg-violet-50/40 ring-1 ring-violet-400/30"
+                  : "border-gray-200"
+              }`}
+            >
               <input
                 type="checkbox"
                 checked={options.pdf}
                 onChange={(e) =>
                   setOptions({ ...options, pdf: e.target.checked })
                 }
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 mt-0.5 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
               />
-              <div className="ml-4">
-                <span className="block text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+              <div className="ml-3 min-w-0">
+                <span className="block text-sm font-bold text-gray-900">
                   PDF 다운로드
                 </span>
-                <span className="block text-xs text-gray-500 mt-0.5">
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
                   인쇄 및 보관용 PDF 파일을 생성합니다.
                 </span>
               </div>
@@ -307,6 +420,30 @@ export default function GeneratePage() {
           </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setIsGuideOpen(true)}
+        className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-blue-50/60 border border-blue-100 text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-all"
+      >
+        <svg
+          className="w-4.5 h-4.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <title>도움말</title>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span className="text-sm font-semibold">
+          어떤 옵션을 선택해야 할지 모르겠다면?
+        </span>
+      </button>
 
       <div className="flex flex-col items-center space-y-6 pt-8">
         <button
@@ -326,7 +463,14 @@ export default function GeneratePage() {
             지문은 최대 20개까지만 입력 가능합니다.
           </p>
         )}
+        {limitError && (
+          <p className="text-sm text-red-500 font-bold bg-red-50 px-4 py-2 rounded-xl text-center">
+            {limitError.message}
+          </p>
+        )}
       </div>
+
+      <GenerateGuideModal isOpen={isGuideOpen} onClose={handleCloseGuide} />
     </div>
   );
 }
