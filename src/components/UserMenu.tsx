@@ -4,9 +4,18 @@ import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 
+interface BillingStatusData {
+  subscription?: {
+    tier?: "free" | "basic" | "standard" | "pro";
+  };
+}
+
 export default function UserMenu() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [planTier, setPlanTier] = useState<
+    "free" | "basic" | "standard" | "pro" | null
+  >(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,6 +27,23 @@ export default function UserMenu() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/billing/status")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: BillingStatusData | null) => {
+        if (
+          data?.subscription?.tier === "free" ||
+          data?.subscription?.tier === "basic" ||
+          data?.subscription?.tier === "standard" ||
+          data?.subscription?.tier === "pro"
+        ) {
+          setPlanTier(data.subscription.tier);
+        }
+      })
+      .catch(() => {});
+  }, [status]);
 
   if (status === "loading") {
     return <div className="w-8 h-8" />;
@@ -98,12 +124,58 @@ export default function UserMenu() {
                 <p className="text-[11px] text-gray-400 truncate mt-0.5">
                   {user.email}
                 </p>
+                {planTier && (
+                  <p className="mt-1 inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                    {planTier.toUpperCase()}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Menu items */}
           <div className="py-1">
+            <a
+              href="/account"
+              className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              <svg
+                className="w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>계정</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M5.121 17.804A8.966 8.966 0 0112 15c2.5 0 4.764 1.02 6.379 2.667M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              내 계정
+            </a>
+            <a
+              href="/pricing"
+              className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              <svg
+                className="w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>요금제</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                  d="M12 8c-2.21 0-4 .896-4 2s1.79 2 4 2 4 .896 4 2-1.79 2-4 2m0-12v2m0 12v2"
+                />
+              </svg>
+              요금제
+            </a>
+            <div className="mx-3 border-t border-gray-100" />
             {isAdmin && (
               <>
                 <a

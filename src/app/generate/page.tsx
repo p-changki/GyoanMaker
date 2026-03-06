@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import GenerateGuideModal from "@/components/GenerateGuideModal";
+import DuplicateWarningModal from "@/components/DuplicateWarningModal";
+import { hashPassages } from "@/services/cache";
 import {
   splitTextBlockIntoPassages,
   passagesToCards,
@@ -38,6 +40,11 @@ export default function GeneratePage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const [duplicates, setDuplicates] = useState<
+    { id: string; title: string; passageCount: number; createdAt: string }[]
+  >([]);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const pendingSubmitRef = useRef(false);
   const handleCloseGuide = useCallback(() => setIsGuideOpen(false), []);
 
   const finalPassages = useMemo(() => {
@@ -87,10 +94,7 @@ export default function GeneratePage() {
     setCards(newCards);
   };
 
-  const handleSubmit = () => {
-    if (isSubmitDisabled || isSubmitting) return;
-    setIsSubmitting(true);
-
+  const proceedToGenerate = useCallback(() => {
     const payload = {
       inputMode,
       passages: finalPassages,
@@ -102,7 +106,59 @@ export default function GeneratePage() {
 
     sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
     router.push("/results");
+  }, [inputMode, finalPassages, options, contentLevel, modelTier, router]);
+
+  const handleSubmit = async () => {
+    if (isSubmitDisabled || isSubmitting) return;
+    if (pendingSubmitRef.current) return;
+
+    setIsSubmitting(true);
+    pendingSubmitRef.current = true;
+
+    try {
+      const hash = await hashPassages(finalPassages);
+      const res = await fetch("/api/handouts/check-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inputHash: hash }),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as {
+          duplicates: {
+            id: string;
+            title: string;
+            passageCount: number;
+            createdAt: string;
+          }[];
+        };
+
+        if (data.duplicates.length > 0) {
+          setDuplicates(data.duplicates);
+          setShowDuplicateModal(true);
+          setIsSubmitting(false);
+          pendingSubmitRef.current = false;
+          return;
+        }
+      }
+    } catch {
+      // check failed — proceed anyway
+    }
+
+    pendingSubmitRef.current = false;
+    proceedToGenerate();
   };
+
+  const handleDuplicateProceed = useCallback(() => {
+    setShowDuplicateModal(false);
+    setDuplicates([]);
+    proceedToGenerate();
+  }, [proceedToGenerate]);
+
+  const handleDuplicateClose = useCallback(() => {
+    setShowDuplicateModal(false);
+    setDuplicates([]);
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 sm:py-16 space-y-10 sm:space-y-12">
@@ -313,7 +369,7 @@ export default function GeneratePage() {
               />
               <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">
-                  정밀 모드 (Pro)
+                  정밀 생성
                 </span>
                 <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
                   높은 정확도, 지문당 30~60초
@@ -336,7 +392,7 @@ export default function GeneratePage() {
               />
               <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">
-                  빠른 모드 (Flash)
+                  빠른 생성
                 </span>
                 <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
                   빠른 생성, 지문당 5~10초
@@ -474,6 +530,12 @@ export default function GeneratePage() {
       </div>
 
       <GenerateGuideModal isOpen={isGuideOpen} onClose={handleCloseGuide} />
+      <DuplicateWarningModal
+        open={showDuplicateModal}
+        duplicates={duplicates}
+        onClose={handleDuplicateClose}
+        onProceed={handleDuplicateProceed}
+      />
     </div>
   );
 }

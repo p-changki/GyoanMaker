@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getQuotaStatus, incrementUsage } from "@/lib/quota";
+import {
+  getQuotaStatus,
+  incrementUsage,
+  QuotaExceededError,
+} from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
+import type { QuotaModel } from "@/lib/plans";
 
 const MAX_WORDS_PER_PASSAGE = 400;
 const MAX_TOTAL_WORDS = 5000;
@@ -174,6 +179,7 @@ export async function POST(req: NextRequest) {
     timeoutMs = getProxyTimeoutMs(baseUrl);
     const startedAt = Date.now();
     const body = await req.json();
+    const selectedModel: QuotaModel = body?.model === "flash" ? "flash" : "pro";
 
     // Server-side word count validation (last line of defense)
     const passages: unknown = body?.passages;
@@ -228,16 +234,18 @@ export async function POST(req: NextRequest) {
 
     if (userEmail) {
       const quota = await getQuotaStatus(userEmail);
-      if (!quota.canGenerate) {
-        const isDaily = quota.daily.count >= quota.limits.dailyLimit;
+      const modelQuota = selectedModel === "flash" ? quota.flash : quota.pro;
+
+      if (modelQuota.remaining < passageCount) {
         return jsonWithRequestId(
           requestId,
           {
             error: {
               code: "QUOTA_EXCEEDED",
-              message: isDaily
-                ? `일일 사용 한도(${quota.limits.dailyLimit}회)를 초과했습니다.`
-                : `월간 사용 한도(${quota.limits.monthlyLimit}회)를 초과했습니다.`,
+              message:
+                selectedModel === "flash"
+                  ? "Flash 사용 한도를 초과했습니다."
+                  : "Pro 사용 한도를 초과했습니다.",
             },
           },
           { status: 429 }
@@ -273,16 +281,19 @@ export async function POST(req: NextRequest) {
     // Increment quota + log token usage on success
     if (userEmail) {
       const totalUsage = data?.totalUsage;
+      const successCount = Array.isArray(data?.results)
+        ? data.results.length
+        : passageCount;
 
       try {
         await Promise.all([
-          incrementUsage(userEmail, passageCount),
+          incrementUsage(userEmail, selectedModel, successCount),
           totalUsage
             ? logUsage({
                 email: userEmail,
                 requestId,
-                passageCount,
-                model: body?.model ?? "pro",
+                passageCount: successCount,
+                model: selectedModel,
                 level: body?.level ?? "advanced",
                 inputTokens: totalUsage.inputTokens ?? 0,
                 outputTokens: totalUsage.outputTokens ?? 0,
@@ -291,6 +302,11 @@ export async function POST(req: NextRequest) {
             : Promise.resolve(),
         ]);
       } catch (quotaErr) {
+        if (quotaErr instanceof QuotaExceededError) {
+          console.warn(
+            `[api/generate][${requestId}] Post-success quota apply failed model=${quotaErr.model} needed=${quotaErr.needed} available=${quotaErr.available}`
+          );
+        }
         console.error(
           `[api/generate][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
         );

@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import ActionBar from "@/components/ActionBar";
 import CopyButton from "@/components/CopyButton";
 import RawResultCard from "@/components/results/RawResultCard";
+import Toast from "@/components/Toast";
+import {
+  requestNotificationPermission,
+  sendBrowserNotification,
+} from "@/lib/notifications";
 import {
   type ApiResultItem,
   type GenerateChunkProgress,
@@ -76,12 +81,56 @@ export default function ResultsPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [etaSeconds, setEtaSeconds] = useState<number | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
   const hasStartedRef = useRef(false);
+  const hasNotifiedRef = useRef(false);
   const generationStartedAtRef = useRef<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isCancellingRef = useRef(false);
   const cacheHashRef = useRef<string | null>(null);
   const cachedResultMapRef = useRef<Map<number, string>>(new Map());
+
+  // Request notification permission on mount
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
+  // Notify when all generation completes
+  useEffect(() => {
+    if (results.length === 0 || hasNotifiedRef.current) return;
+
+    const generating = results.filter((r) => r.status === "generating").length;
+    if (generating > 0) return;
+
+    // Only notify after generation actually started
+    if (!hasStartedRef.current) return;
+
+    hasNotifiedRef.current = true;
+
+    const completed = results.filter((r) => r.status === "completed").length;
+    const failed = results.filter((r) => r.status === "failed").length;
+
+    if (failed > 0) {
+      setToast({
+        message: `교안 생성 완료 (${completed}건 성공, ${failed}건 실패)`,
+        type: "error",
+      });
+      sendBrowserNotification("교안 생성 완료", {
+        body: `${completed}건 성공, ${failed}건 실패`,
+      });
+    } else {
+      setToast({
+        message: `교안 ${completed}건 생성이 완료되었습니다!`,
+        type: "success",
+      });
+      sendBrowserNotification("교안 생성 완료", {
+        body: `${completed}건 생성이 완료되었습니다!`,
+      });
+    }
+  }, [results]);
 
   const persistCachedResults = useCallback(() => {
     const hash = cacheHashRef.current;
@@ -645,6 +694,13 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-[#fcfcfd]">
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <ActionBar
         completed={processed}
         total={total}

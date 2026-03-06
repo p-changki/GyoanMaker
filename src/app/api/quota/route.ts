@@ -14,7 +14,29 @@ export async function GET() {
 
   try {
     const status = await getQuotaStatus(session.user.email);
-    return NextResponse.json(status);
+    return NextResponse.json({
+      plan: status.plan,
+      monthKeyKst: status.monthKeyKst,
+      flash: {
+        limit: status.flash.limit,
+        used: status.flash.used,
+        remaining: status.flash.remaining,
+        credits: status.flash.credits,
+      },
+      pro: {
+        limit: status.pro.limit,
+        used: status.pro.used,
+        remaining: status.pro.remaining,
+        credits: status.pro.credits,
+      },
+      storage: {
+        limit: status.storage.limit,
+        used: status.storage.used,
+        remaining: status.storage.remaining,
+      },
+      canGenerate: status.canGenerate,
+      canGenerateByModel: status.canGenerateByModel,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`[api/quota] Failed to get quota: ${message}`);
