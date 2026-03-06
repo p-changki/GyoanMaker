@@ -32,9 +32,11 @@ export default auth((req) => {
   const publicPaths = [
     "/login",
     "/pending",
+    "/pricing",
     "/privacy",
     "/terms",
     "/api/auth",
+    "/api/billing/webhook",
     "/_next",
     "/favicon.ico",
   ];

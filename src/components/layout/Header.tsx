@@ -25,6 +25,18 @@ export default function Header() {
             >
               내 교안
             </Link>
+            <Link
+              href="/account"
+              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              내 계정
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              요금제
+            </Link>
           </nav>
         </div>
         <UserMenu />

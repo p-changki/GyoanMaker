@@ -1,5 +1,15 @@
 import { getDb } from "./firebase-admin";
 import { DEFAULT_QUOTA } from "./quota";
+import {
+  getMonthKeyKst,
+  getNowIso,
+  PLANS,
+} from "./plans";
+import type {
+  UserCredits,
+  UserPlan,
+  UserQuota,
+} from "./types";
 
 export type UserStatus = "pending" | "approved" | "rejected";
 
@@ -26,6 +36,17 @@ export interface AppUser {
   status: UserStatus;
   createdAt: string;
   updatedAt: string;
+  plan?: UserPlan;
+  quota?:
+    | (UserQuota & {
+        dailyLimit?: number;
+        monthlyLimit?: number;
+      })
+    | {
+        dailyLimit?: number;
+        monthlyLimit?: number;
+      };
+  credits?: UserCredits;
 }
 
 const COLLECTION = "users";
@@ -62,9 +83,11 @@ export async function findOrCreateUser(
   const existing = await getUser(key);
   if (existing) return existing;
 
-  const now = new Date().toISOString();
+  const now = getNowIso();
   const today = new Date().toISOString().slice(0, 10);
-  const month = new Date().toISOString().slice(0, 7);
+  const legacyMonth = new Date().toISOString().slice(0, 7);
+  const monthKeyKst = getMonthKeyKst();
+  const freePlan = PLANS.free;
 
   const newUser: AppUser = {
     email: key,
@@ -80,11 +103,36 @@ export async function findOrCreateUser(
     .doc(key)
     .set({
       ...newUser,
-      quota: DEFAULT_QUOTA,
+      plan: {
+        tier: "free",
+        status: "active",
+        currentPeriodStartAt: now,
+        currentPeriodEndAt: null,
+        paymentMethod: null,
+      } satisfies UserPlan,
+      quota: {
+        ...DEFAULT_QUOTA,
+        flash: {
+          monthlyLimit: freePlan.flashLimit,
+          used: 0,
+          monthKeyKst,
+        },
+        pro: {
+          monthlyLimit: freePlan.proLimit,
+          used: 0,
+          monthKeyKst,
+        },
+        storageLimit: freePlan.storageLimit,
+        storageUsed: 0,
+      },
       usage: {
         daily: { count: 0, key: today },
-        monthly: { count: 0, key: month },
+        monthly: { count: 0, key: legacyMonth },
       },
+      credits: {
+        flash: [],
+        pro: [],
+      } satisfies UserCredits,
     });
   console.log(`[users] new pending user: ${key}`);
   return newUser;

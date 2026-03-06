@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createHandout, listHandouts } from "@/lib/handouts";
+import { getQuotaStatus, setStorageUsed } from "@/lib/quota";
 
 /**
  * GET /api/handouts — 내 교안 목록 조회
@@ -71,6 +72,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const [quota, currentHandouts] = await Promise.all([
+      getQuotaStatus(session.user.email),
+      listHandouts(session.user.email, 1000),
+    ]);
+    const currentStorageUsed = currentHandouts.length;
+
+    if (
+      quota.storage.limit !== null &&
+      currentStorageUsed >= quota.storage.limit
+    ) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "STORAGE_LIMIT_EXCEEDED",
+            message:
+              "교안 저장 한도를 초과했습니다. 플랜을 업그레이드해 저장 공간을 늘려주세요.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     const handout = await createHandout({
       ownerEmail: session.user.email,
       title: title || `교안 ${new Date().toLocaleDateString("ko-KR")}`,
@@ -79,6 +102,8 @@ export async function POST(req: NextRequest) {
       model: model || "pro",
       customTexts,
     });
+
+    await setStorageUsed(session.user.email, currentStorageUsed + 1);
 
     return NextResponse.json(handout, { status: 201 });
   } catch (error) {

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getHandout, deleteHandout, updateHandoutTitle } from "@/lib/handouts";
+import {
+  getHandout,
+  deleteHandout,
+  listHandouts,
+  updateHandoutTitle,
+} from "@/lib/handouts";
+import { setStorageUsed } from "@/lib/quota";
 
 /**
  * GET /api/handouts/[id] — 교안 상세 조회
@@ -109,6 +115,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    const remaining = await listHandouts(session.user.email, 1000);
+    await setStorageUsed(session.user.email, remaining.length);
+
     return NextResponse.json({ ok: true, id });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

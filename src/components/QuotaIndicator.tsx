@@ -2,10 +2,22 @@
 
 import { useQuery } from "@tanstack/react-query";
 
+interface ModelQuotaView {
+  limit: number;
+  used: number;
+  remaining: number;
+  credits: number;
+}
+
 interface QuotaStatusResponse {
-  limits: { dailyLimit: number; monthlyLimit: number };
-  daily: { count: number; key: string };
-  monthly: { count: number; key: string };
+  plan: "free" | "basic" | "standard" | "pro";
+  flash: ModelQuotaView;
+  pro: ModelQuotaView;
+  storage: {
+    limit: number | null;
+    used: number;
+    remaining: number | null;
+  };
   canGenerate: boolean;
 }
 
@@ -13,6 +25,11 @@ async function fetchQuota(): Promise<QuotaStatusResponse> {
   const res = await fetch("/api/quota");
   if (!res.ok) throw new Error("Failed to fetch quota");
   return res.json();
+}
+
+function getUsageRatio(data: ModelQuotaView): number {
+  if (data.limit <= 0) return 0;
+  return data.used / data.limit;
 }
 
 export default function QuotaIndicator() {
@@ -34,14 +51,12 @@ export default function QuotaIndicator() {
 
   if (isError || !data) return null;
 
-  const dailyRemaining = Math.max(0, data.limits.dailyLimit - data.daily.count);
-  const monthlyRemaining = Math.max(
-    0,
-    data.limits.monthlyLimit - data.monthly.count
-  );
-
-  const isLow = dailyRemaining <= 5 || monthlyRemaining <= 10;
-  const isExhausted = !data.canGenerate;
+  const flashRatio = getUsageRatio(data.flash);
+  const proRatio = getUsageRatio(data.pro);
+  const isLow = flashRatio >= 0.8 || proRatio >= 0.8;
+  const isExhausted =
+    !data.canGenerate ||
+    (data.flash.remaining <= 0 && data.pro.remaining <= 0);
 
   return (
     <div
@@ -60,24 +75,22 @@ export default function QuotaIndicator() {
       />
       <div className="flex items-center gap-3">
         <span>
-          오늘{" "}
+          Flash{" "}
           <strong>
-            {dailyRemaining}/{data.limits.dailyLimit}
+            {data.flash.remaining}/{data.flash.limit}
           </strong>
           회
         </span>
         <span className="text-gray-300">|</span>
         <span>
-          이번 달{" "}
+          Pro{" "}
           <strong>
-            {monthlyRemaining}/{data.limits.monthlyLimit}
+            {data.pro.remaining}/{data.pro.limit}
           </strong>
           회
         </span>
       </div>
-      {isExhausted && (
-        <span className="ml-auto text-xs font-bold">한도 초과</span>
-      )}
+      {isExhausted && <span className="ml-auto text-xs font-bold">한도 초과</span>}
     </div>
   );
 }

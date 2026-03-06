@@ -37,7 +37,7 @@ export async function GET(
 
 /**
  * PATCH /api/admin/users/[email]/quota — 사용자 쿼타 한도 수정
- * Body: { dailyLimit?: number, monthlyLimit?: number }
+ * Body: { flashMonthlyLimit?: number, proMonthlyLimit?: number, storageLimit?: number | null }
  */
 export async function PATCH(
   req: NextRequest,
@@ -52,17 +52,23 @@ export async function PATCH(
   const targetEmail = decodeURIComponent(email);
   const body = await req.json();
 
-  const { dailyLimit, monthlyLimit } = body as {
-    dailyLimit?: number;
-    monthlyLimit?: number;
+  const { flashMonthlyLimit, proMonthlyLimit, storageLimit } = body as {
+    flashMonthlyLimit?: number;
+    proMonthlyLimit?: number;
+    storageLimit?: number | null;
   };
 
-  if (dailyLimit === undefined && monthlyLimit === undefined) {
+  if (
+    flashMonthlyLimit === undefined &&
+    proMonthlyLimit === undefined &&
+    storageLimit === undefined
+  ) {
     return NextResponse.json(
       {
         error: {
           code: "INVALID_BODY",
-          message: "dailyLimit 또는 monthlyLimit 중 하나 이상 필요합니다.",
+          message:
+            "flashMonthlyLimit, proMonthlyLimit, storageLimit 중 하나 이상 필요합니다.",
         },
       },
       { status: 400 }
@@ -70,7 +76,11 @@ export async function PATCH(
   }
 
   try {
-    await setQuotaLimits(targetEmail, { dailyLimit, monthlyLimit });
+    await setQuotaLimits(targetEmail, {
+      flashMonthlyLimit,
+      proMonthlyLimit,
+      storageLimit,
+    });
     const updated = await getQuotaStatus(targetEmail);
     return NextResponse.json({ ok: true, email: targetEmail, ...updated });
   } catch (error) {
