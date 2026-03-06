@@ -16,16 +16,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.email) {
         const status = await getUserStatus(token.email);
         token.approved = status === "approved";
-        token.userStatus = status;
+        token.userStatus = status ?? "pending";
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const user = session.user as any;
-        user.approved = token.approved ?? false;
-        user.userStatus = token.userStatus ?? "pending";
+        session.user.approved = token.approved ?? false;
+        session.user.userStatus = token.userStatus ?? "pending";
       }
       return session;
     },

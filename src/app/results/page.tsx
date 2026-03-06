@@ -171,13 +171,28 @@ export default function ResultsPage() {
 
       let parsed: SessionInputData;
       try {
-        parsed = JSON.parse(stored);
-        if (!parsed.passages || !Array.isArray(parsed.passages)) {
+        const raw: unknown = JSON.parse(stored);
+        if (typeof raw !== "object" || raw === null) {
+          setIsLoading(false);
+          return;
+        }
+        const rawObj = raw as Record<string, unknown>;
+
+        if (!Array.isArray(rawObj.passages)) {
+          setIsLoading(false);
+          return;
+        }
+        const passages = (rawObj.passages as unknown[]).filter(
+          (item): item is string => typeof item === "string"
+        );
+        if (passages.length === 0) {
           setIsLoading(false);
           return;
         }
 
-        const payloadAge = Date.now() - new Date(parsed.timestamp).getTime();
+        const timestamp =
+          typeof rawObj.timestamp === "string" ? rawObj.timestamp : "";
+        const payloadAge = Date.now() - new Date(timestamp).getTime();
         if (!Number.isFinite(payloadAge) || payloadAge > INPUT_MAX_AGE_MS) {
           sessionStorage.removeItem(SESSION_STORAGE_KEY);
           setIsLoading(false);

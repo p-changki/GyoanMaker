@@ -60,3 +60,7 @@ tmp/
 # Claude Code
 CLAUDE.md
 .claude/
+
+# Planning docs (local only)
+/docs/
+
