@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
 
@@ -11,10 +10,19 @@ const AUTH_LINKS = [
   { href: "/pricing", label: "요금제" },
 ] as const;
 
-export default function Header() {
+export interface HeaderUser {
+  name: string | null;
+  email: string | null;
+  image: string | null;
+}
+
+interface HeaderClientProps {
+  isAuth: boolean;
+  user: HeaderUser | null;
+}
+
+export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { status } = useSession();
-  const isAuth = status === "authenticated";
   const navLinks = isAuth ? AUTH_LINKS : [];
 
   return (
@@ -45,7 +53,7 @@ export default function Header() {
 
         {/* Desktop user menu */}
         <div className="hidden md:block">
-          <UserMenu />
+          <UserMenu user={user} />
         </div>
 
         {/* Mobile hamburger */}
@@ -96,7 +104,7 @@ export default function Header() {
             ))}
           </nav>
           <div className="px-4 py-3 border-t border-gray-100">
-            <UserMenu />
+            <UserMenu user={user} />
           </div>
         </div>
       )}
