@@ -12,10 +12,16 @@ interface AppUser {
 }
 
 interface QuotaInfo {
-  limits: { dailyLimit: number; monthlyLimit: number };
-  daily: { count: number; key: string };
-  monthly: { count: number; key: string };
+  plan: "free" | "basic" | "standard" | "pro";
+  flash: { limit: number; used: number; remaining: number; credits: number };
+  pro: { limit: number; used: number; remaining: number; credits: number };
+  storage: { limit: number | null; used: number; remaining: number | null };
   canGenerate: boolean;
+}
+
+interface SubscriptionInfo {
+  tier: "free" | "basic" | "standard" | "pro";
+  status: "active" | "past_due" | "canceled";
 }
 
 interface UsageSummaryData {
@@ -135,10 +141,15 @@ function UsageDashboard() {
 
 function QuotaPanel({ email }: { email: string }) {
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editDaily, setEditDaily] = useState("");
-  const [editMonthly, setEditMonthly] = useState("");
+  const [editFlash, setEditFlash] = useState("");
+  const [editPro, setEditPro] = useState("");
+  const [editStorage, setEditStorage] = useState("");
+  const [editPlan, setEditPlan] = useState<"free" | "basic" | "standard" | "pro">(
+    "free"
+  );
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
@@ -146,14 +157,23 @@ function QuotaPanel({ email }: { email: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/admin/users/${encodeURIComponent(email)}/quota`
+      const [quotaRes, subRes] = await Promise.all([
+        fetch(`/api/admin/users/${encodeURIComponent(email)}/quota`),
+        fetch(`/api/admin/users/${encodeURIComponent(email)}/subscription`),
+      ]);
+      if (!quotaRes.ok) throw new Error("쿼타 조회 실패");
+      if (!subRes.ok) throw new Error("구독 조회 실패");
+
+      const quotaData = await quotaRes.json();
+      const subData = await subRes.json();
+      setQuota(quotaData);
+      setSubscription(subData.subscription ?? null);
+      setEditPlan(subData.subscription?.tier ?? "free");
+      setEditFlash(String(quotaData.flash.limit));
+      setEditPro(String(quotaData.pro.limit));
+      setEditStorage(
+        quotaData.storage.limit === null ? "" : String(quotaData.storage.limit)
       );
-      if (!res.ok) throw new Error("쿼타 조회 실패");
-      const data = await res.json();
-      setQuota(data);
-      setEditDaily(String(data.limits.dailyLimit));
-      setEditMonthly(String(data.limits.monthlyLimit));
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
     } finally {
@@ -166,14 +186,24 @@ function QuotaPanel({ email }: { email: string }) {
   }, [fetchQuota]);
 
   const handleSave = async () => {
-    const daily = parseInt(editDaily, 10);
-    const monthly = parseInt(editMonthly, 10);
-    if (!Number.isFinite(daily) || daily < 0) {
-      setSaveMsg("일일 한도를 올바르게 입력하세요.");
+    const flashMonthlyLimit = parseInt(editFlash, 10);
+    const proMonthlyLimit = parseInt(editPro, 10);
+    const storageLimit =
+      editStorage.trim().length === 0 ? null : parseInt(editStorage, 10);
+
+    if (!Number.isFinite(flashMonthlyLimit) || flashMonthlyLimit < 0) {
+      setSaveMsg("Flash 한도를 올바르게 입력하세요.");
       return;
     }
-    if (!Number.isFinite(monthly) || monthly < 0) {
-      setSaveMsg("월간 한도를 올바르게 입력하세요.");
+    if (!Number.isFinite(proMonthlyLimit) || proMonthlyLimit < 0) {
+      setSaveMsg("Pro 한도를 올바르게 입력하세요.");
+      return;
+    }
+    if (
+      storageLimit !== null &&
+      (!Number.isFinite(storageLimit) || storageLimit < 0)
+    ) {
+      setSaveMsg("저장 한도를 올바르게 입력하세요.");
       return;
     }
 
@@ -185,18 +215,48 @@ function QuotaPanel({ email }: { email: string }) {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dailyLimit: daily, monthlyLimit: monthly }),
+          body: JSON.stringify({
+            flashMonthlyLimit,
+            proMonthlyLimit,
+            storageLimit,
+          }),
         }
       );
       if (!res.ok) throw new Error("쿼타 수정 실패");
       const data = await res.json();
       setQuota(data);
-      setEditDaily(String(data.limits.dailyLimit));
-      setEditMonthly(String(data.limits.monthlyLimit));
+      setEditFlash(String(data.flash.limit));
+      setEditPro(String(data.pro.limit));
+      setEditStorage(data.storage.limit === null ? "" : String(data.storage.limit));
       setSaveMsg("저장 완료");
       setTimeout(() => setSaveMsg(null), 2000);
     } catch (err) {
       setSaveMsg(err instanceof Error ? err.message : "저장 실패");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePlan = async () => {
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch(
+        `/api/admin/users/${encodeURIComponent(email)}/subscription`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ planId: editPlan }),
+        }
+      );
+      if (!res.ok) throw new Error("플랜 수정 실패");
+      const data = await res.json();
+      setSubscription(data.subscription);
+      setSaveMsg("플랜 저장 완료");
+      setTimeout(() => setSaveMsg(null), 2000);
+      await fetchQuota();
+    } catch (err) {
+      setSaveMsg(err instanceof Error ? err.message : "플랜 저장 실패");
     } finally {
       setSaving(false);
     }
@@ -212,45 +272,50 @@ function QuotaPanel({ email }: { email: string }) {
 
   if (!quota) return null;
 
-  const dailyRemaining = Math.max(
-    0,
-    quota.limits.dailyLimit - quota.daily.count
-  );
-  const monthlyRemaining = Math.max(
-    0,
-    quota.limits.monthlyLimit - quota.monthly.count
-  );
-
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
       {/* Current usage */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="bg-gray-50 rounded-lg p-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            오늘 사용량
+            Flash 사용량
           </p>
           <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.daily.count}{" "}
+            {quota.flash.used}{" "}
             <span className="text-gray-400 font-normal">
-              / {quota.limits.dailyLimit}회
+              / {quota.flash.limit}회
             </span>
           </p>
           <p className="text-[10px] text-gray-400 mt-0.5">
-            남은 횟수: {dailyRemaining}
+            남은 횟수: {quota.flash.remaining}
           </p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            이번 달 사용량
+            Pro 사용량
           </p>
           <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.monthly.count}{" "}
+            {quota.pro.used}{" "}
             <span className="text-gray-400 font-normal">
-              / {quota.limits.monthlyLimit}회
+              / {quota.pro.limit}회
             </span>
           </p>
           <p className="text-[10px] text-gray-400 mt-0.5">
-            남은 횟수: {monthlyRemaining}
+            남은 횟수: {quota.pro.remaining}
+          </p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            저장 슬롯
+          </p>
+          <p className="text-sm font-bold text-gray-700 mt-1">
+            {quota.storage.used}{" "}
+            <span className="text-gray-400 font-normal">
+              / {quota.storage.limit === null ? "∞" : quota.storage.limit}
+            </span>
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            플랜: {quota.plan.toUpperCase()}
           </p>
         </div>
       </div>
@@ -259,25 +324,37 @@ function QuotaPanel({ email }: { email: string }) {
       <div className="flex items-end gap-3">
         <div className="flex-1">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            일일 한도
+            Flash 한도
           </label>
           <input
             type="number"
             min="0"
-            value={editDaily}
-            onChange={(e) => setEditDaily(e.target.value)}
+            value={editFlash}
+            onChange={(e) => setEditFlash(e.target.value)}
             className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
           />
         </div>
         <div className="flex-1">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            월간 한도
+            Pro 한도
           </label>
           <input
             type="number"
             min="0"
-            value={editMonthly}
-            onChange={(e) => setEditMonthly(e.target.value)}
+            value={editPro}
+            onChange={(e) => setEditPro(e.target.value)}
+            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            저장 한도 (빈값=무제한)
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={editStorage}
+            onChange={(e) => setEditStorage(e.target.value)}
             className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
           />
         </div>
@@ -290,6 +367,44 @@ function QuotaPanel({ email }: { email: string }) {
           {saving ? "저장 중..." : "저장"}
         </button>
       </div>
+
+      {/* Plan edit */}
+      <div className="flex items-end gap-3">
+        <div className="flex-1">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            구독 플랜
+          </label>
+          <select
+            value={editPlan}
+            onChange={(e) =>
+              setEditPlan(
+                e.target.value as "free" | "basic" | "standard" | "pro"
+              )
+            }
+            className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+          >
+            <option value="free">FREE</option>
+            <option value="basic">BASIC</option>
+            <option value="standard">STANDARD</option>
+            <option value="pro">PRO</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          onClick={handleSavePlan}
+          disabled={saving}
+          className="px-4 py-2 bg-violet-500 text-white text-xs font-bold rounded-lg hover:bg-violet-600 transition-colors disabled:opacity-50 shrink-0"
+        >
+          플랜 저장
+        </button>
+      </div>
+
+      {subscription && (
+        <p className="text-xs text-gray-500">
+          현재 플랜: <strong>{subscription.tier.toUpperCase()}</strong> (
+          {subscription.status})
+        </p>
+      )}
 
       {saveMsg && (
         <p

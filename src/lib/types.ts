@@ -1,3 +1,19 @@
+import type {
+  PaymentMethod,
+  PlanId,
+  PlanStatus,
+} from "./plans";
+
+export type {
+  PlanDefinition,
+  PlanId,
+  PlanStatus,
+  PaymentMethod,
+  QuotaModel,
+  TopUpPackageDefinition,
+  TopUpPackageId,
+} from "./plans";
+
 export type ResultStatus = "generating" | "completed" | "failed";
 
 export type PassageId = string;
@@ -65,6 +81,38 @@ export interface OutputOptionState {
 export interface PassageInput {
   id: string;
   text: string;
+}
+
+export interface UserPlan {
+  tier: PlanId;
+  status: PlanStatus;
+  currentPeriodStartAt: string;
+  currentPeriodEndAt: string | null;
+  paymentMethod: PaymentMethod | null;
+}
+
+export interface ModelQuota {
+  monthlyLimit: number;
+  used: number;
+  monthKeyKst: string;
+}
+
+export interface CreditEntry {
+  remaining: number;
+  purchasedAt: string;
+  expiresAt: string;
+}
+
+export interface UserQuota {
+  flash: ModelQuota;
+  pro: ModelQuota;
+  storageLimit: number | null;
+  storageUsed: number;
+}
+
+export interface UserCredits {
+  flash: CreditEntry[];
+  pro: CreditEntry[];
 }
 
 // NextAuth v5 타입 확장: Session User/JWT에 approved, userStatus 필드 추가

@@ -146,27 +146,23 @@ export default function GenerateGuideModal({
                 </svg>
               </div>
               <h3 className="text-sm font-bold text-gray-900">
-                생성 모드 — AI 모델의 속도와 정확도
+                생성 모드 — 생성 속도와 정확도
               </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-2">
-                <p className="text-sm font-bold text-blue-700">
-                  정밀 모드 (Pro)
-                </p>
+                <p className="text-sm font-bold text-blue-700">정밀 생성</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                  <li>Gemini 2.5 Pro 모델 사용</li>
+                  <li>높은 정확도의 AI 엔진 사용</li>
                   <li>지문당 약 30~60초 소요</li>
                   <li>높은 정확도와 일관된 품질</li>
                   <li>중요한 교안 제작 시 추천</li>
                 </ul>
               </div>
               <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-2">
-                <p className="text-sm font-bold text-blue-700">
-                  빠른 모드 (Flash)
-                </p>
+                <p className="text-sm font-bold text-blue-700">빠른 생성</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                  <li>Gemini 2.5 Flash 모델 사용</li>
+                  <li>빠른 응답의 AI 엔진 사용</li>
                   <li>지문당 약 5~10초 소요</li>
                   <li>빠른 속도, 대량 생성에 적합</li>
                   <li>초안 확인이나 시간이 급할 때 추천</li>

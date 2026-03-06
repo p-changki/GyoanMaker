@@ -51,7 +51,7 @@ function levelLabel(level: string): string {
 }
 
 function modelLabel(model: string): string {
-  return model === "flash" ? "Flash" : "Pro";
+  return model === "flash" ? "빠른 생성" : "정밀 생성";
 }
 
 export default function DashboardPage() {

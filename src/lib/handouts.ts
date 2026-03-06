@@ -12,6 +12,7 @@ export interface HandoutMeta {
   model: string;
   createdAt: string;
   updatedAt: string;
+  inputHash?: string;
 }
 
 export interface HandoutDetail extends HandoutMeta {
@@ -27,8 +28,17 @@ export interface HandoutDetail extends HandoutMeta {
 
 // ── Constants ──────────────────────────────────────────
 
-const COLLECTION = "handouts";
 const MAX_HANDOUTS_PER_USER = 100;
+
+// ── Helpers ────────────────────────────────────────────
+
+/** Returns the handouts subcollection ref for a given user */
+function handoutsCol(ownerEmail: string) {
+  return getDb()
+    .collection("users")
+    .doc(ownerEmail.toLowerCase())
+    .collection("handouts");
+}
 
 // ── Create ─────────────────────────────────────────────
 
@@ -38,6 +48,7 @@ export interface CreateHandoutInput {
   sections: Record<string, string>;
   level: string;
   model: string;
+  inputHash?: string;
   customTexts?: {
     headerText?: string;
     analysisTitleText?: string;
@@ -50,17 +61,19 @@ export async function createHandout(
 ): Promise<HandoutMeta> {
   const now = new Date().toISOString();
   const passageCount = Object.keys(input.sections).length;
+  const email = input.ownerEmail.toLowerCase();
 
-  const docRef = getDb().collection(COLLECTION).doc();
+  const docRef = handoutsCol(email).doc();
 
   const data = {
-    ownerEmail: input.ownerEmail.toLowerCase(),
+    ownerEmail: email,
     title: input.title,
     passageCount,
     level: input.level,
     model: input.model,
     sections: input.sections,
     customTexts: input.customTexts ?? {},
+    inputHash: input.inputHash ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -69,13 +82,14 @@ export async function createHandout(
 
   return {
     id: docRef.id,
-    ownerEmail: data.ownerEmail,
+    ownerEmail: email,
     title: data.title,
     passageCount,
     level: data.level,
     model: data.model,
     createdAt: now,
     updatedAt: now,
+    inputHash: data.inputHash ?? undefined,
   };
 }
 
@@ -85,9 +99,7 @@ export async function listHandouts(
   ownerEmail: string,
   limit: number = MAX_HANDOUTS_PER_USER
 ): Promise<HandoutMeta[]> {
-  const snapshot = await getDb()
-    .collection(COLLECTION)
-    .where("ownerEmail", "==", ownerEmail.toLowerCase())
+  const snapshot = await handoutsCol(ownerEmail)
     .orderBy("createdAt", "desc")
     .limit(limit)
     .get();
@@ -103,8 +115,42 @@ export async function listHandouts(
       model: d.model ?? "pro",
       createdAt: d.createdAt,
       updatedAt: d.updatedAt,
+      inputHash: typeof d.inputHash === "string" ? d.inputHash : undefined,
     };
   });
+}
+
+// ── Find by Input Hash ──────────────────────────────
+
+export async function findHandoutsByInputHash(
+  ownerEmail: string,
+  inputHash: string
+): Promise<HandoutMeta[]> {
+  // Single-field query avoids composite index requirement
+  const snapshot = await handoutsCol(ownerEmail)
+    .where("inputHash", "==", inputHash)
+    .limit(10)
+    .get();
+
+  const results = snapshot.docs.map((doc) => {
+    const d = doc.data();
+    return {
+      id: doc.id,
+      ownerEmail: d.ownerEmail,
+      title: d.title,
+      passageCount: d.passageCount ?? 0,
+      level: d.level ?? "advanced",
+      model: d.model ?? "pro",
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+      inputHash: typeof d.inputHash === "string" ? d.inputHash : undefined,
+    };
+  });
+
+  // Sort client-side and take top 5
+  return results
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+    .slice(0, 5);
 }
 
 // ── Get ────────────────────────────────────────────────
@@ -113,14 +159,11 @@ export async function getHandout(
   id: string,
   ownerEmail: string
 ): Promise<HandoutDetail | null> {
-  const doc = await getDb().collection(COLLECTION).doc(id).get();
+  const doc = await handoutsCol(ownerEmail).doc(id).get();
 
   if (!doc.exists) return null;
 
   const d = doc.data()!;
-
-  // Ownership check
-  if (d.ownerEmail !== ownerEmail.toLowerCase()) return null;
 
   return {
     id: doc.id,
@@ -143,13 +186,11 @@ export async function updateHandoutTitle(
   ownerEmail: string,
   title: string
 ): Promise<boolean> {
-  const doc = await getDb().collection(COLLECTION).doc(id).get();
+  const docRef = handoutsCol(ownerEmail).doc(id);
+  const doc = await docRef.get();
   if (!doc.exists) return false;
 
-  const d = doc.data()!;
-  if (d.ownerEmail !== ownerEmail.toLowerCase()) return false;
-
-  await getDb().collection(COLLECTION).doc(id).update({
+  await docRef.update({
     title,
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -163,12 +204,34 @@ export async function deleteHandout(
   id: string,
   ownerEmail: string
 ): Promise<boolean> {
-  const doc = await getDb().collection(COLLECTION).doc(id).get();
+  const docRef = handoutsCol(ownerEmail).doc(id);
+  const doc = await docRef.get();
   if (!doc.exists) return false;
 
-  const d = doc.data()!;
-  if (d.ownerEmail !== ownerEmail.toLowerCase()) return false;
-
-  await getDb().collection(COLLECTION).doc(id).delete();
+  await docRef.delete();
   return true;
+}
+
+// ── Delete All (for account deletion) ─────────────────
+
+/** Deletes all handouts for a user. Firestore batch limit = 500. */
+export async function deleteAllHandouts(ownerEmail: string): Promise<number> {
+  const col = handoutsCol(ownerEmail);
+  let totalDeleted = 0;
+
+  // Paginate in batches of 500 (Firestore batch limit)
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const snapshot = await col.limit(500).get();
+    if (snapshot.empty) break;
+
+    const batch = getDb().batch();
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
+    totalDeleted += snapshot.size;
+  }
+
+  return totalDeleted;
 }

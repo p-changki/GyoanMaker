@@ -33,6 +33,8 @@ function stripTopicSummaryLanguageLabels(text: string): string {
 interface CompileInputData {
   passages: string[];
   hash: string;
+  level: string;
+  model: string;
 }
 
 function createInitialSections(
@@ -68,6 +70,8 @@ function CompilePageInner() {
     total: 0,
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveTitle, setSaveTitle] = useState("");
   const isApplyingRef = useRef(false);
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
@@ -129,11 +133,43 @@ function CompilePageInner() {
       for (const [id, section] of Object.entries(state.sections)) {
         sections[id] = section.rawText;
       }
+      let inputHash: string | undefined;
+      try {
+        const stored = sessionStorage.getItem(INPUT_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as { passages?: string[] };
+          if (Array.isArray(parsed.passages)) {
+            inputHash = await hashPassages(parsed.passages);
+          }
+        }
+      } catch {
+        // hash failure is non-critical
+      }
+
+      // Read level/model from sessionStorage
+      let level = "advanced";
+      let model = "pro";
+      try {
+        const storedInput = sessionStorage.getItem(INPUT_STORAGE_KEY);
+        if (storedInput) {
+          const p = JSON.parse(storedInput) as {
+            level?: string;
+            model?: string;
+          };
+          if (typeof p.level === "string") level = p.level;
+          if (typeof p.model === "string") model = p.model;
+        }
+      } catch {
+        // fallback to defaults
+      }
+
       const body = {
-        title: `교안 ${new Date().toLocaleDateString("ko-KR")}`,
+        title:
+          saveTitle.trim() || `교안 ${new Date().toLocaleDateString("ko-KR")}`,
         sections,
-        level: "advanced",
-        model: "pro",
+        level,
+        model,
+        inputHash,
         customTexts: {
           headerText: state.customHeaderText,
           analysisTitleText: state.analysisTitleText,
@@ -155,6 +191,11 @@ function CompilePageInner() {
   });
 
   const handleSave = useCallback(() => {
+    setShowSaveModal(true);
+  }, []);
+
+  const handleSaveConfirm = useCallback(() => {
+    setShowSaveModal(false);
     saveMutation.mutate();
   }, [saveMutation]);
 
@@ -195,7 +236,20 @@ function CompilePageInner() {
         }
 
         const hash = await hashPassages(passages);
-        return { passages, hash };
+        const fullParsed = JSON.parse(stored) as {
+          level?: string;
+          model?: string;
+        };
+        return {
+          passages,
+          hash,
+          level:
+            typeof fullParsed.level === "string"
+              ? fullParsed.level
+              : "advanced",
+          model:
+            typeof fullParsed.model === "string" ? fullParsed.model : "pro",
+        };
       } catch (error) {
         console.error("Failed to parse compile input", error);
         return null;
@@ -574,18 +628,66 @@ function CompilePageInner() {
   }
 
   return (
-    <CompileLayout
-      onApplyTemplate={handleApplyTemplate}
-      onCopyAll={handleCopyAll}
-      onDownloadTxt={handleDownloadTxt}
-      onExportPdf={handleExportPDF}
-      onSave={handleSave}
-      isSaving={saveMutation.isPending}
-      saveSuccess={saveSuccess}
-      isExportingPdf={isExportingPdf}
-      exportCurrent={exportProgress.current}
-      exportTotal={exportProgress.total}
-    />
+    <>
+      <CompileLayout
+        onApplyTemplate={handleApplyTemplate}
+        onCopyAll={handleCopyAll}
+        onDownloadTxt={handleDownloadTxt}
+        onExportPdf={handleExportPDF}
+        onSave={handleSave}
+        isSaving={saveMutation.isPending}
+        saveSuccess={saveSuccess}
+        isExportingPdf={isExportingPdf}
+        exportCurrent={exportProgress.current}
+        exportTotal={exportProgress.total}
+      />
+
+      {/* Save title modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">교안 저장</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                저장할 교안의 이름을 입력하세요.
+              </p>
+            </div>
+            <div className="px-6 py-5">
+              <input
+                type="text"
+                value={saveTitle}
+                onChange={(e) => setSaveTitle(e.target.value)}
+                placeholder={`교안 ${new Date().toLocaleDateString("ko-KR")}`}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSaveConfirm();
+                }}
+              />
+              <p className="text-xs text-gray-400 mt-2">
+                비워두면 오늘 날짜로 자동 설정됩니다.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSaveModal(false)}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveConfirm}
+                className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
