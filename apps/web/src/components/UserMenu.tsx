@@ -51,7 +51,7 @@ export default function UserMenu({ user }: UserMenuProps) {
   }, []);
 
   const { data: planTier } = useQuery({
-    queryKey: ["billing-status"],
+    queryKey: ["billing-tier"],
     queryFn: fetchBillingStatus,
     staleTime: 5 * 60 * 1000,
     enabled: !!user,
