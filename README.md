@@ -2,9 +2,11 @@
 
 _▶ [한국어 버전은 아래에 있습니다. (Korean version below)](#gyoanmaker-교안-메이커---한국어)_
 
-An AI educational material compiler that analyzes English passages using **Google Gemini 2.5 Pro** and automatically generates a **high-quality, pixel-perfect printable UI** identical to real academy-distributed PDF handouts.
+An AI educational material compiler that analyzes English passages using **Google Gemini 2.5 Pro / Flash** and automatically generates a **high-quality, pixel-perfect printable UI** identical to real academy-distributed PDF handouts.
 
 Users sign in via **Google OAuth** and must be **approved by an admin** before accessing the service. A public landing page introduces the service to all visitors.
+
+**Live**: [https://gyoan-maker.store](https://gyoan-maker.store) (Cloudflare → Vercel)
 
 ## Screenshots
 
@@ -20,32 +22,47 @@ Users sign in via **Google OAuth** and must be **approved by an admin** before a
 - Automatically publishes circular badges for numbers, avatar overlap designs, and a 4-column vocabulary table (Core Vocabulary | Meaning | Synonyms | Antonyms).
 - Responsive 3-column layout (Nav / Canvas / Control Panel) using Tailwind CSS.
 
-### 2. Advanced Prompt Engineering
+### 2. 2-Axis Generation Model
+
+- **ContentLevel**: `advanced` (B2~C1) | `basic` (A2~B1) — controls vocabulary/summary complexity
+- **ModelTier**: `pro` (Gemini 2.5 Pro) | `flash` (Gemini 2.5 Flash) — controls AI model quality/speed
+- Each axis has its own system prompt for fine-tuned output quality.
+
+### 3. Advanced Prompt Engineering
 
 - Extracts high-difficulty vocabulary and diverse synonyms/antonyms at the **TEPS / CSAT (CEFR B2-C1)** level.
 - Uses elegant paraphrasing and natural connectors, eliminating awkward literal Korean translations.
 
-### 3. Strong Security Architecture (Vercel Proxy → Cloud Run)
+### 4. Strong Security Architecture (Cloudflare → Vercel Proxy → Cloud Run)
 
+- **Cloudflare** WAF with country blocking (Korea-only access), DDoS protection, and DNS proxy.
 - Next.js API Routes Proxy (`/api/generate`) prevents exposing the backend directly to the browser.
 - Backend (Cloud Run) middleware layer issuing and authenticating `API_KEY` to completely block AI prompt injection and cost bombs.
 
-### 4. File-Based Prompt Management System
+### 5. File-Based Prompt Management System
 
 - Git-based prompt version control via the `server/system-prompt.txt` file.
 - Real-time tracking of the prompt hash (SHA-256) and the model in use via the `/meta` endpoint.
 
-### 5. Client-Side PDF Generation & Inline Editing (No Backend Cost)
+### 6. Client-Side PDF Generation & Inline Editing (No Backend Cost)
 
 - Uses `html2canvas` and `jsPDF` to capture and render high-quality A4 PDF handouts entirely within the user's browser, eliminating expensive server-side rendering costs.
 - Includes inline editing powered by `Zustand` to customize header text before exporting the PDF.
 
-### 6. Google OAuth & Admin Approval System
+### 7. Google OAuth & Admin Approval System
 
 - **NextAuth.js v5** handles Google OAuth sign-in.
 - **Firestore** stores user documents with `status: "pending" | "approved" | "rejected"`.
 - **Edge middleware** enforces auth + role checks on protected routes.
 - A public landing page (`/`) is accessible to all visitors without authentication.
+
+### 8. Handout Management & Billing
+
+- Save generated handouts to **Dashboard** (`/dashboard`) for later access.
+- **Duplicate detection** via SHA-256 input hash prevents saving identical handouts.
+- **4-tier billing system** (Free / Basic / Standard / Pro) with per-model monthly quotas.
+- **Credits** system for pay-as-you-go usage after monthly quota exhaustion.
+- **Account self-deletion** with cascading data cleanup.
 
 ## Getting Started (Local Execution)
 
@@ -117,9 +134,11 @@ _(For advanced usage, architecture details, and Cloud Run deployment, please ref
 
 # GyoanMaker (교안 메이커) - 한국어
 
-Google Gemini 2.5 Pro를 활용하여 영어 지문을 분석하고, 실제 학원 배포용 **PDF 교안과 픽셀 레벨로 동일한 고품질 인쇄용 UI**를 자동 생성하는 AI 교육 자료 컴파일러입니다.
+Google Gemini 2.5 Pro / Flash를 활용하여 영어 지문을 분석하고, 실제 학원 배포용 **PDF 교안과 픽셀 레벨로 동일한 고품질 인쇄용 UI**를 자동 생성하는 AI 교육 자료 컴파일러입니다.
 
 **Google OAuth**로 로그인하고, 관리자 승인을 받은 사용자만 서비스를 이용할 수 있습니다. 공개 랜딩 페이지에서 서비스 소개를 확인할 수 있습니다.
+
+**운영 URL**: [https://gyoan-maker.store](https://gyoan-maker.store) (Cloudflare → Vercel)
 
 ## 스크린샷 (Screenshots)
 
@@ -139,6 +158,7 @@ flowchart LR
     E -.-> F
     F --> G["📊 AI 분석 결과\n/results"]
     G --> H["🖨️ PDF 편집 & 출력\n/compile"]
+    H --> I["💾 대시보드 저장\n/dashboard"]
 ```
 
 ## 주요 기능 (Key Features)
@@ -149,32 +169,47 @@ flowchart LR
 - 01 숫자 둥근 뱃징, 아바타 오버랩 디자인, 4열 어휘 테이블(핵심어휘|뜻|유의어|반의어) 자동 퍼블리싱.
 - Tailwind CSS를 활용한 반응형 3단 레이아웃(Nav / Canvas / Control Panel).
 
-### 2. 고도화된 프롬프트 엔지니어링
+### 2. 2축 생성 모델
+
+- **ContentLevel**: `advanced` (B2~C1) | `basic` (A2~B1) — 어휘/요약 난이도 조절
+- **ModelTier**: `pro` (Gemini 2.5 Pro) | `flash` (Gemini 2.5 Flash) — AI 모델 품질/속도 선택
+- 각 축별 전용 시스템 프롬프트로 최적화된 출력 품질.
+
+### 3. 고도화된 프롬프트 엔지니어링
 
 - **TEPS / 수능 (CEFR B2-C1)** 수준의 고난도 어휘 및 다채로운 유의어/반의어 추출.
 - 한국어 직역의 어색함을 없앤 유려한 의역 및 부드러운 연결어 사용.
 
-### 3. 강력한 보안 아키텍처 (Vercel Proxy → Cloud Run)
+### 4. 강력한 보안 아키텍처 (Cloudflare → Vercel Proxy → Cloud Run)
 
+- **Cloudflare** WAF 국가 차단(한국만 접근), DDoS 방어, DNS 프록시.
 - 프론트엔드 브라우저 노출을 방지하는 Next.js API Routes Proxy (`/api/generate`).
 - 백엔드(Cloud Run)의 `API_KEY` 발급 및 인증 미들웨어 레이어로 AI 비용 폭탄 원천 차단.
 
-### 4. 파일 기반 프롬프트 관리 시스템
+### 5. 파일 기반 프롬프트 관리 시스템
 
 - `server/system-prompt.txt` 파일을 통한 Git 기반의 프롬프트 버전 관리.
 - `/meta` 엔드포인트를 통한 실시간 프롬프트 해시(SHA-256) 및 사용 모델 추적 가능.
 
-### 5. 클라이언트 사이드 PDF 렌더링 & 인라인 에디팅 기능
+### 6. 클라이언트 사이드 PDF 렌더링 & 인라인 에디팅 기능
 
 - 별도의 비싼 PDF 렌더링 서버(Puppeteer 등) 없이 오직 유저의 브라우저 자원(`html2canvas`, `jspdf`)만으로 A4 고해상도 PDF 파일을 1초 안에 자동 병합 및 추출.
 - `Zustand` 기반의 상태 관리를 통해 "고1 25년 9월" 등 실제 교안 배포에 필요한 커스텀 헤더 텍스트를 즉시 편집하고 PDF에 구워낼 수 있습니다.
 
-### 6. Google OAuth & 관리자 승인 시스템
+### 7. Google OAuth & 관리자 승인 시스템
 
 - **NextAuth.js v5**를 통한 Google OAuth 로그인.
 - **Firestore**에 사용자 문서 저장 (`status: "pending" | "approved" | "rejected"`).
 - **Edge 미들웨어**가 보호된 경로에서 인증 + 역할 검사를 수행.
 - 공개 랜딩 페이지(`/`)는 인증 없이 모든 방문자가 접근 가능.
+
+### 8. 교안 관리 & 과금 시스템
+
+- 생성된 교안을 **대시보드** (`/dashboard`)에 저장하여 나중에 다시 열기.
+- SHA-256 입력 해시 기반 **중복 감지**로 동일 교안 재저장 방지.
+- **4단계 요금제** (Free / Basic / Standard / Pro) 및 모델별 월간 쿼타.
+- **크레딧** 시스템으로 월간 쿼타 소진 후 추가 사용 가능.
+- **계정 자체 삭제** 기능 (교안 서브컬렉션 일괄 삭제 포함).
 
 ## 시작하기 (로컬 실행 방법)
 
@@ -247,31 +282,54 @@ npm run dev
 src/
 ├── app/
 │   ├── page.tsx              # 공개 랜딩 페이지
-│   ├── generate/page.tsx     # 교안 생성 (지문 입력)
+│   ├── opengraph-image.tsx   # 동적 OG 이미지 (Edge)
+│   ├── generate/page.tsx     # 교안 생성 (레벨+모델 선택, 지문 입력)
 │   ├── results/page.tsx      # AI 분석 결과
 │   ├── compile/page.tsx      # PDF 편집 & 출력
+│   ├── dashboard/page.tsx    # 저장된 교안 목록
+│   ├── account/page.tsx      # 계정 관리 & 탈퇴
+│   ├── pricing/page.tsx      # 요금제 안내
+│   ├── privacy/page.tsx      # 개인정보 처리방침
+│   ├── terms/page.tsx        # 서비스 이용약관
 │   ├── preview/page.tsx      # PDF 미리보기
 │   ├── (auth)/
 │   │   ├── login/page.tsx    # Google OAuth 로그인
 │   │   └── pending/page.tsx  # 승인 대기
 │   ├── admin/page.tsx        # 관리자 페이지
-│   └── api/                  # API Routes (프록시)
+│   └── api/                  # API Routes (16개)
+│       ├── generate/         # Cloud Run 프록시
+│       ├── handouts/         # 교안 CRUD + 중복 검사
+│       ├── quota/            # 쿼타 조회
+│       ├── billing/          # 결제 상태/체크아웃/웹훅
+│       ├── account/          # 계정 탈퇴
+│       └── admin/            # 사용자/사용량 관리
 ├── components/
 │   ├── layout/               # AppShell, Header
 │   ├── landing/              # LandingCta (인증 상태별 CTA)
 │   ├── compile/              # PDF 미리보기 & 3단 컴파일 레이아웃
+│   ├── account/              # 계정 대시보드, 사용량 바, 탈퇴 모달
+│   ├── pricing/              # 요금제 카드, FAQ
 │   └── ...
 ├── lib/                      # 유틸리티, 타입, 파서
+│   ├── types.ts              # 핵심 TypeScript 인터페이스
+│   ├── users.ts              # Firestore 사용자 CRUD
+│   ├── handouts.ts           # 교안 Firestore CRUD + 일괄 삭제
+│   ├── plans.ts              # 요금제 정의
+│   ├── quota.ts              # 쿼타 시스템 (모델별 한도, 크레딧)
+│   ├── subscription.ts       # 구독 관리
+│   └── usageLog.ts           # 사용량/토큰 로깅
 ├── stores/                   # Zustand 상태 관리
 ├── middleware.ts              # Edge 인증 + 역할 미들웨어
 ├── auth.ts / auth.config.ts  # NextAuth 설정
 └── ...
+server.js                     # Express 엔트리포인트 (루트)
 server/
-├── server.js                 # Express 엔트리포인트
 ├── gemini.js                 # Gemini 클라이언트
 ├── processor.js              # 지문 처리 파이프라인
+├── prompt.js                 # 프롬프트 로더 (파일 기반)
 ├── validation.js             # 출력 검증 + 자동 복구
-├── system-prompt.txt         # Git 버전관리 시스템 프롬프트
+├── system-prompt.txt         # Advanced 모드 시스템 프롬프트
+├── system-prompt-basic.txt   # Basic 모드 시스템 프롬프트
 └── scripts/                  # 검증 스크립트
 ```
 
@@ -282,8 +340,12 @@ server/
 - **UI Library**: React 19
 - **Auth**: NextAuth.js v5 (Google OAuth) + Firestore (승인 관리)
 - **State & Cache**: Zustand, TanStack Query (React Query)
+- **AI**: Google Gemini 2.5 Pro / Flash (Vertex AI on Cloud Run, API Key locally)
 - **PDF Export**: html2canvas-pro, jsPDF
 - **Styling**: Tailwind CSS 4
+- **CDN/Security**: Cloudflare (WAF, DDoS, DNS proxy)
+- **Deploy**: Vercel (frontend) + Google Cloud Run (backend)
+- **Database**: Firestore (users, handouts, usage_logs)
 - **Code Quality**: ESLint, Prettier
 
 ## 사용 가능한 스크립트
@@ -364,19 +426,22 @@ npm run lint:fix      # 린트 오류 수정
 | `PROCESSING_MODE`                         | —           | `sequential` (기본) 또는 `parallel`          |
 | `NEXT_PUBLIC_INITIAL_GENERATE_CHUNK_SIZE` | 선택        | 결과 페이지 청크 단위(기본 2)                |
 | `NEXT_PUBLIC_APP_URL`                     | ✅          | 앱의 공개 호스트 URL                         |
+| `NEXTAUTH_URL`                            | ✅ (Vercel) | 운영 URL (`https://gyoan-maker.store`)       |
+| `NEXT_PUBLIC_ADMIN_EMAILS`                | 선택        | 클라이언트 사이드 관리자 UI 표시용           |
 
 ### 우선순위
 
 - **인증 방식**: `GOOGLE_CLOUD_PROJECT` 있으면 → Vertex AI ADC 모드 (Cloud Run 운영 권장) → 없으면 `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` (로컬 개발 fallback)
 - **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt` (기본값, 이 파일을 수정 후 push하면 자동 반영)
 
-## 보안 아키텍처 (Vercel API Proxy)
+## 보안 아키텍처 (Cloudflare → Vercel API Proxy → Cloud Run)
 
 비용 방어와 키 노출 방지를 위해 다음과 같은 구조를 사용합니다.
 
-1. **브라우저**: `/api/generate` (Vercel 내장 주소)를 호출합니다.
-2. **Vercel Server Side**: `CLOUDRUN_API_KEY`를 헤더에 붙여 Cloud Run에 요청을 전달(Proxy)합니다.
-3. **Cloud Run**: `X-API-KEY`를 검증하여 일치할 때만 인스턴스를 실행합니다.
+1. **Cloudflare**: DNS 프록시 + WAF 국가 차단 (한국만 허용) + DDoS 방어.
+2. **브라우저**: `/api/generate` (Vercel 내장 주소)를 호출합니다.
+3. **Vercel Server Side**: `CLOUDRUN_API_KEY`를 헤더에 붙여 Cloud Run에 요청을 전달(Proxy)합니다.
+4. **Cloud Run**: `X-API-KEY`를 검증하여 일치할 때만 인스턴스를 실행합니다.
 
 이 방식을 통해 브라우저 Network 탭에서 Cloud Run의 주소와 API Key가 일절 노출되지 않습니다.
 
