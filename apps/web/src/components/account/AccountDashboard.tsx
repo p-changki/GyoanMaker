@@ -38,7 +38,7 @@ export default function AccountDashboard() {
     queryFn: fetchBillingStatus,
   });
 
-  const currentPlan = data?.subscription.tier ?? "free";
+  const currentPlan = data?.subscription?.tier ?? "free";
 
   if (isLoading || !data) {
     return (
