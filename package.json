@@ -2,7 +2,7 @@
   "name": "gyoanmaker",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "npm@11.6.2",
+  "packageManager": "pnpm@10.17.1",
   "workspaces": ["apps/*", "packages/*"],
   "engines": {
     "node": ">=20.9"
