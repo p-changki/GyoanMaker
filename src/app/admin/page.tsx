@@ -11,6 +11,22 @@ interface AppUser {
   updatedAt: string;
 }
 
+interface QuotaInfo {
+  limits: { dailyLimit: number; monthlyLimit: number };
+  daily: { count: number; key: string };
+  monthly: { count: number; key: string };
+  canGenerate: boolean;
+}
+
+interface UsageSummaryData {
+  totalRequests: number;
+  totalPassages: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+}
+
 type Tab = "all" | "pending" | "approved" | "rejected";
 
 const TAB_CONFIG: { key: Tab; label: string; color: string }[] = [
@@ -32,12 +48,269 @@ const STATUS_LABEL: Record<string, string> = {
   rejected: "거부됨",
 };
 
+// ── Usage Dashboard ───────────────────────────────────
+
+function UsageDashboard() {
+  const [daily, setDaily] = useState<UsageSummaryData | null>(null);
+  const [monthly, setMonthly] = useState<UsageSummaryData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/admin/usage?period=daily").then((r) => r.json()),
+      fetch("/api/admin/usage?period=monthly").then((r) => r.json()),
+    ])
+      .then(([d, m]) => {
+        setDaily(d);
+        setMonthly(m);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="bg-gray-50 rounded-xl p-4 animate-pulse h-24"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const cards = [
+    {
+      label: "오늘 요청",
+      value: daily?.totalRequests ?? 0,
+      unit: "회",
+      sub: `${daily?.totalPassages ?? 0} 지문`,
+    },
+    {
+      label: "오늘 토큰",
+      value: ((daily?.totalTokens ?? 0) / 1000).toFixed(1),
+      unit: "K",
+      sub: `$${(daily?.estimatedCostUsd ?? 0).toFixed(4)}`,
+    },
+    {
+      label: "이번 달 요청",
+      value: monthly?.totalRequests ?? 0,
+      unit: "회",
+      sub: `${monthly?.totalPassages ?? 0} 지문`,
+    },
+    {
+      label: "이번 달 토큰",
+      value: ((monthly?.totalTokens ?? 0) / 1000).toFixed(1),
+      unit: "K",
+      sub: `$${(monthly?.estimatedCostUsd ?? 0).toFixed(4)}`,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className="bg-white border border-gray-200/60 rounded-xl p-4 shadow-sm"
+        >
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            {card.label}
+          </p>
+          <p className="text-xl font-bold text-gray-900 mt-1">
+            {card.value}
+            <span className="text-sm font-normal text-gray-400 ml-1">
+              {card.unit}
+            </span>
+          </p>
+          <p className="text-[11px] text-gray-400 mt-0.5">{card.sub}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Quota Panel ────────────────────────────────────────
+
+function QuotaPanel({ email }: { email: string }) {
+  const [quota, setQuota] = useState<QuotaInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editDaily, setEditDaily] = useState("");
+  const [editMonthly, setEditMonthly] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+
+  const fetchQuota = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/users/${encodeURIComponent(email)}/quota`
+      );
+      if (!res.ok) throw new Error("쿼타 조회 실패");
+      const data = await res.json();
+      setQuota(data);
+      setEditDaily(String(data.limits.dailyLimit));
+      setEditMonthly(String(data.limits.monthlyLimit));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "알 수 없는 오류");
+    } finally {
+      setLoading(false);
+    }
+  }, [email]);
+
+  useEffect(() => {
+    fetchQuota();
+  }, [fetchQuota]);
+
+  const handleSave = async () => {
+    const daily = parseInt(editDaily, 10);
+    const monthly = parseInt(editMonthly, 10);
+    if (!Number.isFinite(daily) || daily < 0) {
+      setSaveMsg("일일 한도를 올바르게 입력하세요.");
+      return;
+    }
+    if (!Number.isFinite(monthly) || monthly < 0) {
+      setSaveMsg("월간 한도를 올바르게 입력하세요.");
+      return;
+    }
+
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch(
+        `/api/admin/users/${encodeURIComponent(email)}/quota`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dailyLimit: daily, monthlyLimit: monthly }),
+        }
+      );
+      if (!res.ok) throw new Error("쿼타 수정 실패");
+      const data = await res.json();
+      setQuota(data);
+      setEditDaily(String(data.limits.dailyLimit));
+      setEditMonthly(String(data.limits.monthlyLimit));
+      setSaveMsg("저장 완료");
+      setTimeout(() => setSaveMsg(null), 2000);
+    } catch (err) {
+      setSaveMsg(err instanceof Error ? err.message : "저장 실패");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-xs text-gray-400 py-2">쿼타 로딩 중...</div>;
+  }
+
+  if (error) {
+    return <div className="text-xs text-red-500 py-2">{error}</div>;
+  }
+
+  if (!quota) return null;
+
+  const dailyRemaining = Math.max(
+    0,
+    quota.limits.dailyLimit - quota.daily.count
+  );
+  const monthlyRemaining = Math.max(
+    0,
+    quota.limits.monthlyLimit - quota.monthly.count
+  );
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+      {/* Current usage */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            오늘 사용량
+          </p>
+          <p className="text-sm font-bold text-gray-700 mt-1">
+            {quota.daily.count}{" "}
+            <span className="text-gray-400 font-normal">
+              / {quota.limits.dailyLimit}회
+            </span>
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            남은 횟수: {dailyRemaining}
+          </p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            이번 달 사용량
+          </p>
+          <p className="text-sm font-bold text-gray-700 mt-1">
+            {quota.monthly.count}{" "}
+            <span className="text-gray-400 font-normal">
+              / {quota.limits.monthlyLimit}회
+            </span>
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            남은 횟수: {monthlyRemaining}
+          </p>
+        </div>
+      </div>
+
+      {/* Edit limits */}
+      <div className="flex items-end gap-3">
+        <div className="flex-1">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            일일 한도
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={editDaily}
+            onChange={(e) => setEditDaily(e.target.value)}
+            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
+        <div className="flex-1">
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            월간 한도
+          </label>
+          <input
+            type="number"
+            min="0"
+            value={editMonthly}
+            onChange={(e) => setEditMonthly(e.target.value)}
+            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 shrink-0"
+        >
+          {saving ? "저장 중..." : "저장"}
+        </button>
+      </div>
+
+      {saveMsg && (
+        <p
+          className={`text-xs font-medium ${saveMsg === "저장 완료" ? "text-green-600" : "text-red-500"}`}
+        >
+          {saveMsg}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Admin Page ─────────────────────────────────────────
+
 export default function AdminPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("pending");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -77,6 +350,10 @@ export default function AdminPage() {
     }
   };
 
+  const toggleQuota = (email: string) => {
+    setExpandedEmail((prev) => (prev === email ? null : email));
+  };
+
   const filteredUsers =
     activeTab === "all" ? users : users.filter((u) => u.status === activeTab);
 
@@ -91,8 +368,10 @@ export default function AdminPage() {
     <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
       <div>
         <h1 className="text-3xl font-extrabold text-gray-900">사용자 관리</h1>
-        <p className="mt-1 text-gray-500">승인 대기 중인 사용자를 관리합니다</p>
+        <p className="mt-1 text-gray-500">사용자 승인 및 쿼타를 관리합니다</p>
       </div>
+
+      <UsageDashboard />
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
@@ -136,59 +415,78 @@ export default function AdminPage() {
           {filteredUsers.map((user) => (
             <div
               key={user.email}
-              className="bg-white border border-gray-200/60 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white border border-gray-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold shrink-0">
-                  {(user.name ?? user.email)[0].toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">
-                    {user.name ?? "이름 없음"}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {new Date(user.createdAt).toLocaleDateString("ko-KR")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <span
-                  className={`px-3 py-1 text-xs font-semibold border rounded-full ${STATUS_BADGE[user.status]}`}
-                >
-                  {STATUS_LABEL[user.status]}
-                </span>
-
-                {updating === user.email ? (
-                  <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
-                ) : (
-                  <div className="flex gap-2">
-                    {user.status !== "approved" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleStatusChange(user.email, "approved")
-                        }
-                        className="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors"
-                      >
-                        승인
-                      </button>
-                    )}
-                    {user.status !== "rejected" && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleStatusChange(user.email, "rejected")
-                        }
-                        className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
-                      >
-                        거부
-                      </button>
-                    )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold shrink-0">
+                    {(user.name ?? user.email)[0].toUpperCase()}
                   </div>
-                )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 truncate">
+                      {user.name ?? "이름 없음"}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(user.createdAt).toLocaleDateString("ko-KR")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <span
+                    className={`px-3 py-1 text-xs font-semibold border rounded-full ${STATUS_BADGE[user.status]}`}
+                  >
+                    {STATUS_LABEL[user.status]}
+                  </span>
+
+                  {updating === user.email ? (
+                    <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
+                  ) : (
+                    <div className="flex gap-2">
+                      {user.status !== "approved" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleStatusChange(user.email, "approved")
+                          }
+                          className="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors"
+                        >
+                          승인
+                        </button>
+                      )}
+                      {user.status !== "rejected" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleStatusChange(user.email, "rejected")
+                          }
+                          className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
+                        >
+                          거부
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleQuota(user.email)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                          expandedEmail === user.email
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                        }`}
+                      >
+                        쿼타
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {expandedEmail === user.email && (
+                <QuotaPanel email={user.email} />
+              )}
             </div>
           ))}
         </div>

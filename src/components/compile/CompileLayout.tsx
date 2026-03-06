@@ -9,6 +9,9 @@ interface CompileLayoutProps {
   onCopyAll: () => void;
   onDownloadTxt: () => void;
   onExportPdf: (customFileName?: string) => void;
+  onSave?: () => void;
+  isSaving?: boolean;
+  saveSuccess?: boolean;
   isExportingPdf: boolean;
   exportCurrent: number;
   exportTotal: number;
@@ -19,6 +22,9 @@ export default function CompileLayout({
   onCopyAll,
   onDownloadTxt,
   onExportPdf,
+  onSave,
+  isSaving,
+  saveSuccess,
   isExportingPdf,
   exportCurrent,
   exportTotal,
@@ -45,6 +51,9 @@ export default function CompileLayout({
             onCopyAll={onCopyAll}
             onDownloadTxt={onDownloadTxt}
             onExportPdf={onExportPdf}
+            onSave={onSave}
+            isSaving={isSaving}
+            saveSuccess={saveSuccess}
             isExportingPdf={isExportingPdf}
             exportCurrent={exportCurrent}
             exportTotal={exportTotal}

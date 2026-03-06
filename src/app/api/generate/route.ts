@@ -1,4 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { getQuotaStatus, incrementUsage } from "@/lib/quota";
+import { logUsage } from "@/lib/usageLog";
+
+const MAX_WORDS_PER_PASSAGE = 400;
+const MAX_TOTAL_WORDS = 5000;
+
+function countWordsServer(text: string): number {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return 0;
+  return trimmed.split(/\s+/).length;
+}
 
 const DEFAULT_PROXY_TIMEOUT_MS = 120000;
 const LOCAL_PROXY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -38,7 +50,10 @@ function getClientAddress(req: NextRequest): string {
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor && forwardedFor.trim().length > 0) {
     // 마지막 IP를 사용: Vercel/Cloud Run 등 신뢰된 프록시가 추가한 실제 클라이언트 IP
-    const ips = forwardedFor.split(",").map((ip) => ip.trim()).filter(Boolean);
+    const ips = forwardedFor
+      .split(",")
+      .map((ip) => ip.trim())
+      .filter(Boolean);
     return ips[ips.length - 1] ?? "unknown";
   }
 
@@ -160,6 +175,76 @@ export async function POST(req: NextRequest) {
     const startedAt = Date.now();
     const body = await req.json();
 
+    // Server-side word count validation (last line of defense)
+    const passages: unknown = body?.passages;
+    if (Array.isArray(passages)) {
+      let totalWords = 0;
+      const overIndices: number[] = [];
+
+      for (let i = 0; i < passages.length; i++) {
+        if (typeof passages[i] === "string") {
+          const wc = countWordsServer(passages[i] as string);
+          totalWords += wc;
+          if (wc > MAX_WORDS_PER_PASSAGE) {
+            overIndices.push(i);
+          }
+        }
+      }
+
+      if (overIndices.length > 0) {
+        const labels = overIndices
+          .map((i) => `P${String(i + 1).padStart(2, "0")}`)
+          .join(", ");
+        return jsonWithRequestId(
+          requestId,
+          {
+            error: {
+              code: "PASSAGE_TOO_LONG",
+              message: `${labels} 지문이 ${MAX_WORDS_PER_PASSAGE}단어를 초과합니다.`,
+            },
+          },
+          { status: 422 }
+        );
+      }
+
+      if (totalWords > MAX_TOTAL_WORDS) {
+        return jsonWithRequestId(
+          requestId,
+          {
+            error: {
+              code: "TOTAL_WORDS_EXCEEDED",
+              message: `전체 단어수(${totalWords.toLocaleString()})가 최대 ${MAX_TOTAL_WORDS.toLocaleString()}단어를 초과합니다.`,
+            },
+          },
+          { status: 422 }
+        );
+      }
+    }
+
+    // Quota check (requires authenticated user)
+    const session = await auth();
+    const userEmail = session?.user?.email;
+    const passageCount = Array.isArray(passages) ? passages.length : 1;
+
+    if (userEmail) {
+      const quota = await getQuotaStatus(userEmail);
+      if (!quota.canGenerate) {
+        const isDaily = quota.daily.count >= quota.limits.dailyLimit;
+        return jsonWithRequestId(
+          requestId,
+          {
+            error: {
+              code: "QUOTA_EXCEEDED",
+              message: isDaily
+                ? `일일 사용 한도(${quota.limits.dailyLimit}회)를 초과했습니다.`
+                : `월간 사용 한도(${quota.limits.monthlyLimit}회)를 초과했습니다.`,
+            },
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     const response = await fetch(`${baseUrl}/generate`, {
       method: "POST",
       headers: {
@@ -184,6 +269,34 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
+
+    // Increment quota + log token usage on success
+    if (userEmail) {
+      const totalUsage = data?.totalUsage;
+
+      try {
+        await Promise.all([
+          incrementUsage(userEmail, passageCount),
+          totalUsage
+            ? logUsage({
+                email: userEmail,
+                requestId,
+                passageCount,
+                model: body?.model ?? "pro",
+                level: body?.level ?? "advanced",
+                inputTokens: totalUsage.inputTokens ?? 0,
+                outputTokens: totalUsage.outputTokens ?? 0,
+                totalTokens: totalUsage.totalTokens ?? 0,
+              })
+            : Promise.resolve(),
+        ]);
+      } catch (quotaErr) {
+        console.error(
+          `[api/generate][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
+        );
+      }
+    }
+
     return jsonWithRequestId(requestId, data);
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") {
@@ -203,7 +316,9 @@ export async function POST(req: NextRequest) {
 
     const errName = error instanceof Error ? error.name : "UnknownError";
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error(`[api/generate][${requestId}] Proxy error: [${errName}] ${errMsg}`);
+    console.error(
+      `[api/generate][${requestId}] Proxy error: [${errName}] ${errMsg}`
+    );
     return jsonWithRequestId(
       requestId,
       {

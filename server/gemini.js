@@ -119,6 +119,37 @@ function extractText(response) {
 }
 
 /**
+ * 응답 객체에서 토큰 사용량 메타데이터를 추출한다.
+ * @returns {{ inputTokens: number, outputTokens: number, totalTokens: number }}
+ */
+function extractUsage(response) {
+  try {
+    const meta = response?.usageMetadata;
+    if (!meta) return { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+    const inputTokens = meta.promptTokenCount ?? meta.inputTokens ?? 0;
+    const outputTokens = meta.candidatesTokenCount ?? meta.outputTokens ?? 0;
+    return {
+      inputTokens,
+      outputTokens,
+      totalTokens: inputTokens + outputTokens,
+    };
+  } catch {
+    return { inputTokens: 0, outputTokens: 0, totalTokens: 0 };
+  }
+}
+
+/**
+ * 두 usage 객체를 합산한다 (immutable).
+ */
+function mergeUsage(a, b) {
+  return {
+    inputTokens: (a.inputTokens || 0) + (b.inputTokens || 0),
+    outputTokens: (a.outputTokens || 0) + (b.outputTokens || 0),
+    totalTokens: (a.totalTokens || 0) + (b.totalTokens || 0),
+  };
+}
+
+/**
  * 단일 지문에 대한 교안을 생성한다.
  *
  * @param {object} ai - Gemini client
@@ -158,6 +189,7 @@ async function generateOnePassage(
     });
 
     let text = extractText(response);
+    let totalUsage = extractUsage(response);
     let finalWarnings = [];
 
     if (ENABLE_REPAIR) {
@@ -206,15 +238,20 @@ async function generateOnePassage(
           contents: passage,
         });
         text = extractText(response);
+        totalUsage = mergeUsage(totalUsage, extractUsage(response));
       }
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(
-      `[gemini] <<< Success! Took ${duration}s, output: ${text.length} chars`
+      `[gemini] <<< Success! Took ${duration}s, output: ${text.length} chars, tokens: ${totalUsage.totalTokens}`
     );
 
-    return { outputText: text.trim(), warnings: finalWarnings };
+    return {
+      outputText: text.trim(),
+      warnings: finalWarnings,
+      usage: totalUsage,
+    };
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.error(`[gemini] !!! Failed after ${duration}s:`, error.message);

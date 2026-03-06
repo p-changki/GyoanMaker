@@ -8,6 +8,9 @@ interface ControlPanelProps {
   onCopyAll: () => void;
   onDownloadTxt: () => void;
   onExportPdf: (customFileName?: string) => void;
+  onSave?: () => void;
+  isSaving?: boolean;
+  saveSuccess?: boolean;
   isExportingPdf: boolean;
   exportCurrent: number;
   exportTotal: number;
@@ -18,6 +21,9 @@ export default function ControlPanel({
   onCopyAll,
   onDownloadTxt,
   onExportPdf,
+  onSave,
+  isSaving,
+  saveSuccess,
   isExportingPdf,
   exportCurrent,
   exportTotal,
@@ -89,6 +95,24 @@ export default function ControlPanel({
           <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
             Quick Actions
           </p>
+          {onSave && (
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!isReady || isSaving}
+              className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
+                saveSuccess
+                  ? "bg-emerald-50 border border-emerald-300 text-emerald-600"
+                  : "bg-white border border-gray-200 text-gray-700 hover:border-[#5E35B1] hover:text-[#5E35B1]"
+              } disabled:opacity-40`}
+            >
+              {isSaving
+                ? "저장 중..."
+                : saveSuccess
+                  ? "저장 완료!"
+                  : "교안 저장"}
+            </button>
+          )}
           <button
             type="button"
             onClick={onCopyAll}

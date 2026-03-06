@@ -20,6 +20,7 @@ import {
 } from "@/lib/types";
 import PassageInput from "@/components/PassageInput";
 import PassageCard from "@/components/PassageCard";
+import QuotaIndicator from "@/components/QuotaIndicator";
 
 const SESSION_STORAGE_KEY = "gyoanmaker:input";
 
@@ -444,6 +445,8 @@ export default function GeneratePage() {
           어떤 옵션을 선택해야 할지 모르겠다면?
         </span>
       </button>
+
+      <QuotaIndicator />
 
       <div className="flex flex-col items-center space-y-6 pt-8">
         <button
