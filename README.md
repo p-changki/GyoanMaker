@@ -39,10 +39,11 @@ Users sign in via **Google OAuth** and must be **approved by an admin** before a
 - Next.js API Routes Proxy (`/api/generate`) prevents exposing the backend directly to the browser.
 - Backend (Cloud Run) middleware layer issuing and authenticating `API_KEY` to completely block AI prompt injection and cost bombs.
 
-### 5. File-Based Prompt Management System
+### 5. Secret Manager-Based Prompt Management
 
-- Git-based prompt version control via the `server/system-prompt.txt` file.
+- System prompts stored in **GCP Secret Manager** and mounted as volumes in Cloud Run.
 - Real-time tracking of the prompt hash (SHA-256) and the model in use via the `/meta` endpoint.
+- Local development uses file-based prompts (`server/system-prompt.txt`).
 
 ### 6. Client-Side PDF Generation & Inline Editing (No Backend Cost)
 
@@ -71,7 +72,7 @@ Anyone can clone this repository, provide their **own Gemini API Key**, and inst
 ### Prerequisites
 
 - Node.js 20.9+
-- npm (default) or pnpm
+- **pnpm 10.17+** (`corepack enable && corepack prepare pnpm@10.17.1 --activate`)
 - **Google Gemini API Key** (or Google Cloud Vertex AI access)
 
 ### 1. Installation & Environment Setup
@@ -79,7 +80,7 @@ Anyone can clone this repository, provide their **own Gemini API Key**, and inst
 ```bash
 git clone <repository_url>
 cd GyoanMaker
-npm install
+pnpm install
 
 # Copy environment variables
 cp .env.example .env.local
@@ -97,24 +98,25 @@ Open the `.env.local` file and set the following required variables:
 1. `API_KEY`: Any secret password to protect the local backend.
 2. `CLOUDRUN_API_KEY`: The password the frontend uses to call the backend (must be identical to `API_KEY`).
 
-### 2. Running 2 Local Servers Simultaneously
+### 2. Running the Dev Server
 
-This project operates with separate frontend (Next.js) and backend API (Node.js Express) servers.
-Open 2 terminals and run the following commands in each.
-
-**Terminal A (Backend API Server - Port 4000):**
+This is a **Turborepo monorepo** — a single command starts both servers in parallel:
 
 ```bash
-npm run start:api
+pnpm dev
 ```
 
-**Terminal B (Frontend UI - Port 3000):**
+This runs:
+
+- **Frontend** (Next.js): [http://localhost:3000](http://localhost:3000)
+- **Backend** (Express): [http://localhost:4000](http://localhost:4000)
+
+To run individual servers:
 
 ```bash
-npm run dev
+pnpm dev:web   # Frontend only
+pnpm dev:api   # Backend only
 ```
-
-Now open a web browser to [http://localhost:3000](http://localhost:3000) and try out GyoanMaker with the applied prompt!
 
 ### 3. Sample Local Test
 
@@ -186,10 +188,11 @@ flowchart LR
 - 프론트엔드 브라우저 노출을 방지하는 Next.js API Routes Proxy (`/api/generate`).
 - 백엔드(Cloud Run)의 `API_KEY` 발급 및 인증 미들웨어 레이어로 AI 비용 폭탄 원천 차단.
 
-### 5. 파일 기반 프롬프트 관리 시스템
+### 5. Secret Manager 기반 프롬프트 관리 시스템
 
-- `server/system-prompt.txt` 파일을 통한 Git 기반의 프롬프트 버전 관리.
+- **GCP Secret Manager**에 시스템 프롬프트를 저장하고 Cloud Run 볼륨 마운트로 주입.
 - `/meta` 엔드포인트를 통한 실시간 프롬프트 해시(SHA-256) 및 사용 모델 추적 가능.
+- 로컬 개발 시에는 파일 기반 (`server/system-prompt.txt`) 사용.
 
 ### 6. 클라이언트 사이드 PDF 렌더링 & 인라인 에디팅 기능
 
@@ -218,7 +221,7 @@ flowchart LR
 ### 필수 요구사항
 
 - Node.js 20.9 이상
-- npm(기본) 또는 pnpm
+- **pnpm 10.17+** (`corepack enable && corepack prepare pnpm@10.17.1 --activate`)
 - **Google Gemini API Key** (또는 Google Cloud Vertex AI 권한)
 
 ### 1. 설치 및 환경 변수 세팅
@@ -226,7 +229,7 @@ flowchart LR
 ```bash
 git clone <저장소 주소>
 cd GyoanMaker
-npm install
+pnpm install
 
 # 환경변수 파일 복사
 cp .env.example .env.local
@@ -244,24 +247,25 @@ cp .env.example .env.local
 1. `API_KEY`: 로컬 백엔드 보호용 임의의 비밀번호
 2. `CLOUDRUN_API_KEY`: 프론트가 백엔드 호출 시 사용할 비밀번호 (`API_KEY`와 같은 값)
 
-### 2. 로컬 서버 2개 동시 실행
+### 2. 로컬 개발 서버 실행
 
-이 프로젝트는 프론트엔드(Next.js)와 백엔드 API(Node.js Express)가 분리되어 구동됩니다.
-터미널을 2개 열어 각각 아래 명령어를 실행하세요.
-
-**터미널 A (백엔드 API 서버 - Port 4000):**
+이 프로젝트는 **Turborepo 모노레포**입니다. 한 명령어로 프론트엔드와 백엔드가 동시에 실행됩니다:
 
 ```bash
-npm run start:api
+pnpm dev
 ```
 
-**터미널 B (프론트엔드 UI - Port 3000):**
+실행되는 서버:
+
+- **프론트엔드** (Next.js): [http://localhost:3000](http://localhost:3000)
+- **백엔드** (Express): [http://localhost:4000](http://localhost:4000)
+
+개별 서버 실행:
 
 ```bash
-npm run dev
+pnpm dev:web   # 프론트엔드만
+pnpm dev:api   # 백엔드만
 ```
-
-이제 웹 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열면 공개 랜딩 페이지가 표시됩니다.
 
 ### 3. 로컬 테스트 해보기 (Sample Test)
 
@@ -276,66 +280,65 @@ npm run dev
 3. **교안 생성하기** 버튼을 클릭합니다.
 4. 백엔드로 데이터가 전송되며, Gemini 2.5 Pro 모델이 **완벽한 PDF 교안 레이아웃**으로 데이터를 렌더링하여 결과 페이지에 표시됩니다!
 
-## 폴더 구조 (요약)
+## 프로젝트 구조
 
 ```text
-src/
-├── app/
-│   ├── page.tsx              # 공개 랜딩 페이지
-│   ├── opengraph-image.tsx   # 동적 OG 이미지 (Edge)
-│   ├── generate/page.tsx     # 교안 생성 (레벨+모델 선택, 지문 입력)
-│   ├── results/page.tsx      # AI 분석 결과
-│   ├── compile/page.tsx      # PDF 편집 & 출력
-│   ├── dashboard/page.tsx    # 저장된 교안 목록
-│   ├── account/page.tsx      # 계정 관리 & 탈퇴
-│   ├── pricing/page.tsx      # 요금제 안내
-│   ├── privacy/page.tsx      # 개인정보 처리방침
-│   ├── terms/page.tsx        # 서비스 이용약관
-│   ├── preview/page.tsx      # PDF 미리보기
-│   ├── (auth)/
-│   │   ├── login/page.tsx    # Google OAuth 로그인
-│   │   └── pending/page.tsx  # 승인 대기
-│   ├── admin/page.tsx        # 관리자 페이지
-│   └── api/                  # API Routes (16개)
-│       ├── generate/         # Cloud Run 프록시
-│       ├── handouts/         # 교안 CRUD + 중복 검사
-│       ├── quota/            # 쿼타 조회
-│       ├── billing/          # 결제 상태/체크아웃/웹훅
-│       ├── account/          # 계정 탈퇴
-│       └── admin/            # 사용자/사용량 관리
-├── components/
-│   ├── layout/               # AppShell, Header
-│   ├── landing/              # LandingCta (인증 상태별 CTA)
-│   ├── compile/              # PDF 미리보기 & 3단 컴파일 레이아웃
-│   ├── account/              # 계정 대시보드, 사용량 바, 탈퇴 모달
-│   ├── pricing/              # 요금제 카드, FAQ
-│   └── ...
-├── lib/                      # 유틸리티, 타입, 파서
-│   ├── types.ts              # 핵심 TypeScript 인터페이스
-│   ├── users.ts              # Firestore 사용자 CRUD
-│   ├── handouts.ts           # 교안 Firestore CRUD + 일괄 삭제
-│   ├── plans.ts              # 요금제 정의
-│   ├── quota.ts              # 쿼타 시스템 (모델별 한도, 크레딧)
-│   ├── subscription.ts       # 구독 관리
-│   └── usageLog.ts           # 사용량/토큰 로깅
-├── stores/                   # Zustand 상태 관리
-├── middleware.ts              # Edge 인증 + 역할 미들웨어
-├── auth.ts / auth.config.ts  # NextAuth 설정
-└── ...
-server.js                     # Express 엔트리포인트 (루트)
-server/
-├── gemini.js                 # Gemini 클라이언트
-├── processor.js              # 지문 처리 파이프라인
-├── prompt.js                 # 프롬프트 로더 (파일 기반)
-├── validation.js             # 출력 검증 + 자동 복구
-├── system-prompt.txt         # Advanced 모드 시스템 프롬프트
-├── system-prompt-basic.txt   # Basic 모드 시스템 프롬프트
-└── scripts/                  # 검증 스크립트
+gyoanmaker/                          # Turborepo monorepo (pnpm)
+├── apps/
+│   ├── web/                         # @gyoanmaker/web — Next.js 16 (Vercel)
+│   │   ├── src/
+│   │   │   ├── app/
+│   │   │   │   ├── page.tsx              # 공개 랜딩 페이지
+│   │   │   │   ├── opengraph-image.tsx   # 동적 OG 이미지 (Edge)
+│   │   │   │   ├── generate/page.tsx     # 교안 생성 (레벨+모델 선택, 지문 입력)
+│   │   │   │   ├── results/page.tsx      # AI 분석 결과
+│   │   │   │   ├── compile/page.tsx      # PDF 편집 & 출력
+│   │   │   │   ├── dashboard/page.tsx    # 저장된 교안 목록
+│   │   │   │   ├── account/page.tsx      # 계정 관리 & 탈퇴
+│   │   │   │   ├── pricing/page.tsx      # 요금제 안내
+│   │   │   │   ├── privacy/page.tsx      # 개인정보 처리방침
+│   │   │   │   ├── terms/page.tsx        # 서비스 이용약관
+│   │   │   │   ├── (auth)/               # 인증 관련 (login, pending)
+│   │   │   │   ├── admin/page.tsx        # 관리자 페이지
+│   │   │   │   └── api/                  # API Routes (16개)
+│   │   │   ├── components/               # UI 컴포넌트
+│   │   │   ├── lib/                      # 유틸리티, Firestore CRUD
+│   │   │   ├── stores/                   # Zustand 상태 관리
+│   │   │   ├── services/                 # API 호출 서비스
+│   │   │   ├── middleware.ts             # Edge 인증 + 역할 미들웨어
+│   │   │   └── auth.ts / auth.config.ts  # NextAuth 설정
+│   │   └── package.json
+│   └── api/                         # @gyoanmaker/api — Express 5 (Cloud Run)
+│       ├── src/
+│       │   ├── server.ts                 # Express 엔트리포인트
+│       │   ├── routes/                   # generate, meta 라우트
+│       │   ├── services/                 # gemini, processor, prompt
+│       │   ├── middleware/               # auth, rateLimit
+│       │   └── validation/               # output, request, vocab
+│       └── package.json
+├── packages/
+│   └── shared/                      # @gyoanmaker/shared — 공유 타입 & 요금제
+│       └── src/
+│           ├── plans/                    # 요금제 정의
+│           ├── types/                    # 공유 타입
+│           └── index.ts
+├── server/                          # 검증 스크립트 & 로컬 프롬프트 파일
+│   ├── scripts/                          # validate-output, validate-vocab-count
+│   ├── validators/                       # 검증 로직
+│   ├── system-prompt.txt                 # Advanced 모드 프롬프트 (로컬 dev)
+│   └── system-prompt-basic.txt           # Basic 모드 프롬프트 (로컬 dev)
+├── Dockerfile                       # Cloud Run 프로덕션 빌드 (multi-stage)
+├── turbo.json                       # Turborepo 태스크 설정
+├── pnpm-workspace.yaml              # 워크스페이스 정의
+├── tsconfig.base.json               # 공통 TS 설정
+└── .npmrc                           # pnpm 설정 (shamefully-hoist)
 ```
 
 ## 기술 스택
 
+- **Monorepo**: Turborepo + pnpm 10.17 workspaces
 - **Framework**: Next.js 16 (App Router)
+- **Backend**: Express 5 (TypeScript)
 - **Language**: TypeScript 5
 - **UI Library**: React 19
 - **Auth**: NextAuth.js v5 (Google OAuth) + Firestore (승인 관리)
@@ -344,22 +347,24 @@ server/
 - **PDF Export**: html2canvas-pro, jsPDF
 - **Styling**: Tailwind CSS 4
 - **CDN/Security**: Cloudflare (WAF, DDoS, DNS proxy)
-- **Deploy**: Vercel (frontend) + Google Cloud Run (backend)
-- **Database**: Firestore (users, handouts, usage_logs)
+- **Deploy**: Vercel (frontend) + Google Cloud Run (backend via Cloud Build)
+- **Secrets**: GCP Secret Manager (system prompts)
+- **Database**: Firestore (users, handouts, usage\_logs)
 - **Code Quality**: ESLint, Prettier
 
 ## 사용 가능한 스크립트
 
-- `npm run dev` - 개발 서버 실행
-- `npm run build` - 프로덕션 빌드
-- `npm run start` - 프로덕션 서버 실행
-- `npm run lint` - ESLint 실행
-- `npm run lint:fix` - ESLint 오류 자동 수정
-- `npm run format` - Prettier로 코드 포맷팅
-- `npm run format:check` - 코드 포맷 검사
-- `npm run type-check` - TypeScript 타입 검사
-- `node server/scripts/validate-output.js` - Topic/Summary 길이 규칙 검증(기본 fixture 3개)
-- `node server/scripts/validate-vocab-count.js` - Core Vocabulary 형식 검증(항목 4개, 유의어 3개, 반의어 2개)
+- `pnpm dev` - Turbo 병렬 개발 서버 (web + api)
+- `pnpm dev:web` - 프론트엔드만 실행
+- `pnpm dev:api` - 백엔드만 실행
+- `pnpm build` - Turbo 프로덕션 빌드
+- `pnpm type-check` - TypeScript 타입 검사 (전체)
+- `pnpm lint` - ESLint 실행 (전체)
+- `pnpm lint:fix` - ESLint 오류 자동 수정
+- `pnpm format` - Prettier로 코드 포맷팅
+- `pnpm format:check` - 코드 포맷 검사
+- `node server/scripts/validate-output.js` - Topic/Summary 길이 규칙 검증
+- `node server/scripts/validate-vocab-count.js` - Core Vocabulary 형식 검증
 
 실제 `/generate` 응답(JSON 파일) 기준 검증도 가능합니다.
 
@@ -389,8 +394,8 @@ VS Code를 사용하는 경우, 프로젝트에는 다음을 제공하는 권장
 ### 수동 포맷팅
 
 ```bash
-npm run format        # 모든 파일 포맷팅
-npm run lint:fix      # 린트 오류 수정
+pnpm format        # 모든 파일 포맷팅
+pnpm lint:fix      # 린트 오류 수정
 ```
 
 ## 환경 변수
@@ -402,7 +407,7 @@ npm run lint:fix      # 린트 오류 수정
 | `API_KEYS`                                | 선택        | 다중 API 키 롤링용 목록(`,` 구분)            |
 | `ADMIN_KEYS`                              | 선택        | 다중 Admin 키 롤링용 목록(`,` 구분)          |
 | `CLOUDRUN_API_BASE_URL`                   | ✅ (Vercel) | Cloud Run 앱의 실제 URL (프록시용)           |
-| `CLOUDRUN_API_KEY`                        | ✅ (Vercel) | 백엔드의 API_KEY와 동일한 값                 |
+| `CLOUDRUN_API_KEY`                        | ✅ (Vercel) | 백엔드의 API\_KEY와 동일한 값                |
 | `CLOUDRUN_API_TIMEOUT_MS`                 | 선택        | Proxy 타임아웃(ms), 미설정 시 기본 정책 사용 |
 | `GOOGLE_CLIENT_ID`                        | ✅ (Vercel) | Google OAuth 클라이언트 ID                   |
 | `GOOGLE_CLIENT_SECRET`                    | ✅ (Vercel) | Google OAuth 클라이언트 시크릿               |
@@ -420,7 +425,6 @@ npm run lint:fix      # 린트 오류 수정
 | `META_RATE_LIMIT_WINDOW_MS`               | 선택        | 백엔드 `/meta` rate limit 윈도우(ms)         |
 | `GOOGLE_CLOUD_PROJECT`                    | ✅ (운영)   | GCP 프로젝트 ID                              |
 | `GOOGLE_CLOUD_LOCATION`                   | ✅ (운영)   | GCP 리전 (예: `asia-northeast3`)             |
-| `SYSTEM_PROMPT_B64`                       | 선택        | 시스템 프롬프트 Base64 (긴급 override용)     |
 | `ENABLE_REPAIR`                           | 선택        | 규칙 위반 시 1회 자동 재시도 (기본: `true`)  |
 | `REPAIR_MAX_ATTEMPTS`                     | 선택        | Repair 재시도 횟수 (기본: `1`, 최대 `1`)     |
 | `PROCESSING_MODE`                         | —           | `sequential` (기본) 또는 `parallel`          |
@@ -432,7 +436,7 @@ npm run lint:fix      # 린트 오류 수정
 ### 우선순위
 
 - **인증 방식**: `GOOGLE_CLOUD_PROJECT` 있으면 → Vertex AI ADC 모드 (Cloud Run 운영 권장) → 없으면 `GOOGLE_CLOUD_API_KEY` → `GOOGLE_API_KEY` (로컬 개발 fallback)
-- **시스템 프롬프트**: `SYSTEM_PROMPT_B64` → `SYSTEM_PROMPT` → `server/system-prompt.txt` (기본값, 이 파일을 수정 후 push하면 자동 반영)
+- **시스템 프롬프트**: GCP Secret Manager 볼륨 마운트 (프로덕션) → 로컬 파일 `server/system-prompt.txt` (개발)
 
 ## 보안 아키텍처 (Cloudflare → Vercel API Proxy → Cloud Run)
 
@@ -454,20 +458,8 @@ npm run lint:fix      # 린트 오류 수정
 
 ### Timeout 정책
 
-- 기본값은 Proxy 기준 55초이며(`CLOUDRUN_API_TIMEOUT_MS` 미설정 시), 로컬 타겟(`localhost/127.0.0.1`)은 개발 편의를 위해 더 긴 timeout을 사용합니다.
+- 기본값은 Proxy 기준 120초이며(`CLOUDRUN_API_TIMEOUT_MS` 미설정 시), 로컬 타겟(`localhost/127.0.0.1`)은 개발 편의를 위해 10분 timeout을 사용합니다.
 - 운영 환경에서는 `CLOUDRUN_API_TIMEOUT_MS`를 명시해 환경별 편차를 제거하는 것을 권장합니다.
-
-## 프롬프트 튜닝 워크플로우 (promptSource: file)
-
-**현재 Cloud Run은 `promptSource: file` 방식으로 운영 중입니다.** 따라서 프롬프트를 수정할 때는 환경변수가 아닌 파일만 수정해야 합니다.
-
-> 보안 권장: 실제 Cloud Run 배포 URL과 API 키는 저장소(README, 코드, 예시 파일)에 기록하지 말고 Cloud Run/Vercel 환경변수로만 관리하세요.
-
-1. `server/system-prompt.txt` 파일을 직접 수정합니다.
-2. `git add`, `git commit`, `git push`를 통해 저장소에 반영합니다.
-3. 터미널에서 `gcloud run deploy --source .` 명령어로 재배포하면 즉시 반영됩니다.
-
-**긴급 override:** 장애 등의 사유로 즉시 덮어써야 할 경우에만 Cloud Run 콘솔에서 `SYSTEM_PROMPT_B64` 환경변수를 강제 주입하세요. (설정 해제 시 다시 파일 모드로 복구됨)
 
 ## 서버 메타데이터 확인 (/meta)
 
@@ -489,16 +481,17 @@ curl -H "X-ADMIN-KEY: YOUR_ADMIN_KEY" https://your-api-url/meta
 }
 ```
 
-### Base64 프롬프트 생성 (긴급용)
-
-```bash
-# macOS/Linux에서 줄바꿈 없는 1줄 Base64 생성
-base64 -b 0 -i server/system-prompt.txt | pbcopy
-```
-
 ## Cloud Run 배포
 
-### 1. 빌드 & 배포
+### 자동 배포 (Cloud Build)
+
+`main` 브랜치에 push하면 **Cloud Build**가 자동으로 트리거되어 배포됩니다.
+
+- 루트 `Dockerfile`을 사용한 multi-stage 빌드
+- 시스템 프롬프트는 **GCP Secret Manager** 볼륨 마운트로 주입
+- 포트: 8080
+
+### 수동 배포
 
 ```bash
 gcloud run deploy your-api-service-name \
@@ -514,14 +507,7 @@ gcloud run deploy your-api-service-name \
 
 > **운영 환경에서 `GOOGLE_API_KEY`는 설정하지 않는 것을 권장합니다.** `GOOGLE_CLOUD_PROJECT`가 있으면 Vertex AI ADC(서비스 계정) 방식으로 자동 인증됩니다.
 
-### 2. Cloud Run 콘솔에서 환경변수 설정
-
-1. [Cloud Run 콘솔](https://console.cloud.google.com/run) 접속
-2. `your-api-service-name` 서비스 선택
-3. **수정 및 새 버전 배포** → **변수 및 보안 비밀** 탭
-4. `SYSTEM_PROMPT_B64` 환경변수 추가
-
-### 3. 서비스 계정 권한
+### 서비스 계정 권한
 
 ```bash
 gcloud projects add-iam-policy-binding your-project-id \
@@ -529,7 +515,7 @@ gcloud projects add-iam-policy-binding your-project-id \
   --role="roles/aiplatform.user"
 ```
 
-### 4. 배포 확인
+### 배포 확인
 
 ```bash
 curl "${CLOUDRUN_API_BASE_URL}/health"
