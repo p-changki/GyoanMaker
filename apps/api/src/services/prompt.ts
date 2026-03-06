@@ -3,10 +3,17 @@ import fs from "fs";
 import path from "path";
 import { getAuthMode } from "./gemini";
 
-const PROMPT_FILES = {
+const SECRET_PATHS = {
+  advanced: "/workspace/apps/api/secrets/system-prompt/system-prompt",
+  basic: "/workspace/apps/api/secrets/system-prompt-basic/system-prompt-basic",
+} as const;
+
+const LOCAL_PATHS = {
   advanced: path.join(__dirname, "../../system-prompt.txt"),
   basic: path.join(__dirname, "../../system-prompt-basic.txt"),
 } as const;
+
+const PROMPT_FILES = process.env.NODE_ENV === "production" ? SECRET_PATHS : LOCAL_PATHS;
 
 type PromptLevel = keyof typeof PROMPT_FILES;
 
