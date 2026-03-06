@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
 
-const NAV_LINKS = [
+const PUBLIC_LINKS = [{ href: "/pricing", label: "요금제" }] as const;
+
+const AUTH_LINKS = [
   { href: "/generate", label: "생성" },
   { href: "/dashboard", label: "내 교안" },
   { href: "/pricing", label: "요금제" },
@@ -12,6 +15,8 @@ const NAV_LINKS = [
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { status } = useSession();
+  const navLinks = status === "authenticated" ? AUTH_LINKS : PUBLIC_LINKS;
 
   return (
     <header className="relative z-60 border-b border-gray-200 bg-white">
@@ -28,7 +33,7 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-5">
-          {NAV_LINKS.map(({ href, label }) => (
+          {navLinks.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
@@ -80,7 +85,7 @@ export default function Header() {
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
           <nav className="flex flex-col px-4 py-3 space-y-1">
-            {NAV_LINKS.map(({ href, label }) => (
+            {navLinks.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
