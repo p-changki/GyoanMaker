@@ -1,0 +1,17 @@
+{
+  "name": "@gyoanmaker/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./plans": "./src/plans/index.ts",
+    "./types": "./src/types/index.ts",
+    "./types/handout": "./src/types/handout.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo 'No lint configured for @gyoanmaker/shared'"
+  }
+}
