@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getQuotaStatus, incrementUsage } from "@/lib/quota";
+import { logUsage } from "@/lib/usageLog";
 
 const MAX_WORDS_PER_PASSAGE = 400;
 const MAX_TOTAL_WORDS = 5000;
@@ -269,13 +270,29 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
 
-    // Increment quota usage on success
+    // Increment quota + log token usage on success
     if (userEmail) {
+      const totalUsage = data?.totalUsage;
+
       try {
-        await incrementUsage(userEmail, passageCount);
+        await Promise.all([
+          incrementUsage(userEmail, passageCount),
+          totalUsage
+            ? logUsage({
+                email: userEmail,
+                requestId,
+                passageCount,
+                model: body?.model ?? "pro",
+                level: body?.level ?? "advanced",
+                inputTokens: totalUsage.inputTokens ?? 0,
+                outputTokens: totalUsage.outputTokens ?? 0,
+                totalTokens: totalUsage.totalTokens ?? 0,
+              })
+            : Promise.resolve(),
+        ]);
       } catch (quotaErr) {
         console.error(
-          `[api/generate][${requestId}] Failed to increment quota: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
+          `[api/generate][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
         );
       }
     }

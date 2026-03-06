@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import {
+  Suspense,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+} from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 import CompileLayout from "@/components/compile/CompileLayout";
 import { generatePassages, type ApiResultItem } from "@/services/api";
 import { CompiledHandout, HandoutSection } from "@/types/handout";
@@ -51,19 +58,105 @@ function createInitialSections(
   return sections;
 }
 
-export default function CompilePage() {
+function CompilePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const handoutId = searchParams.get("handoutId");
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exportProgress, setExportProgress] = useState({
     current: 0,
     total: 0,
   });
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const isApplyingRef = useRef(false);
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
   const setApplying = useHandoutStore((state) => state.setApplying);
   const setProgress = useHandoutStore((state) => state.setProgress);
   const updateSection = useHandoutStore((state) => state.updateSection);
+
+  // Load saved handout from Firestore when handoutId is present
+  const handoutQuery = useQuery({
+    queryKey: ["handout", handoutId],
+    enabled: Boolean(handoutId),
+    staleTime: Infinity,
+    gcTime: Infinity,
+    queryFn: async () => {
+      const res = await fetch(`/api/handouts/${handoutId}`);
+      if (!res.ok) throw new Error("교안을 불러오지 못했습니다.");
+      const data = await res.json();
+      // Restore sections from saved rawText
+      const sections: Record<string, HandoutSection> = {};
+      for (const [id, rawText] of Object.entries(
+        data.sections as Record<string, string>
+      )) {
+        sections[id] = {
+          passageId: id,
+          sentences: [],
+          topic: { en: "", ko: "" },
+          summary: { en: "", ko: "" },
+          flow: [],
+          vocabulary: [],
+          rawText,
+          isParsed: false,
+        };
+      }
+      setCompiledData(sections);
+      // Restore custom texts if available
+      if (data.customTexts) {
+        const store = useHandoutStore.getState();
+        if (data.customTexts.headerText)
+          store.setCustomHeaderText(data.customTexts.headerText);
+        if (data.customTexts.analysisTitleText)
+          store.setAnalysisTitleText(data.customTexts.analysisTitleText);
+        if (data.customTexts.summaryTitleText)
+          store.setSummaryTitleText(data.customTexts.summaryTitleText);
+      }
+      return {
+        id: data.id,
+        title: data.title,
+        level: data.level,
+        model: data.model,
+      };
+    },
+  });
+
+  // Save handout mutation
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const state = useHandoutStore.getState();
+      const sections: Record<string, string> = {};
+      for (const [id, section] of Object.entries(state.sections)) {
+        sections[id] = section.rawText;
+      }
+      const body = {
+        title: `교안 ${new Date().toLocaleDateString("ko-KR")}`,
+        sections,
+        level: "advanced",
+        model: "pro",
+        customTexts: {
+          headerText: state.customHeaderText,
+          analysisTitleText: state.analysisTitleText,
+          summaryTitleText: state.summaryTitleText,
+        },
+      };
+      const res = await fetch("/api/handouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("교안 저장에 실패했습니다.");
+      return res.json();
+    },
+    onSuccess: () => {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    },
+  });
+
+  const handleSave = useCallback(() => {
+    saveMutation.mutate();
+  }, [saveMutation]);
 
   const inputQuery = useQuery<CompileInputData | null>({
     queryKey: ["compile", "input"],
@@ -161,6 +254,7 @@ export default function CompilePage() {
   }, [isExportingPdf]);
 
   const isLoading =
+    handoutQuery.isLoading ||
     inputQuery.isLoading ||
     (inputQuery.data !== null &&
       inputQuery.data !== undefined &&
@@ -460,7 +554,7 @@ export default function CompilePage() {
     );
   }
 
-  if (!inputQuery.data) {
+  if (!inputQuery.data && !handoutId) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
@@ -485,9 +579,31 @@ export default function CompilePage() {
       onCopyAll={handleCopyAll}
       onDownloadTxt={handleDownloadTxt}
       onExportPdf={handleExportPDF}
+      onSave={handleSave}
+      isSaving={saveMutation.isPending}
+      saveSuccess={saveSuccess}
       isExportingPdf={isExportingPdf}
       exportCurrent={exportProgress.current}
       exportTotal={exportProgress.total}
     />
+  );
+}
+
+export default function CompilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-screen w-full flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#5E35B1] border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-black text-[#5E35B1] animate-pulse uppercase tracking-widest">
+              Loading Layout...
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <CompilePageInner />
+    </Suspense>
   );
 }

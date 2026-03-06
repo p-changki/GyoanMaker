@@ -18,6 +18,7 @@ async function processSequential(passages, generateOne) {
         index,
         outputText: generated.outputText,
         warnings: generated.warnings,
+        usage: generated.usage,
       });
     }
   }
@@ -47,6 +48,7 @@ async function processBoundedParallel(passages, generateOne, limit = 3) {
           index: currentIndex,
           outputText: generated.outputText,
           warnings: generated.warnings,
+          usage: generated.usage,
         };
       }
     }

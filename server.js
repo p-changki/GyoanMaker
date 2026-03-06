@@ -206,7 +206,21 @@ app.post("/generate", generateRateLimit, requireApiKey, async (req, res) => {
           )
         : await processSequential(validated.passages, generateOne);
 
-    return res.json({ results });
+    const totalUsage = results.reduce(
+      (acc, r) => {
+        if (!r.usage) return acc;
+        return {
+          inputTokens: acc.inputTokens + (r.usage.inputTokens || 0),
+          outputTokens: acc.outputTokens + (r.usage.outputTokens || 0),
+          totalTokens: acc.totalTokens + (r.usage.totalTokens || 0),
+        };
+      },
+      { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+    );
+
+    console.log(`[api] totalUsage: ${totalUsage.totalTokens} tokens (in: ${totalUsage.inputTokens}, out: ${totalUsage.outputTokens})`);
+
+    return res.json({ results, totalUsage });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown error";
     return sendError(
