@@ -44,7 +44,7 @@ export default function QuotaIndicator() {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-400">
         <div className="w-3 h-3 rounded-full bg-gray-200 animate-pulse" />
-        <span>쿼타 확인 중...</span>
+        <span>남은 횟수 확인 중...</span>
       </div>
     );
   }
@@ -55,8 +55,7 @@ export default function QuotaIndicator() {
   const proRatio = getUsageRatio(data.pro);
   const isLow = flashRatio >= 0.8 || proRatio >= 0.8;
   const isExhausted =
-    !data.canGenerate ||
-    (data.flash.remaining <= 0 && data.pro.remaining <= 0);
+    !data.canGenerate || (data.flash.remaining <= 0 && data.pro.remaining <= 0);
 
   return (
     <div
@@ -75,7 +74,7 @@ export default function QuotaIndicator() {
       />
       <div className="flex items-center gap-3">
         <span>
-          Flash{" "}
+          빠른 생성{" "}
           <strong>
             {data.flash.remaining}/{data.flash.limit}
           </strong>
@@ -83,14 +82,16 @@ export default function QuotaIndicator() {
         </span>
         <span className="text-gray-300">|</span>
         <span>
-          Pro{" "}
+          정밀 생성{" "}
           <strong>
             {data.pro.remaining}/{data.pro.limit}
           </strong>
           회
         </span>
       </div>
-      {isExhausted && <span className="ml-auto text-xs font-bold">한도 초과</span>}
+      {isExhausted && (
+        <span className="ml-auto text-xs font-bold">한도 초과</span>
+      )}
     </div>
   );
 }

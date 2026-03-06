@@ -1,9 +1,11 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { type PlanId } from "@/lib/plans";
 import UsageBar from "./UsageBar";
+import DeleteAccountModal from "./DeleteAccountModal";
 
 interface BillingStatusResponse {
   subscription: {
@@ -28,6 +30,7 @@ async function fetchBillingStatus(): Promise<BillingStatusResponse> {
 
 export default function AccountDashboard() {
   const { data: session } = useSession();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-status"],
@@ -79,7 +82,7 @@ export default function AccountDashboard() {
               {currentPlan.toUpperCase()}
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              Flash {data.quota.flash.remaining}건 / Pro{" "}
+              빠른 생성 {data.quota.flash.remaining}건 / 정밀 생성{" "}
               {data.quota.pro.remaining}건 남음
             </p>
           </div>
@@ -95,14 +98,14 @@ export default function AccountDashboard() {
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <UsageBar
-          label="Flash"
+          label="빠른 생성"
           used={data.quota.flash.used}
           limit={data.quota.flash.limit}
           remaining={data.quota.flash.remaining}
           credits={data.quota.flash.credits}
         />
         <UsageBar
-          label="Pro"
+          label="정밀 생성"
           used={data.quota.pro.used}
           limit={data.quota.pro.limit}
           remaining={data.quota.pro.remaining}
@@ -118,6 +121,31 @@ export default function AccountDashboard() {
           플랜 변경 및 크레딧 충전은 곧 오픈 예정입니다.
         </p>
       </section>
+
+      {/* Danger zone */}
+      <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
+        <h3 className="text-sm font-bold text-red-700">위험 구역</h3>
+        <p className="mt-1 text-xs text-gray-500">
+          계정을 삭제하면 모든 데이터가 영구 삭제되며 복구할 수 없습니다.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowDeleteModal(true)}
+          className="mt-4 rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 transition-colors"
+        >
+          계정 탈퇴
+        </button>
+      </section>
+
+      <DeleteAccountModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={async () => {
+          const res = await fetch("/api/account/delete", { method: "DELETE" });
+          if (!res.ok) throw new Error("삭제 실패");
+          signOut({ callbackUrl: "/" });
+        }}
+      />
     </div>
   );
 }

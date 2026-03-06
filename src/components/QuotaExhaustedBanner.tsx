@@ -11,7 +11,7 @@ export default function QuotaExhaustedBanner({
 }: QuotaExhaustedBannerProps) {
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-      {model.toUpperCase()} 한도를 모두 사용했습니다.{" "}
+      {model === "flash" ? "빠른 생성" : "정밀 생성"} 횟수를 모두 사용했습니다.{" "}
       <Link href="/account" className="font-bold underline underline-offset-2">
         충전하기
       </Link>{" "}

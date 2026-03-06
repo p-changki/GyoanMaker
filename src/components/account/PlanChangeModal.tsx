@@ -31,29 +31,31 @@ export default function PlanChangeModal({
           </button>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-          {(Object.entries(PLANS) as Array<[PlanId, (typeof PLANS)[PlanId]]>).map(
-            ([planId, plan]) => (
-              <button
-                key={planId}
-                type="button"
-                disabled={planId === currentPlan}
-                onClick={() => onSelect(planId)}
-                className={`rounded-xl border p-4 text-left ${
-                  planId === currentPlan
-                    ? "border-blue-300 bg-blue-50/50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <p className="text-sm font-bold text-gray-900">{planId.toUpperCase()}</p>
-                <p className="mt-1 text-sm text-gray-600">
-                  Flash {plan.flashLimit} / Pro {plan.proLimit}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">
-                  ₩{plan.price.toLocaleString("ko-KR")} /월
-                </p>
-              </button>
-            )
-          )}
+          {(
+            Object.entries(PLANS) as Array<[PlanId, (typeof PLANS)[PlanId]]>
+          ).map(([planId, plan]) => (
+            <button
+              key={planId}
+              type="button"
+              disabled={planId === currentPlan}
+              onClick={() => onSelect(planId)}
+              className={`rounded-xl border p-4 text-left ${
+                planId === currentPlan
+                  ? "border-blue-300 bg-blue-50/50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              <p className="text-sm font-bold text-gray-900">
+                {planId.toUpperCase()}
+              </p>
+              <p className="mt-1 text-sm text-gray-600">
+                빠른 생성 {plan.flashLimit} / 정밀 생성 {plan.proLimit}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">
+                ₩{plan.price.toLocaleString("ko-KR")} /월
+              </p>
+            </button>
+          ))}
         </div>
       </div>
     </div>

@@ -48,11 +48,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { title, sections, level, model, customTexts } = body as {
+    const { title, sections, level, model, customTexts, inputHash } = body as {
       title?: string;
       sections?: Record<string, string>;
       level?: string;
       model?: string;
+      inputHash?: string;
       customTexts?: {
         headerText?: string;
         analysisTitleText?: string;
@@ -100,6 +101,7 @@ export async function POST(req: NextRequest) {
       sections,
       level: level || "advanced",
       model: model || "pro",
+      inputHash: typeof inputHash === "string" ? inputHash : undefined,
       customTexts,
     });
 

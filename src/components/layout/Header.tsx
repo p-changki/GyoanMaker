@@ -1,46 +1,101 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
 
+const NAV_LINKS = [
+  { href: "/generate", label: "생성" },
+  { href: "/dashboard", label: "내 교안" },
+  { href: "/pricing", label: "요금제" },
+] as const;
+
 export default function Header() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
-    <header className="relative z-60 border-b border-gray-200 bg-white py-6">
-      <div className="mx-auto max-w-[1100px] px-4 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">교안 생성기</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              AI 기반 맞춤형 교육 자료 제작 도구
-            </p>
-          </div>
-          <nav className="flex items-center gap-4">
+    <header className="relative z-60 border-b border-gray-200 bg-white">
+      <div className="mx-auto max-w-[1100px] px-4 flex items-center justify-between h-20 md:h-28">
+        {/* Logo */}
+        <Link href="/" className="shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="교안 생성기"
+            className="h-12 w-auto md:h-[90px]"
+          />
+        </Link>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-5">
+          {NAV_LINKS.map(({ href, label }) => (
             <Link
-              href="/generate"
-              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              key={href}
+              href={href}
+              className="text-base font-semibold text-gray-500 hover:text-gray-900 transition-colors"
             >
-              생성
+              {label}
             </Link>
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              내 교안
-            </Link>
-            <Link
-              href="/account"
-              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              내 계정
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              요금제
-            </Link>
-          </nav>
+          ))}
+        </nav>
+
+        {/* Desktop user menu */}
+        <div className="hidden md:block">
+          <UserMenu />
         </div>
-        <UserMenu />
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen((prev) => !prev)}
+          className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          aria-label="메뉴 열기"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            {mobileOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white">
+          <nav className="flex flex-col px-4 py-3 space-y-1">
+            {NAV_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMobileOpen(false)}
+                className="block py-2.5 px-3 rounded-lg text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <div className="px-4 py-3 border-t border-gray-100">
+            <UserMenu />
+          </div>
+        </div>
+      )}
     </header>
   );
 }
