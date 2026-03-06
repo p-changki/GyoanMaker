@@ -5,8 +5,6 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import UserMenu from "@/components/UserMenu";
 
-const PUBLIC_LINKS = [{ href: "/pricing", label: "요금제" }] as const;
-
 const AUTH_LINKS = [
   { href: "/generate", label: "생성" },
   { href: "/dashboard", label: "내 교안" },
@@ -16,7 +14,8 @@ const AUTH_LINKS = [
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { status } = useSession();
-  const navLinks = status === "authenticated" ? AUTH_LINKS : PUBLIC_LINKS;
+  const isAuth = status === "authenticated";
+  const navLinks = isAuth ? AUTH_LINKS : [];
 
   return (
     <header className="relative z-60 border-b border-gray-200 bg-white">
