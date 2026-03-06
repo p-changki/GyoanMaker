@@ -16,9 +16,12 @@
 # next.js
 /.next/
 /out/
+/apps/web/.next/
 
 # production
 /build
+/apps/api/dist/
+/packages/shared/dist/
 
 # misc
 .DS_Store
@@ -29,6 +32,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.turbo/
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -66,4 +70,4 @@ CLAUDE.md
 
 # System prompts (core IP — keep local only)
 server/system-prompt*.txt
-
+apps/api/system-prompt*.txt
