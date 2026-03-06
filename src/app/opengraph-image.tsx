@@ -8,7 +8,7 @@ export const contentType = "image/png";
 export default async function OgImage() {
   // 한글 렌더링 에러(500) 방지를 위해 ttf 폰트 동적 로드
   const fontData = await fetch(
-    "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/packages/pretendard/dist/public/static/Pretendard-ExtraBold.ttf"
+    "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/packages/pretendard/dist/public/static/alternative/Pretendard-ExtraBold.ttf"
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
@@ -64,6 +64,9 @@ export default async function OgImage() {
       {/* Title */}
       <div
         style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
           fontSize: "56px",
           fontWeight: 800,
           color: "#1e293b",
@@ -72,9 +75,10 @@ export default async function OgImage() {
           marginBottom: "20px",
         }}
       >
-        영어 지문 분석부터
-        <br />
-        <span style={{ color: "#2563eb" }}>교안 출력까지, 한 번에</span>
+        <span>영어 지문 분석부터</span>
+        <span style={{ color: "#2563eb", marginTop: "12px" }}>
+          교안 출력까지, 한 번에
+        </span>
       </div>
 
       {/* Description */}
