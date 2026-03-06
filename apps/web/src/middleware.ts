@@ -39,6 +39,8 @@ export default auth((req) => {
     "/api/billing/webhook",
     "/_next",
     "/favicon.ico",
+    "/icon",
+    "/sitemap.xml",
     "/opengraph-image",
   ];
   if (publicPaths.some((p) => pathname.startsWith(p))) {

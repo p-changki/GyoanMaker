@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { HeaderUser } from "@/components/layout/HeaderClient";
 
 interface BillingStatusData {
   subscription?: {
@@ -10,12 +12,32 @@ interface BillingStatusData {
   };
 }
 
-export default function UserMenu() {
-  const { data: session, status } = useSession();
+type PlanTier = "free" | "basic" | "standard" | "pro";
+
+function isValidTier(tier: unknown): tier is PlanTier {
+  return (
+    tier === "free" ||
+    tier === "basic" ||
+    tier === "standard" ||
+    tier === "pro"
+  );
+}
+
+async function fetchBillingStatus(): Promise<PlanTier | null> {
+  const res = await fetch("/api/billing/status");
+  if (!res.ok) return null;
+  const data = (await res.json()) as BillingStatusData;
+  return isValidTier(data?.subscription?.tier)
+    ? data.subscription!.tier!
+    : null;
+}
+
+interface UserMenuProps {
+  user: HeaderUser | null;
+}
+
+export default function UserMenu({ user }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [planTier, setPlanTier] = useState<
-    "free" | "basic" | "standard" | "pro" | null
-  >(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,28 +50,14 @@ export default function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    fetch("/api/billing/status")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: BillingStatusData | null) => {
-        if (
-          data?.subscription?.tier === "free" ||
-          data?.subscription?.tier === "basic" ||
-          data?.subscription?.tier === "standard" ||
-          data?.subscription?.tier === "pro"
-        ) {
-          setPlanTier(data.subscription.tier);
-        }
-      })
-      .catch(() => {});
-  }, [status]);
+  const { data: planTier } = useQuery({
+    queryKey: ["billing-status"],
+    queryFn: fetchBillingStatus,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!user,
+  });
 
-  if (status === "loading") {
-    return <div className="w-8 h-8" />;
-  }
-
-  if (status !== "authenticated" || !session?.user) {
+  if (!user) {
     return (
       <a
         href="/login"
@@ -60,7 +68,6 @@ export default function UserMenu() {
     );
   }
 
-  const user = session.user;
   const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
