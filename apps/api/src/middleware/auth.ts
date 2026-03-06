@@ -15,8 +15,22 @@ function parseKeys(multiEnvName: string, singleEnvName: string): string[] {
   return [...new Set(multiKeys)];
 }
 
-const API_KEYS = parseKeys("API_KEYS", "API_KEY");
-const ADMIN_KEYS = parseKeys("ADMIN_KEYS", "ADMIN_KEY");
+let _apiKeys: string[] | null = null;
+let _adminKeys: string[] | null = null;
+
+function getApiKeys(): string[] {
+  if (_apiKeys === null) {
+    _apiKeys = parseKeys("API_KEYS", "API_KEY");
+  }
+  return _apiKeys;
+}
+
+function getAdminKeys(): string[] {
+  if (_adminKeys === null) {
+    _adminKeys = parseKeys("ADMIN_KEYS", "ADMIN_KEY");
+  }
+  return _adminKeys;
+}
 
 function normalizeHeaderValue(value: string | string[] | undefined): string {
   if (typeof value === "string") {
@@ -70,6 +84,7 @@ export const requireApiKey: RequestHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  const API_KEYS = getApiKeys();
   if (API_KEYS.length === 0) {
     handleMisconfiguredKeySet(res, "API_KEYS/API_KEY");
     return;
@@ -100,6 +115,7 @@ export const requireAdminKey: RequestHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  const ADMIN_KEYS = getAdminKeys();
   if (ADMIN_KEYS.length === 0) {
     handleMisconfiguredKeySet(res, "ADMIN_KEYS/ADMIN_KEY");
     return;

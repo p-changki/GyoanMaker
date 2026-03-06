@@ -6,7 +6,7 @@ import { CompiledHandout, HandoutSection } from "@gyoanmaker/shared/types/handou
 
 export const DEFAULT_CUSTOM_HEADER_TEXT = "고1 25년 9월 모의고사";
 export const DEFAULT_ANALYSIS_TITLE_TEXT = "구문 분석 및 해석";
-export const DEFAULT_SUMMARY_TITLE_TEXT = "하늘쌤 PICK 핵심 정리";
+export const DEFAULT_SUMMARY_TITLE_TEXT = "PICK 핵심 정리";
 
 interface HandoutStoreState {
   sections: Record<string, HandoutSection>;
