@@ -200,11 +200,21 @@ export default function ResultsPage() {
         }
 
         parsed = {
-          ...parsed,
-          inputMode: parsed.inputMode ?? "text",
-          options: parsed.options ?? { copyBlock: false, pdf: false },
-          level: parsed.level ?? "advanced",
-          model: parsed.model ?? "pro",
+          inputMode:
+            (rawObj.inputMode as SessionInputData["inputMode"]) ?? "text",
+          passages,
+          options: (rawObj.options as SessionInputData["options"]) ?? {
+            copyBlock: false,
+            pdf: false,
+          },
+          level: (rawObj.level as SessionInputData["level"]) ?? "advanced",
+          model: (rawObj.model as SessionInputData["model"]) ?? "pro",
+          timestamp,
+          textBlock:
+            typeof rawObj.textBlock === "string" ? rawObj.textBlock : undefined,
+          cards: Array.isArray(rawObj.cards)
+            ? (rawObj.cards as SessionInputData["cards"])
+            : undefined,
         };
       } catch (error) {
         console.error("Failed to parse session storage", error);
