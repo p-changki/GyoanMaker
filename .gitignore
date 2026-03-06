@@ -64,3 +64,6 @@ CLAUDE.md
 # Planning docs (local only)
 /docs/
 
+# System prompts (core IP — keep local only)
+server/system-prompt*.txt
+
