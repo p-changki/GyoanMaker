@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
+import { ToastProvider } from "@/components/ui/Toast";
+import { ConfirmProvider } from "@/components/ui/ConfirmModal";
 import QueryProvider from "@/providers/QueryProvider";
 import AuthProvider from "@/providers/AuthProvider";
 
@@ -63,7 +65,11 @@ export default function RootLayout({
         </Script>
         <AuthProvider>
           <QueryProvider>
-            <AppShell>{children}</AppShell>
+            <ToastProvider>
+              <ConfirmProvider>
+                <AppShell>{children}</AppShell>
+              </ConfirmProvider>
+            </ToastProvider>
           </QueryProvider>
         </AuthProvider>
       </body>

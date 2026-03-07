@@ -8,11 +8,34 @@ Users sign in via **Google OAuth** and must be **approved by an admin** before a
 
 **Live**: [https://gyoan-maker.store](https://gyoan-maker.store) (Cloudflare → Vercel)
 
+## Why GyoanMaker?
+
+### The Problem
+
+Academy instructors spend **2–3 hours per passage** manually crafting handouts: sentence-by-sentence analysis, vocabulary tables with synonyms/antonyms, topic summaries, and pixel-perfect formatting — all before a single student walks through the door.
+
+Multiply that by 5–10 passages per week, and handout preparation becomes the biggest time sink in an instructor's workflow.
+
+### The Solution
+
+GyoanMaker automates the entire pipeline. Paste a passage, click **Generate**, and receive a **print-ready PDF handout in under 30 seconds** — formatted exactly like a real academy-distributed document.
+
+### What Makes It Different
+
+| | Manual | GyoanMaker |
+|---|---|---|
+| **Time per passage** | 2–3 hours | ~30 seconds |
+| **Sentence analysis** | Hand-typed | AI-generated (Gemini 2.5 Pro/Flash) |
+| **Vocabulary table** | Copy-paste from dictionaries | Auto-extracted with CEFR-level synonyms/antonyms |
+| **Summary & flow** | Written from scratch | AI-structured 4-step flow + bilingual summary |
+| **PDF formatting** | Manual layout in Word/HWP | Pixel-perfect, auto-formatted, one-click export |
+| **Customization** | Start over | Live editing with template settings |
+
 ## Screenshots
 
 |          1. Landing Page           |       2. AI Analysis & Parsing        |         3. PDF Compile & Export         |
 | :--------------------------------: | :-----------------------------------: | :-------------------------------------: |
-| ![Main](public/images/1_main.png)  | ![Result](public/images/2_result.png) | ![Compile](public/images/3_compile.png) |
+| ![Main](apps/web/public/images/1_main.png)  | ![Result](apps/web/public/images/2_result.png) | ![Compile](apps/web/public/images/3_compile.png) |
 
 ## Key Features
 
@@ -21,6 +44,7 @@ Users sign in via **Google OAuth** and must be **approved by an admin** before a
 - Perfectly matches the layout of the original lecture handout (65% English : 35% Korean ratio).
 - Automatically publishes circular badges for numbers, avatar overlap designs, and a 4-column vocabulary table (Core Vocabulary | Meaning | Synonyms | Antonyms).
 - Responsive 3-column layout (Nav / Canvas / Control Panel) using Tailwind CSS.
+- **Template customization**: section-based font sizing, header/title text editing.
 
 ### 2. 2-Axis Generation Model
 
@@ -49,6 +73,7 @@ Users sign in via **Google OAuth** and must be **approved by an admin** before a
 
 - Uses `html2canvas` and `jsPDF` to capture and render high-quality A4 PDF handouts entirely within the user's browser, eliminating expensive server-side rendering costs.
 - Includes inline editing powered by `Zustand` to customize header text before exporting the PDF.
+- Template settings panel for per-section font size control and custom header/title text.
 
 ### 7. Google OAuth & Admin Approval System
 
@@ -127,7 +152,7 @@ Once the servers are running, visit the landing page and navigate to `/generate`
 > Some people argue that there is a single, logically consistent concept known as reading that can be neatly set apart from everything else people do with books. Is reading really that simple? The most productive way to think about reading is as a loosely related set of behaviors that belong together owing to family resemblances, as Ludwig Wittgenstein used the phrase, without having in common a single defining trait.
 
 1. Navigate to `/generate` and paste the text above into the text input area.
-2. Click the **"교안 생성하기"** button.
+2. Click the **"Generate"** button.
 3. The data is sent to the backend, and you can see the Gemini 2.5 Pro model rendering the data in a **perfect PDF handout layout** on the results page!
 
 _(For advanced usage, architecture details, and Cloud Run deployment, please refer to the Korean documentation below or strictly use translation tools)._
@@ -142,25 +167,48 @@ Google Gemini 2.5 Pro / Flash를 활용하여 영어 지문을 분석하고, 실
 
 **운영 URL**: [https://gyoan-maker.store](https://gyoan-maker.store) (Cloudflare → Vercel)
 
+## 왜 GyoanMaker인가?
+
+### 문제
+
+학원 강사는 지문 한 개당 **2~3시간**을 수작업으로 교안을 만드는 데 씁니다 — 문장별 분석, 유의어/반의어가 포함된 어휘 테이블, 토픽 요약, 그리고 픽셀 단위의 레이아웃 포맷팅까지. 수업 하나 시작하기도 전에 말입니다.
+
+이걸 주당 5~10개 지문씩 반복하면, 교안 작성은 강사 업무에서 가장 큰 시간 소모 요인이 됩니다.
+
+### 해결
+
+GyoanMaker는 이 전체 파이프라인을 자동화합니다. 지문을 붙여넣고 **Generate** 버튼을 누르면, **30초 이내에 인쇄 가능한 PDF 교안**이 — 실제 학원 배포 문서와 동일한 포맷으로 완성됩니다.
+
+### 차별점
+
+| | 수작업 | GyoanMaker |
+| --- | --- | --- |
+| **지문당 소요 시간** | 2~3시간 | ~30초 |
+| **구문 분석** | 직접 타이핑 | AI 자동 생성 (Gemini 2.5 Pro/Flash) |
+| **어휘 테이블** | 사전에서 복사 붙여넣기 | CEFR 수준 유의어/반의어 자동 추출 |
+| **요약 & 흐름** | 처음부터 작성 | AI 구조화 4단계 흐름 + 이중 언어 요약 |
+| **PDF 포맷** | Word/한글에서 수동 레이아웃 | 자동 포맷, 원클릭 추출 |
+| **커스터마이징** | 처음부터 다시 | 템플릿 설정으로 실시간 편집 |
+
 ## 스크린샷 (Screenshots)
 
 |       1. 공개 랜딩 페이지          |         2. AI 지문 분석 결과          |         3. 최종 교안 PDF 컴파일         |
 | :--------------------------------: | :-----------------------------------: | :-------------------------------------: |
-| ![Main](public/images/1_main.png)  | ![Result](public/images/2_result.png) | ![Compile](public/images/3_compile.png) |
+| ![Main](apps/web/public/images/1_main.png)  | ![Result](apps/web/public/images/2_result.png) | ![Compile](apps/web/public/images/3_compile.png) |
 
 ## 사용 흐름
 
 ```mermaid
 flowchart LR
-    A["🏠 랜딩 페이지\n/"] --> B["🔐 로그인\n/login"]
+    A["Landing Page\n/"] --> B["Login\n/login"]
     B --> C["Google OAuth"]
-    C --> D{"관리자 승인?"}
-    D -- 대기 --> E["⏳ 승인 대기\n/pending"]
-    D -- 승인 --> F["✏️ 교안 생성\n/generate"]
+    C --> D{"Admin\nApproval?"}
+    D -- Pending --> E["Pending\n/pending"]
+    D -- Approved --> F["Generate\n/generate"]
     E -.-> F
-    F --> G["📊 AI 분석 결과\n/results"]
-    G --> H["🖨️ PDF 편집 & 출력\n/compile"]
-    H --> I["💾 대시보드 저장\n/dashboard"]
+    F --> G["AI Results\n/results"]
+    G --> H["PDF Compile\n/compile"]
+    H --> I["Dashboard\n/dashboard"]
 ```
 
 ## 주요 기능 (Key Features)
@@ -198,6 +246,7 @@ flowchart LR
 
 - 별도의 비싼 PDF 렌더링 서버(Puppeteer 등) 없이 오직 유저의 브라우저 자원(`html2canvas`, `jspdf`)만으로 A4 고해상도 PDF 파일을 1초 안에 자동 병합 및 추출.
 - `Zustand` 기반의 상태 관리를 통해 "고1 25년 9월" 등 실제 교안 배포에 필요한 커스텀 헤더 텍스트를 즉시 편집하고 PDF에 구워낼 수 있습니다.
+- 템플릿 설정 패널: 섹션별 폰트 크기 조절, 커스텀 헤더/타이틀 텍스트 지원.
 
 ### 7. Google OAuth & 관리자 승인 시스템
 
@@ -275,9 +324,9 @@ pnpm dev:api   # 백엔드만
 
 > Some people argue that there is a single, logically consistent concept known as reading that can be neatly set apart from everything else people do with books. Is reading really that simple? The most productive way to think about reading is as a loosely related set of behaviors that belong together owing to family resemblances, as Ludwig Wittgenstein used the phrase, without having in common a single defining trait.
 
-1. 상단 헤더의 **로그인** 버튼을 클릭하여 Google 계정으로 로그인합니다.
+1. 상단 헤더의 **Login** 버튼을 클릭하여 Google 계정으로 로그인합니다.
 2. `/generate` 페이지에서 위 지문을 텍스트 입력 영역에 붙여넣습니다.
-3. **교안 생성하기** 버튼을 클릭합니다.
+3. **Generate** 버튼을 클릭합니다.
 4. 백엔드로 데이터가 전송되며, Gemini 2.5 Pro 모델이 **완벽한 PDF 교안 레이아웃**으로 데이터를 렌더링하여 결과 페이지에 표시됩니다!
 
 ## 프로젝트 구조
@@ -301,7 +350,7 @@ gyoanmaker/                          # Turborepo monorepo (pnpm)
 │   │   │   │   ├── (auth)/               # 인증 관련 (login, pending)
 │   │   │   │   ├── admin/page.tsx        # 관리자 페이지
 │   │   │   │   └── api/                  # API Routes (16개)
-│   │   │   ├── components/               # UI 컴포넌트
+│   │   │   ├── components/               # UI 컴포넌트 (landing, compile, ui, layout 등)
 │   │   │   ├── lib/                      # 유틸리티, Firestore CRUD
 │   │   │   ├── stores/                   # Zustand 상태 관리
 │   │   │   ├── services/                 # API 호출 서비스
@@ -344,6 +393,7 @@ gyoanmaker/                          # Turborepo monorepo (pnpm)
 - **Auth**: NextAuth.js v5 (Google OAuth) + Firestore (승인 관리)
 - **State & Cache**: Zustand, TanStack Query (React Query)
 - **AI**: Google Gemini 2.5 Pro / Flash (Vertex AI on Cloud Run, API Key locally)
+- **Animation**: Framer Motion (scroll-triggered animations, carousel, layout transitions)
 - **PDF Export**: html2canvas-pro, jsPDF
 - **Styling**: Tailwind CSS 4
 - **CDN/Security**: Cloudflare (WAF, DDoS, DNS proxy)

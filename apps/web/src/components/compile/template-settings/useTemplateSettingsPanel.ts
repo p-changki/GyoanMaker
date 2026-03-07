@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { resizeImageToBase64 } from "@/lib/imageResize";
+import { useConfirm } from "@/components/ui/ConfirmModal";
 
 export function useTemplateSettingsPanel() {
   const [isSaving, setIsSaving] = useState(false);
@@ -12,6 +13,7 @@ export function useTemplateSettingsPanel() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
+  const { confirm } = useConfirm();
   const setLogoBase64 = useTemplateSettingsStore((s) => s.setLogoBase64);
   const setAvatarBase64 = useTemplateSettingsStore((s) => s.setAvatarBase64);
   const resetToDefaults = useTemplateSettingsStore((s) => s.resetToDefaults);
@@ -71,10 +73,16 @@ export function useTemplateSettingsPanel() {
     }
   }
 
-  function handleResetToDefaults() {
-    if (!window.confirm("모든 설정을 기본값으로 초기화합니다. 계속하시겠습니까?")) return;
+  async function handleResetToDefaults() {
+    const ok = await confirm({
+      title: "Reset to Defaults",
+      message: "All settings will be reset to defaults. Continue?",
+      confirmLabel: "Reset",
+      variant: "danger",
+    });
+    if (!ok) return;
     resetToDefaults();
-    setSaveMessage("기본값으로 초기화되었습니다. 저장 버튼을 눌러 서버에 반영하세요.");
+    setSaveMessage("Reset to defaults. Press Save to apply changes to server.");
     setTimeout(() => setSaveMessage(null), 5000);
   }
 
