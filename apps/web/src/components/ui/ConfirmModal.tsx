@@ -14,7 +14,7 @@ interface ConfirmOptions {
 interface ConfirmContextValue {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
-1
+
 const ConfirmContext = createContext<ConfirmContextValue | null>(null);
 
 export function useConfirm() {

@@ -106,7 +106,7 @@ export function useCompileActions({
 
     navigator.clipboard.writeText(allText);
     toast("Full handout content copied to clipboard.", "success");
-  }, []);
+  }, [toast]);
 
   const handleDownloadTxt = useCallback(() => {
     const sections = useHandoutStore.getState().sections;
@@ -257,7 +257,7 @@ export function useCompileActions({
         setExportProgress({ current: 0, total: 0 });
       }
     },
-    [setExportProgress, setIsExportingPdf]
+    [setExportProgress, setIsExportingPdf, toast]
   );
 
   return {

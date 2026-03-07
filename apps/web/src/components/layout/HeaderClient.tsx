@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -62,11 +62,8 @@ interface HeaderClientProps {
 export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
   const pathname = usePathname();
   const navLinks = isAuth ? AUTH_LINKS : PUBLIC_LINKS;
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const activeTab =
     navLinks.find((l) =>
