@@ -55,8 +55,8 @@ export function formatEta(seconds: number): string {
   const remain = seconds % 60;
 
   if (mins <= 0) {
-    return `${remain}초`;
+    return `${remain}s`;
   }
 
-  return `${mins}분 ${remain}초`;
+  return `${mins}m ${remain}s`;
 }

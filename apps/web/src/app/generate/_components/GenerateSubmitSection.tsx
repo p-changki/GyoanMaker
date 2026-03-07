@@ -33,11 +33,11 @@ export default function GenerateSubmitSection({
               : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.03] active:scale-[0.97] shadow-blue-200"
           }`}
         >
-          {isSubmitting ? "생성 중..." : "교안 생성하기"}
+          {isSubmitting ? "Generating..." : "Generate Handout"}
         </button>
         {passageCount > 20 && (
           <p className="text-sm text-red-500 font-bold bg-red-50 px-4 py-2 rounded-full">
-            지문은 최대 20개까지만 입력 가능합니다.
+            Maximum 20 passages allowed.
           </p>
         )}
         {limitError && (

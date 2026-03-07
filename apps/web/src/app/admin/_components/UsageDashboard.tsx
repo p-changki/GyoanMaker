@@ -41,25 +41,25 @@ export default function UsageDashboard() {
 
   const cards = [
     {
-      label: "오늘 요청",
+      label: "Today Requests",
       value: daily?.totalRequests ?? 0,
-      unit: "회",
-      sub: `${daily?.totalPassages ?? 0} 지문`,
+      unit: "",
+      sub: `${daily?.totalPassages ?? 0} passages`,
     },
     {
-      label: "오늘 토큰",
+      label: "Today Tokens",
       value: ((daily?.totalTokens ?? 0) / 1000).toFixed(1),
       unit: "K",
       sub: `$${(daily?.estimatedCostUsd ?? 0).toFixed(4)}`,
     },
     {
-      label: "이번 달 요청",
+      label: "Monthly Requests",
       value: monthly?.totalRequests ?? 0,
-      unit: "회",
-      sub: `${monthly?.totalPassages ?? 0} 지문`,
+      unit: "",
+      sub: `${monthly?.totalPassages ?? 0} passages`,
     },
     {
-      label: "이번 달 토큰",
+      label: "Monthly Tokens",
       value: ((monthly?.totalTokens ?? 0) / 1000).toFixed(1),
       unit: "K",
       sub: `$${(monthly?.estimatedCostUsd ?? 0).toFixed(4)}`,

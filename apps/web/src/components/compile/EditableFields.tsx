@@ -100,7 +100,7 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
       style={{ fontFamily: "GmarketSans, sans-serif" }}
-      aria-label="헤더 텍스트 편집"
+      aria-label="Edit header text"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
         {customHeaderText}
@@ -175,10 +175,10 @@ export const EditableAnalysisTitle = memo(function EditableAnalysisTitle({
         setIsEditing(true);
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 text-[#5E35B1] font-bold hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
-      aria-label="구문 분석 제목 편집"
+      aria-label="Edit analysis title"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-[#5E35B1]/40 transition-colors">
-        {analysisTitleText} {pageNum > 1 ? "(계속)" : ""}
+        {analysisTitleText} {pageNum > 1 ? "(cont.)" : ""}
       </span>
       <PencilHintIcon className="text-[#5E35B1]/0 group-hover/edit:text-[#5E35B1]/50" />
     </button>
@@ -247,7 +247,7 @@ export const EditableSummaryTitleText = memo(function EditableSummaryTitleText()
         setIsEditing(true);
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
-      aria-label="요약 제목 편집"
+      aria-label="Edit summary title"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
         {summaryTitleText}

@@ -8,6 +8,8 @@ interface PricingGridProps {
   currentPlan?: PlanId;
 }
 
+const PLAN_ORDER: PlanId[] = ["free", "basic", "standard", "pro"];
+
 export default function PricingGrid({ currentPlan }: PricingGridProps) {
   const router = useRouter();
 
@@ -17,23 +19,22 @@ export default function PricingGrid({ currentPlan }: PricingGridProps) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {(Object.entries(PLANS) as Array<[PlanId, (typeof PLANS)[PlanId]]>).map(
-          ([planId, plan]) => (
-            <PricingCard
-              key={planId}
-              planId={planId}
-              plan={plan}
-              currentPlan={currentPlan}
-              recommended={planId === "basic"}
-              onSelect={handleSelect}
-            />
-          )
-        )}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {PLAN_ORDER.map((planId, index) => (
+          <PricingCard
+            key={planId}
+            planId={planId}
+            plan={PLANS[planId]}
+            currentPlan={currentPlan}
+            recommended={planId === "basic"}
+            onSelect={handleSelect}
+            index={index}
+            totalPlans={PLAN_ORDER.length}
+          />
+        ))}
       </div>
       <p className="text-center text-xs text-gray-400">
-        콘텐츠 난이도(상위권/기초)와 관계없이, 선택한 생성 모드에 따라
-        차감됩니다.
+        Usage is deducted based on generation mode, regardless of content difficulty level.
       </p>
     </div>
   );

@@ -92,13 +92,13 @@ export default function PreviewPage() {
   if (!inputData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4">
-        <p className="text-gray-600">입력된 데이터가 없습니다.</p>
+        <p className="text-gray-600">No input data found.</p>
         <button
           type="button"
           onClick={() => router.push("/generate")}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
-          처음으로 돌아가기
+          Go Back
         </button>
       </div>
     );
@@ -113,7 +113,7 @@ export default function PreviewPage() {
               type="button"
               onClick={() => router.push("/results")}
               className="p-2.5 hover:bg-gray-100 rounded-xl transition-all group"
-              aria-label="뒤로 가기"
+              aria-label="Go back"
             >
               <svg
                 className="w-5 h-5 text-gray-600 group-hover:-translate-x-1 transition-transform"
@@ -132,7 +132,7 @@ export default function PreviewPage() {
             </button>
             <div className="flex flex-col">
               <h1 className="text-lg font-black text-gray-900 tracking-tight">
-                인쇄 미리보기
+                Print Preview
               </h1>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 Print Preview
@@ -158,7 +158,7 @@ export default function PreviewPage() {
                 d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
               />
             </svg>
-            PDF 다운로드
+            Download PDF
           </button>
         </div>
       </div>

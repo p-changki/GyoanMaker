@@ -6,7 +6,7 @@ import { isAdmin } from "@/lib/users";
 import { getQuotaStatus, setQuotaLimits } from "@/lib/quota";
 
 /**
- * GET /api/admin/users/[email]/quota — 사용자 쿼타 상태 조회
+ * GET /api/admin/users/[email]/quota — Get user quota status
  */
 export async function GET(
   _req: NextRequest,
@@ -36,7 +36,7 @@ export async function GET(
 }
 
 /**
- * PATCH /api/admin/users/[email]/quota — 사용자 쿼타 한도 수정
+ * PATCH /api/admin/users/[email]/quota — Update user quota limits
  * Body: { flashMonthlyLimit?: number, proMonthlyLimit?: number, storageLimit?: number | null }
  */
 export async function PATCH(
@@ -68,7 +68,7 @@ export async function PATCH(
         error: {
           code: "INVALID_BODY",
           message:
-            "flashMonthlyLimit, proMonthlyLimit, storageLimit 중 하나 이상 필요합니다.",
+            "At least one of flashMonthlyLimit, proMonthlyLimit, storageLimit is required.",
         },
       },
       { status: 400 }

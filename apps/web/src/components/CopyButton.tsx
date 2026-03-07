@@ -13,8 +13,8 @@ interface CopyButtonProps {
 
 export default function CopyButton({
   getText,
-  label = "복사",
-  copiedLabel = "복사됨 ✓",
+  label = "Copy",
+  copiedLabel = "Copied ✓",
   className = "",
   disabled = false,
   onError,

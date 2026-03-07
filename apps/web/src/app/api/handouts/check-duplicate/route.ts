@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
     );
   }
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   if (!body.inputHash || typeof body.inputHash !== "string") {
     return NextResponse.json(
-      { error: { code: "INVALID_BODY", message: "inputHash가 필요합니다." } },
+      { error: { code: "INVALID_BODY", message: "inputHash is required." } },
       { status: 400 }
     );
   }

@@ -79,13 +79,13 @@ export default function ControlPanel({
                 onClick={onApplyTemplate}
                 className="w-full py-4 bg-[#5E35B1] text-white rounded-xl font-black text-sm shadow-xl shadow-purple-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                교안 템플릿 적용
+                Apply Handout Template
               </button>
             )}
             <p className="text-[10px] text-gray-400 font-medium mt-3 text-center leading-relaxed">
-              * AI가 생성한 20개 분석 결과를
+              * Converts AI-generated analysis results
               <br />
-              교안 레이아웃으로 변환합니다.
+              into handout layout format.
             </p>
           </div>
         </section>
@@ -107,10 +107,10 @@ export default function ControlPanel({
               } disabled:opacity-40`}
             >
               {isSaving
-                ? "저장 중..."
+                ? "Saving..."
                 : saveSuccess
-                  ? "저장 완료!"
-                  : "교안 저장"}
+                  ? "Saved!"
+                  : "Save Handout"}
             </button>
           )}
           <button
@@ -119,7 +119,7 @@ export default function ControlPanel({
             disabled={!isReady}
             className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-all shadow-sm"
           >
-            전체 텍스트 복사
+            Copy All Text
           </button>
           <button
             type="button"
@@ -127,7 +127,7 @@ export default function ControlPanel({
             disabled={!isReady}
             className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-all shadow-sm"
           >
-            TXT 다운로드
+            Download TXT
           </button>
         </section>
 
@@ -138,7 +138,7 @@ export default function ControlPanel({
           </p>
           <input
             type="text"
-            placeholder="저장할 파일명 입력 (선택)"
+            placeholder="Enter file name (optional)"
             value={pdfFileName}
             onChange={(e) => setPdfFileName(e.target.value)}
             disabled={!isReady || isExportingPdf}
@@ -153,15 +153,15 @@ export default function ControlPanel({
             {isExportingPdf ? (
               <>
                 <span className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                PDF 추출 중... (잠시만 대기)
+                Exporting PDF... (please wait)
               </>
             ) : (
-              "PDF 다운로드"
+              "Download PDF"
             )}
           </button>
           {isExportingPdf && exportTotal > 0 && (
             <p className="text-[10px] text-gray-400 font-bold text-center">
-              진행도 {exportCurrent} / {exportTotal}
+              Progress {exportCurrent} / {exportTotal}
             </p>
           )}
         </section>

@@ -6,7 +6,7 @@ import { isAdmin } from "@/lib/users";
 import { getUsageSummary, estimateCostUsd } from "@/lib/usageLog";
 
 /**
- * GET /api/admin/usage — 전체 사용량 집계 조회
+ * GET /api/admin/usage — Get aggregated usage stats
  * Query params:
  *   - period: "daily" | "monthly" (default: "daily")
  *   - email: optional user email filter

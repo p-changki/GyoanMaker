@@ -78,13 +78,13 @@ export function useCompileActions({
         }
 
         let text = `【${id}】\n\n`;
-        text += `[문장별 구문 분석 및 해석]\n영어 섹션\n`;
+        text += `[Sentence Analysis & Translation]\nEnglish Section\n`;
         text += `${s.sentences.map((p) => p.en).join("\n")}\n`;
-        text += `한글 섹션\n${s.sentences.map((p) => p.ko).join("\n")}\n\n`;
-        text += `[주제문]\n${s.topic.en}\n${s.topic.ko}\n\n`;
-        text += `[본문 요약]\n${s.summary.en}\n${s.summary.ko}\n\n`;
-        text += `[글의 흐름 4단 정리]\n${s.flow.map((step) => step.text).join("\n")}\n\n`;
-        text += `[핵심 어휘 및 확장]\n`;
+        text += `Korean Section\n${s.sentences.map((p) => p.ko).join("\n")}\n\n`;
+        text += `[Topic Sentence]\n${s.topic.en}\n${s.topic.ko}\n\n`;
+        text += `[Summary]\n${s.summary.en}\n${s.summary.ko}\n\n`;
+        text += `[4-Step Flow]\n${s.flow.map((step) => step.text).join("\n")}\n\n`;
+        text += `[Core Vocabulary & Expansion]\n`;
         text += s.vocabulary
           .map((vocab, index) => {
             const synonyms = vocab.synonyms
@@ -94,7 +94,7 @@ export function useCompileActions({
               .map((entry) => `${entry.word} ${entry.meaning}`.trim())
               .join("\n");
 
-            return `${index + 1}. ${vocab.word} ${vocab.meaning}\n유의어\n${synonyms}\n반의어\n${antonyms}`;
+            return `${index + 1}. ${vocab.word} ${vocab.meaning}\nSynonyms\n${synonyms}\nAntonyms\n${antonyms}`;
           })
           .join("\n\n");
 
@@ -103,7 +103,7 @@ export function useCompileActions({
       .join("\n\n" + "=".repeat(30) + "\n\n");
 
     navigator.clipboard.writeText(allText);
-    alert("전체 교안 내용이 클립보드에 복사되었습니다.");
+    alert("Full handout content copied to clipboard.");
   }, []);
 
   const handleDownloadTxt = useCallback(() => {
@@ -112,7 +112,7 @@ export function useCompileActions({
       .sort()
       .map((id) => {
         const s = sections[id];
-        return `【${id}】\n${s.isParsed ? "" : "(미파싱 원문)\n"}${normalizeRawExportText(s.rawText)}`;
+        return `【${id}】\n${s.isParsed ? "" : "(Unparsed raw text)\n"}${normalizeRawExportText(s.rawText)}`;
       })
       .join("\n\n" + "=".repeat(30) + "\n\n");
 
@@ -136,7 +136,7 @@ export function useCompileActions({
         });
 
       if (exportIds.length === 0) {
-        alert("PDF로 추출할 파싱 완료 지문이 없습니다.");
+        alert("No parsed passages available for PDF export.");
         return;
       }
 
@@ -236,7 +236,7 @@ export function useCompileActions({
         }
 
         if (capturedCount === 0 || !pdf) {
-          alert("PDF로 추출할 섹션을 찾지 못했습니다.");
+          alert("No sections found for PDF export.");
           return;
         }
 
@@ -249,7 +249,7 @@ export function useCompileActions({
         pdf.save(finalFileName);
       } catch (error) {
         console.error("Failed to export PDF", error);
-        alert("PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        alert("Error generating PDF. Please try again.");
       } finally {
         setIsExportingPdf(false);
         setExportProgress({ current: 0, total: 0 });

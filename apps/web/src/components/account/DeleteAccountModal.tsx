@@ -8,7 +8,7 @@ interface DeleteAccountModalProps {
   onConfirm: () => Promise<void>;
 }
 
-const CONFIRM_TEXT = "탈퇴합니다";
+const CONFIRM_TEXT = "DELETE";
 
 export default function DeleteAccountModal({
   open,
@@ -51,9 +51,9 @@ export default function DeleteAccountModal({
             </svg>
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900">계정 탈퇴</h3>
+            <h3 className="text-base font-bold text-gray-900">Delete Account</h3>
             <p className="mt-1 text-sm text-gray-500">
-              탈퇴하면 모든 데이터가 영구 삭제되며 복구할 수 없습니다.
+              This action is permanent and cannot be undone. All your data will be deleted.
             </p>
           </div>
         </div>
@@ -61,18 +61,18 @@ export default function DeleteAccountModal({
         {/* Deleted items */}
         <div className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
           <ul className="list-inside list-disc space-y-1">
-            <li>저장된 교안 전체 삭제</li>
-            <li>사용 내역 및 크레딧 삭제</li>
-            <li>계정 정보 영구 삭제</li>
+            <li>All saved handouts will be deleted</li>
+            <li>Usage history and credits will be removed</li>
+            <li>Account information will be permanently erased</li>
           </ul>
         </div>
 
         {/* Confirmation input */}
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700">
-            확인을 위해{" "}
-            <span className="font-bold text-red-600">{CONFIRM_TEXT}</span>를
-            입력해주세요
+            Type{" "}
+            <span className="font-bold text-red-600">{CONFIRM_TEXT}</span>{" "}
+            to confirm
           </label>
           <input
             type="text"
@@ -95,7 +95,7 @@ export default function DeleteAccountModal({
             disabled={isDeleting}
             className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
-            취소
+            Cancel
           </button>
           <button
             type="button"
@@ -103,7 +103,7 @@ export default function DeleteAccountModal({
             disabled={!canConfirm || isDeleting}
             className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {isDeleting ? "삭제 중..." : "계정 탈퇴"}
+            {isDeleting ? "Deleting..." : "Delete Account"}
           </button>
         </div>
       </div>

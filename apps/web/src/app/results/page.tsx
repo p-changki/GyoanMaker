@@ -35,13 +35,13 @@ export default function ResultsPage() {
   if (!inputData) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 space-y-4">
-        <p className="text-gray-600">입력된 데이터가 없습니다.</p>
+        <p className="text-gray-600">No input data found.</p>
         <button
           type="button"
           onClick={() => router.push("/generate")}
           className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
-          처음으로 돌아가기
+          Go Back
         </button>
       </div>
     );

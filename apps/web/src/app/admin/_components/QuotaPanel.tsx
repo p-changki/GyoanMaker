@@ -37,8 +37,8 @@ export default function QuotaPanel({ email }: { email: string }) {
         fetch(`/api/admin/users/${encodeURIComponent(email)}/quota`),
         fetch(`/api/admin/users/${encodeURIComponent(email)}/subscription`),
       ]);
-      if (!quotaRes.ok) throw new Error("쿼타 조회 실패");
-      if (!subRes.ok) throw new Error("구독 조회 실패");
+      if (!quotaRes.ok) throw new Error("Failed to fetch quota");
+      if (!subRes.ok) throw new Error("Failed to fetch subscription");
 
       const quotaData = await quotaRes.json();
       const subData = await subRes.json();
@@ -49,7 +49,7 @@ export default function QuotaPanel({ email }: { email: string }) {
       setEditPro(String(quotaData.pro.limit));
       setEditStorage(quotaData.storage.limit === null ? "" : String(quotaData.storage.limit));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류");
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -65,15 +65,15 @@ export default function QuotaPanel({ email }: { email: string }) {
     const storageLimit = editStorage.trim().length === 0 ? null : parseInt(editStorage, 10);
 
     if (!Number.isFinite(flashMonthlyLimit) || flashMonthlyLimit < 0) {
-      setSaveMsg("Flash 한도를 올바르게 입력하세요.");
+      setSaveMsg("Please enter a valid Flash limit.");
       return;
     }
     if (!Number.isFinite(proMonthlyLimit) || proMonthlyLimit < 0) {
-      setSaveMsg("Pro 한도를 올바르게 입력하세요.");
+      setSaveMsg("Please enter a valid Pro limit.");
       return;
     }
     if (storageLimit !== null && (!Number.isFinite(storageLimit) || storageLimit < 0)) {
-      setSaveMsg("저장 한도를 올바르게 입력하세요.");
+      setSaveMsg("Please enter a valid storage limit.");
       return;
     }
 
@@ -89,16 +89,16 @@ export default function QuotaPanel({ email }: { email: string }) {
           storageLimit,
         }),
       });
-      if (!res.ok) throw new Error("쿼타 수정 실패");
+      if (!res.ok) throw new Error("Failed to update quota");
       const data = await res.json();
       setQuota(data);
       setEditFlash(String(data.flash.limit));
       setEditPro(String(data.pro.limit));
       setEditStorage(data.storage.limit === null ? "" : String(data.storage.limit));
-      setSaveMsg("저장 완료");
+      setSaveMsg("Saved");
       setTimeout(() => setSaveMsg(null), 2000);
     } catch (err) {
-      setSaveMsg(err instanceof Error ? err.message : "저장 실패");
+      setSaveMsg(err instanceof Error ? err.message : "Save failed");
     } finally {
       setSaving(false);
     }
@@ -113,21 +113,21 @@ export default function QuotaPanel({ email }: { email: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ planId: editPlan }),
       });
-      if (!res.ok) throw new Error("플랜 수정 실패");
+      if (!res.ok) throw new Error("Failed to update plan");
       const data = await res.json();
       setSubscription(data.subscription);
-      setSaveMsg("플랜 저장 완료");
+      setSaveMsg("Plan saved");
       setTimeout(() => setSaveMsg(null), 2000);
       await fetchQuota();
     } catch (err) {
-      setSaveMsg(err instanceof Error ? err.message : "플랜 저장 실패");
+      setSaveMsg(err instanceof Error ? err.message : "Plan save failed");
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="text-xs text-gray-400 py-2">쿼타 로딩 중...</div>;
+    return <div className="text-xs text-gray-400 py-2">Loading quota...</div>;
   }
 
   if (error) {
@@ -141,40 +141,40 @@ export default function QuotaPanel({ email }: { email: string }) {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-gray-50 rounded-lg p-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Flash 사용량
+            Flash Usage
           </p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.flash.used}{" "}
-            <span className="text-gray-400 font-normal">/ {quota.flash.limit}회</span>
+            <span className="text-gray-400 font-normal">/ {quota.flash.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">남은 횟수: {quota.flash.remaining}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Remaining: {quota.flash.remaining}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Pro 사용량
+            Pro Usage
           </p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.pro.used}{" "}
-            <span className="text-gray-400 font-normal">/ {quota.pro.limit}회</span>
+            <span className="text-gray-400 font-normal">/ {quota.pro.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">남은 횟수: {quota.pro.remaining}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Remaining: {quota.pro.remaining}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">저장 슬롯</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Storage Slots</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.storage.used}{" "}
             <span className="text-gray-400 font-normal">
               / {quota.storage.limit === null ? "∞" : quota.storage.limit}
             </span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">플랜: {quota.plan.toUpperCase()}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Plan: {quota.plan.toUpperCase()}</p>
         </div>
       </div>
 
       <div className="flex items-end gap-3">
         <div className="flex-1">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Flash 한도
+            Flash Limit
           </label>
           <input
             type="number"
@@ -185,7 +185,7 @@ export default function QuotaPanel({ email }: { email: string }) {
           />
         </div>
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pro 한도</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pro Limit</label>
           <input
             type="number"
             min="0"
@@ -196,7 +196,7 @@ export default function QuotaPanel({ email }: { email: string }) {
         </div>
         <div className="flex-1">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            저장 한도 (빈값=무제한)
+            Storage Limit (empty=unlimited)
           </label>
           <input
             type="number"
@@ -212,13 +212,13 @@ export default function QuotaPanel({ email }: { email: string }) {
           disabled={saving}
           className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 shrink-0"
         >
-          {saving ? "저장 중..." : "저장"}
+          {saving ? "Saving..." : "Save"}
         </button>
       </div>
 
       <div className="flex items-end gap-3">
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">구독 플랜</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subscription Plan</label>
           <select
             value={editPlan}
             onChange={(e) => setEditPlan(e.target.value as "free" | "basic" | "standard" | "pro")}
@@ -236,18 +236,18 @@ export default function QuotaPanel({ email }: { email: string }) {
           disabled={saving}
           className="px-4 py-2 bg-violet-500 text-white text-xs font-bold rounded-lg hover:bg-violet-600 transition-colors disabled:opacity-50 shrink-0"
         >
-          플랜 저장
+          Save Plan
         </button>
       </div>
 
       {subscription && (
         <p className="text-xs text-gray-500">
-          현재 플랜: <strong>{subscription.tier.toUpperCase()}</strong> ({subscription.status})
+          Current plan: <strong>{subscription.tier.toUpperCase()}</strong> ({subscription.status})
         </p>
       )}
 
       {saveMsg && (
-        <p className={`text-xs font-medium ${saveMsg === "저장 완료" ? "text-green-600" : "text-red-500"}`}>
+        <p className={`text-xs font-medium ${saveMsg === "Saved" || saveMsg === "Plan saved" ? "text-green-600" : "text-red-500"}`}>
           {saveMsg}
         </p>
       )}

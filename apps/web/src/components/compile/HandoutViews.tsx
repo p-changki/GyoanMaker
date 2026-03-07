@@ -120,7 +120,7 @@ export function ParsedHandoutViewPage2({
                 className="text-[13px] font-bold text-white leading-none"
                 style={{ fontFamily: "GmarketSans, sans-serif" }}
               >
-                주제
+                Topic
               </h3>
             </div>
             <div className="pl-1">
@@ -143,7 +143,7 @@ export function ParsedHandoutViewPage2({
                   className="text-[13px] font-bold text-white leading-none"
                   style={{ fontFamily: "GmarketSans, sans-serif" }}
                 >
-                  요약
+                  Summary
                 </h3>
               </div>
               <div className="pl-1">
@@ -166,7 +166,7 @@ export function ParsedHandoutViewPage2({
                 className="text-[13px] font-bold text-white leading-none"
                 style={{ fontFamily: "GmarketSans, sans-serif" }}
               >
-                내용 정리
+                Content Summary
               </h3>
             </div>
             <div className="pl-1 space-y-2">
@@ -190,7 +190,7 @@ export function ParsedHandoutViewPage2({
                 className="text-[13px] font-bold text-white leading-none"
                 style={{ fontFamily: "GmarketSans, sans-serif" }}
               >
-                핵심 어휘
+                Core Vocabulary
               </h3>
             </div>
 
@@ -200,15 +200,15 @@ export function ParsedHandoutViewPage2({
                   className="bg-[#5E35B1] text-white text-[11.5px] font-bold"
                   style={{ fontFamily: "GmarketSans, sans-serif" }}
                 >
-                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">핵심 어휘</th>
-                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">뜻</th>
-                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">유의어</th>
-                  <th className="px-3 py-2 w-[25%]">반의어</th>
+                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">Core Vocabulary</th>
+                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">Meaning</th>
+                  <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">Synonyms</th>
+                  <th className="px-3 py-2 w-[25%]">Antonyms</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
                 {section.vocabulary
-                  .filter((vocab) => vocab.word !== "핵심 어휘 및 확장")
+                  .filter((vocab) => vocab.word !== "Core Vocabulary & Expansion")
                   .map((vocab, index) => (
                     <tr
                       key={`${vocab.word}-${vocab.meaning}`}

@@ -4,13 +4,13 @@ import { createHandout, listHandouts } from "@/lib/handouts";
 import { getQuotaStatus, setStorageUsed } from "@/lib/quota";
 
 /**
- * GET /api/handouts — 내 교안 목록 조회
+ * GET /api/handouts — Get my handout list
  */
 export async function GET() {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
     );
   }
@@ -25,7 +25,7 @@ export async function GET() {
       {
         error: {
           code: "LIST_ERROR",
-          message: "교안 목록 조회에 실패했습니다.",
+          message: "Failed to fetch handout list.",
         },
       },
       { status: 500 }
@@ -34,14 +34,14 @@ export async function GET() {
 }
 
 /**
- * POST /api/handouts — 교안 저장
+ * POST /api/handouts — Save handout
  * Body: { title, sections, level, model, customTexts? }
  */
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
     );
   }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         {
           error: {
             code: "INVALID_BODY",
-            message: "sections 필드가 필요합니다.",
+            message: "sections field is required.",
           },
         },
         { status: 400 }
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
           error: {
             code: "STORAGE_LIMIT_EXCEEDED",
             message:
-              "교안 저장 한도를 초과했습니다. 플랜을 업그레이드해 저장 공간을 늘려주세요.",
+              "Storage limit exceeded. Please upgrade your plan.",
           },
         },
         { status: 403 }
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     const handout = await createHandout({
       ownerEmail: session.user.email,
-      title: title || `교안 ${new Date().toLocaleDateString("ko-KR")}`,
+      title: title || `Handout ${new Date().toLocaleDateString("en-US")}`,
       sections,
       level: level || "advanced",
       model: model || "pro",
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`[api/handouts] Create failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "CREATE_ERROR", message: "교안 저장에 실패했습니다." } },
+      { error: { code: "CREATE_ERROR", message: "Failed to save handout." } },
       { status: 500 }
     );
   }

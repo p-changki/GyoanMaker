@@ -38,7 +38,7 @@ export function useCompileData() {
     gcTime: Infinity,
     queryFn: async () => {
       const res = await fetch(`/api/handouts/${handoutId}`);
-      if (!res.ok) throw new Error("교안을 불러오지 못했습니다.");
+      if (!res.ok) throw new Error("Failed to load handout.");
       const data = await res.json();
 
       const sections: Record<string, HandoutSection> = {};
@@ -109,7 +109,7 @@ export function useCompileData() {
       }
 
       const body = {
-        title: saveTitle.trim() || `교안 ${new Date().toLocaleDateString("ko-KR")}`,
+        title: saveTitle.trim() || `Handout ${new Date().toLocaleDateString("en-US")}`,
         sections,
         level,
         model,
@@ -126,7 +126,7 @@ export function useCompileData() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error("교안 저장에 실패했습니다.");
+      if (!res.ok) throw new Error("Failed to save handout.");
       return res.json();
     },
     onSuccess: () => {
@@ -185,7 +185,7 @@ export function useCompileData() {
     queryFn: async () => {
       const input = inputQuery.data;
       if (!input) {
-        throw new Error("입력 데이터를 찾을 수 없습니다.");
+        throw new Error("Input data not found.");
       }
 
       const compiledKey = `${COMPILED_PREFIX}${input.hash}`;
@@ -217,7 +217,7 @@ export function useCompileData() {
     if (!isExportingPdf) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = "PDF 내보내기가 진행 중입니다. 페이지를 떠나시겠습니까?";
+      e.returnValue = "PDF export is in progress. Are you sure you want to leave?";
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
