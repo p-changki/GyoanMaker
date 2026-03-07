@@ -169,6 +169,87 @@ export const FONT_SIZE_GROUPS: { label: string; keys: (keyof FontSizeConfig)[] }
   { label: "공통 UI",  keys: ["sectionTitle", "headerLogo", "headerBadge", "passageNumber", "sentenceNumber", "summaryBarTitle", "pageFooter"] },
 ];
 
+// --- Phase 1 extensions ---
+
+export interface Page1LayoutConfig {
+  headerVisible: boolean;
+  sentenceColumnRatio: number;    // 0.5 ~ 0.8 (default: 0.65)
+  numberStyle: "padded" | "plain" | "circle";
+  tableOuterBorderWidth: number;  // px (default: 3)
+}
+
+export const DEFAULT_PAGE1_LAYOUT: Page1LayoutConfig = {
+  headerVisible: true,
+  sentenceColumnRatio: 0.65,
+  numberStyle: "padded",
+  tableOuterBorderWidth: 3,
+};
+
+export interface SectionStyleConfig {
+  paddingTop: number;
+  paddingBottom: number;
+  borderStyle: "none" | "solid" | "dashed";
+  borderColor: string;  // "" = theme primary
+  titleColor: string;   // "" = theme primary
+  bgColor: string;      // "" = transparent / default
+  textColor: string;    // "" = #111827
+  fontFamily: FontFamily | "";   // "" = use global setting
+  titleWeight: TitleWeight | ""; // "" = use global setting
+}
+
+export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
+  paddingTop: 0,
+  paddingBottom: 0,
+  borderStyle: "none",
+  borderColor: "",
+  titleColor: "",
+  bgColor: "",
+  textColor: "",
+  fontFamily: "",
+  titleWeight: "",
+};
+
+export type EditableSectionKey = Page2SectionKey | "page1Body" | "page2Header" | "header" | "headerBadge";
+
+export const SECTION_FONT_SIZE_KEYS: Record<EditableSectionKey, (keyof FontSizeConfig)[]> = {
+  header:      ["headerLogo", "passageNumber"],
+  headerBadge: ["headerBadge"],
+  page1Body:   ["analysisEn", "analysisKo", "sentenceNumber"],
+  page2Header: ["summaryBarTitle"],
+  topic:      ["topicEn", "topicKo", "sectionTitle"],
+  summary:    ["summaryEn", "summaryKo", "sectionTitle"],
+  flow:       ["flowText", "sectionTitle"],
+  vocabulary: ["vocabText", "sectionTitle"],
+};
+
+export const EDITABLE_SECTION_LABELS: Record<EditableSectionKey, string> = {
+  header: "헤더",
+  headerBadge: "헤더 배지",
+  page1Body: "문장 테이블",
+  page2Header: "요약바",
+  topic: "주제문",
+  summary: "요약",
+  flow: "내용 정리",
+  vocabulary: "핵심 어휘",
+};
+
+export interface CustomThemeColors {
+  primary: string;
+  primaryDark: string;
+  headerBg: string;
+  sentenceBg: string;
+}
+
+export type VocabColumnLayout = 4 | 3 | 2;
+
+export interface SavedTemplate {
+  id: string;
+  name: string;
+  settings: TemplateSettings;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TemplateSettings {
   academyName: string | null;
   logoBase64: string | null;
@@ -182,6 +263,16 @@ export interface TemplateSettings {
   fontFamily: FontFamily;
   titleWeight: TitleWeight;
   fontSizes: FontSizeConfig;
+  // Phase 1 optional fields
+  page1Layout?: Page1LayoutConfig;
+  headerStyle?: SectionStyleConfig;
+  headerBadgeStyle?: SectionStyleConfig;
+  page1BodyStyle?: SectionStyleConfig;
+  page2HeaderStyle?: SectionStyleConfig;
+  sectionStyles?: Partial<Record<Page2SectionKey, SectionStyleConfig>>;
+  vocabColumnLayout?: VocabColumnLayout;
+  customThemeColors?: CustomThemeColors | null;
+  useCustomTheme?: boolean;
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
