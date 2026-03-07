@@ -14,8 +14,8 @@ import type {
 export type UserStatus = "pending" | "approved" | "rejected";
 
 /**
- * 관리자 이메일 여부 확인
- * ADMIN_EMAILS 환경변수(쉼표 구분)와 비교한다.
+ * Check if email is admin
+ * Compares against ADMIN_EMAILS env var (comma-separated).
  */
 export function isAdmin(email: string | null | undefined): boolean {
   if (!email) return false;
@@ -52,7 +52,7 @@ export interface AppUser {
 const COLLECTION = "users";
 
 /**
- * 사용자 조회 (이메일 기준)
+ * Get user by email
  */
 export async function getUser(email: string): Promise<AppUser | null> {
   const doc = await getDb()
@@ -64,7 +64,7 @@ export async function getUser(email: string): Promise<AppUser | null> {
 }
 
 /**
- * 사용자 상태 조회
+ * Get user status
  */
 export async function getUserStatus(email: string): Promise<UserStatus | null> {
   const user = await getUser(email);
@@ -72,7 +72,7 @@ export async function getUserStatus(email: string): Promise<UserStatus | null> {
 }
 
 /**
- * 최초 로그인 시 자동 등록 (이미 존재하면 스킵)
+ * Auto-register on first login (skip if exists)
  */
 export async function findOrCreateUser(
   email: string,
@@ -139,7 +139,7 @@ export async function findOrCreateUser(
 }
 
 /**
- * 사용자 상태 변경
+ * Update user status
  */
 export async function updateUserStatus(
   email: string,
@@ -154,7 +154,7 @@ export async function updateUserStatus(
 }
 
 /**
- * 사용자 목록 조회 (필터 선택)
+ * Get user list (optional filter)
  */
 export async function listUsers(filterStatus?: UserStatus): Promise<AppUser[]> {
   let query: FirebaseFirestore.Query = getDb().collection(COLLECTION);
@@ -168,7 +168,7 @@ export async function listUsers(filterStatus?: UserStatus): Promise<AppUser[]> {
 }
 
 /**
- * 사용자 삭제
+ * Delete user
  */
 export async function deleteUser(email: string): Promise<void> {
   const key = email.toLowerCase();

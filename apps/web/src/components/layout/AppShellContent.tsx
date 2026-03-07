@@ -17,14 +17,14 @@ export default function AppShellContent({
 }: AppShellContentProps) {
   const pathname = usePathname();
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
-  const isFullWidth = pathname === "/compile" || pathname === "/";
+  const isFullWidth = pathname === "/compile" || pathname === "/" || pathname === "/about";
 
   if (isAuthPage) {
     return <>{children}</>;
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f8f9fc]">
+    <div className="flex min-h-screen flex-col bg-white">
       {header}
       {isFullWidth ? (
         <main className="w-full flex-1">{children}</main>

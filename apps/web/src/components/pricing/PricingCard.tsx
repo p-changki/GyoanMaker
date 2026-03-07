@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "framer-motion";
+import { cn } from "@/lib/cn";
 import type { PlanDefinition, PlanId } from "@gyoanmaker/shared/plans";
 
 interface PricingCardProps {
@@ -8,6 +10,8 @@ interface PricingCardProps {
   currentPlan?: PlanId;
   recommended?: boolean;
   onSelect: (planId: PlanId) => void;
+  index: number;
+  totalPlans: number;
 }
 
 const PLAN_META: Record<
@@ -16,60 +20,60 @@ const PLAN_META: Record<
 > = {
   free: {
     label: "Free",
-    description: "서비스를 처음 체험해보는 분께 적합",
+    description: "Perfect for trying out the service",
     features: [
-      "빠른 생성 10건/월",
-      "정밀 생성 2건/월",
-      "교안 저장 최대 3개",
-      "기본 PDF 내보내기",
+      "10 Speed gen / mo",
+      "2 Precision gen / mo",
+      "Up to 3 handouts",
+      "Basic PDF export",
     ],
   },
   basic: {
     label: "Basic",
-    description: "소규모 학원·과외 선생님을 위한 플랜",
+    description: "For individual tutors & small academies",
     features: [
-      "빠른 생성 250건/월",
-      "정밀 생성 30건/월",
-      "교안 저장 무제한",
-      "PDF 내보내기",
-      "크레딧 충전 가능",
+      "250 Speed gen / mo",
+      "30 Precision gen / mo",
+      "Unlimited storage",
+      "PDF export",
+      "Credit top-up",
     ],
   },
   standard: {
     label: "Standard",
-    description: "중규모 학원의 다과목 운영에 최적",
+    description: "For mid-size academies",
     features: [
-      "빠른 생성 500건/월",
-      "정밀 생성 120건/월",
-      "교안 저장 무제한",
-      "PDF 내보내기",
-      "크레딧 충전 가능",
-      "우선 생성 처리",
+      "500 Speed gen / mo",
+      "120 Precision gen / mo",
+      "Unlimited storage",
+      "PDF export",
+      "Credit top-up",
+      "Priority processing",
     ],
   },
   pro: {
     label: "Pro",
-    description: "대형 학원·프랜차이즈의 대량 생성에 적합",
+    description: "For large academies & franchises",
     features: [
-      "빠른 생성 1,000건/월",
-      "정밀 생성 400건/월",
-      "교안 저장 무제한",
-      "PDF 내보내기",
-      "크레딧 충전 가능",
-      "우선 생성 처리",
+      "1,000 Speed gen / mo",
+      "400 Precision gen / mo",
+      "Unlimited storage",
+      "PDF export",
+      "Credit top-up",
+      "Priority processing",
     ],
   },
 };
 
 function formatPrice(price: number): string {
-  if (price === 0) return "0";
+  if (price === 0) return "Free";
   return price.toLocaleString("ko-KR");
 }
 
 function CheckIcon() {
   return (
     <svg
-      className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
+      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-600"
       viewBox="0 0 20 20"
       fill="currentColor"
     >
@@ -88,86 +92,118 @@ export default function PricingCard({
   currentPlan,
   recommended,
   onSelect,
+  index,
+  totalPlans,
 }: PricingCardProps) {
   const isCurrent = currentPlan === planId;
   const meta = PLAN_META[planId];
+  const isEdge = index === 0 || index === totalPlans - 1;
 
   return (
-    <div
-      className={`relative flex flex-col rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${
-        recommended
-          ? "border-emerald-400 ring-1 ring-emerald-400/30"
-          : "border-gray-200"
-      }`}
+    <motion.div
+      initial={{ y: 50, opacity: 0 }}
+      whileInView={{
+        y: recommended ? -8 : 0,
+        opacity: 1,
+        scale: isEdge ? 0.97 : 1.0,
+      }}
+      viewport={{ once: true }}
+      transition={{
+        duration: 1.2,
+        type: "spring",
+        stiffness: 100,
+        damping: 30,
+        delay: index * 0.1,
+      }}
+      className={cn(
+        "relative flex flex-col rounded-2xl border bg-white p-5 text-center shadow-sm transition-shadow hover:shadow-lg",
+        recommended ? "border-blue-600 border-2 z-10" : "border-gray-200",
+        !recommended && "mt-0 md:mt-4"
+      )}
     >
-      {/* 추천 배지 */}
+      {/* Popular badge */}
       {recommended && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-          <span className="rounded-full bg-emerald-500 px-4 py-1 text-xs font-bold text-white shadow-sm">
-            추천
+        <div className="absolute right-0 top-0 flex items-center rounded-bl-xl rounded-tr-xl bg-blue-600 px-2.5 py-0.5">
+          <svg
+            className="h-3.5 w-3.5 fill-current text-white"
+            viewBox="0 0 24 24"
+          >
+            <title>Popular</title>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          <span className="ml-1 text-xs font-semibold text-white">
+            Popular
           </span>
         </div>
       )}
 
-      <div className="flex flex-1 flex-col p-6 pt-7">
-        {/* 플랜 이름 + 설명 */}
-        <div className="text-center">
-          <h3 className="text-lg font-extrabold text-gray-900">{meta.label}</h3>
-          <p className="mt-1 text-sm text-gray-500">{meta.description}</p>
+      <div className="flex flex-1 flex-col">
+        {/* Plan name */}
+        <p className="text-sm font-semibold text-gray-500">{meta.label}</p>
+
+        {/* Price */}
+        <div className="mt-4 flex items-baseline justify-center gap-1">
+          {plan.price === 0 ? (
+            <span className="text-3xl font-bold tracking-tight text-gray-900">
+              Free
+            </span>
+          ) : (
+            <>
+              <span className="text-xs font-medium text-gray-400">₩</span>
+              <span className="text-3xl font-bold tracking-tight text-gray-900">
+                {formatPrice(plan.price)}
+              </span>
+              <span className="text-xs font-medium text-gray-400">/mo</span>
+            </>
+          )}
         </div>
 
-        {/* 가격 */}
-        <div className="mt-5 text-center">
-          <p className="text-4xl font-extrabold tracking-tight text-gray-900">
-            {formatPrice(plan.price)}
-            <span className="ml-1 text-base font-medium text-gray-400">원</span>
-          </p>
-          <p className="mt-1 text-xs text-gray-400">
-            {plan.price === 0 ? "무료" : "/월 (Vat 별도)"}
-          </p>
-        </div>
+        <p className="mt-1 text-[11px] text-gray-400">
+          {plan.price === 0 ? "No credit card required" : "VAT excluded"}
+        </p>
 
-        {/* 구분선 */}
-        <hr className="my-5 border-gray-100" />
-
-        {/* 피처 리스트 */}
-        <ul className="flex-1 space-y-2.5">
+        {/* Features */}
+        <ul className="mt-5 flex flex-col gap-2">
           {meta.features.map((feature) => (
-            <li
-              key={feature}
-              className="flex items-start gap-2 text-sm text-gray-600"
-            >
+            <li key={feature} className="flex items-start gap-1.5 text-left">
               <CheckIcon />
-              <span>{feature}</span>
+              <span className="text-xs text-gray-600">{feature}</span>
             </li>
           ))}
         </ul>
 
-        {/* 현재 플랜 배지 */}
+        <hr className="my-4 border-gray-100" />
+
+        {/* Current plan badge */}
         {isCurrent && (
-          <div className="mt-4 text-center">
-            <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
-              현재 이용 중
+          <div className="mb-2 text-center">
+            <span className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-600">
+              Current Plan
             </span>
           </div>
         )}
 
-        {/* CTA 버튼 */}
+        {/* CTA */}
         <button
           type="button"
           onClick={() => onSelect(planId)}
-          className={`mt-5 w-full rounded-xl py-2.5 text-sm font-bold transition-colors ${
-            isCurrent
-              ? "border border-gray-200 bg-gray-50 text-gray-400 cursor-default"
-              : recommended
-                ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                : "bg-gray-900 text-white hover:bg-gray-800"
-          }`}
           disabled={isCurrent}
+          className={cn(
+            "mt-auto w-full rounded-xl py-2.5 text-sm font-bold transition-all",
+            isCurrent
+              ? "cursor-default border border-gray-200 bg-gray-50 text-gray-400"
+              : recommended
+                ? "bg-blue-600 text-white hover:bg-blue-700 hover:ring-2 hover:ring-blue-600 hover:ring-offset-1"
+                : "bg-gray-900 text-white hover:bg-gray-800 hover:ring-2 hover:ring-gray-900 hover:ring-offset-1"
+          )}
         >
-          {isCurrent ? "이용 중" : "이 플랜 선택"}
+          {isCurrent ? "Current Plan" : "Get Started"}
         </button>
+
+        <p className="mt-3 text-[11px] leading-4 text-gray-400">
+          {meta.description}
+        </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

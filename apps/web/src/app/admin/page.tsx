@@ -16,10 +16,10 @@ interface AppUser {
 type Tab = "all" | "pending" | "approved" | "rejected";
 
 const TAB_CONFIG: { key: Tab; label: string; color: string }[] = [
-  { key: "all", label: "전체", color: "bg-gray-100 text-gray-700" },
-  { key: "pending", label: "대기 중", color: "bg-amber-100 text-amber-700" },
-  { key: "approved", label: "승인됨", color: "bg-green-100 text-green-700" },
-  { key: "rejected", label: "거부됨", color: "bg-red-100 text-red-700" },
+  { key: "all", label: "All", color: "bg-gray-100 text-gray-700" },
+  { key: "pending", label: "Pending", color: "bg-amber-100 text-amber-700" },
+  { key: "approved", label: "Approved", color: "bg-green-100 text-green-700" },
+  { key: "rejected", label: "Rejected", color: "bg-red-100 text-red-700" },
 ];
 
 const STATUS_BADGE: Record<string, string> = {
@@ -29,9 +29,9 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending: "대기 중",
-  approved: "승인됨",
-  rejected: "거부됨",
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected",
 };
 
 export default function AdminPage() {
@@ -45,12 +45,12 @@ export default function AdminPage() {
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/users");
-      if (!res.ok) throw new Error("사용자 목록을 불러올 수 없습니다");
+      if (!res.ok) throw new Error("Failed to load user list");
       const data = await res.json();
       setUsers(data.users);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "알 수 없는 오류");
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -71,10 +71,10 @@ export default function AdminPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("상태 변경 실패");
+      if (!res.ok) throw new Error("Status update failed");
       await fetchUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "상태 변경 실패");
+      setError(err instanceof Error ? err.message : "Status update failed");
     } finally {
       setUpdating(null);
     }
@@ -97,8 +97,8 @@ export default function AdminPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
       <div>
-        <h1 className="text-3xl font-extrabold text-gray-900">사용자 관리</h1>
-        <p className="mt-1 text-gray-500">사용자 승인 및 쿼타를 관리합니다</p>
+        <h1 className="text-3xl font-extrabold text-gray-900">User Management</h1>
+        <p className="mt-1 text-gray-500">Manage user approvals and quotas</p>
       </div>
 
       <UsageDashboard />
@@ -130,11 +130,11 @@ export default function AdminPage() {
       {loading ? (
         <div className="text-center py-16 text-gray-400">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-3" />
-          불러오는 중...
+          Loading...
         </div>
       ) : filteredUsers.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          {activeTab === "pending" ? "대기 중인 사용자가 없습니다" : "해당 상태의 사용자가 없습니다"}
+          {activeTab === "pending" ? "No pending users" : "No users with this status"}
         </div>
       ) : (
         <div className="space-y-3">
@@ -149,10 +149,10 @@ export default function AdminPage() {
                     {(user.name ?? user.email)[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{user.name ?? "이름 없음"}</p>
+                    <p className="font-semibold text-gray-900 truncate">{user.name ?? "No name"}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {new Date(user.createdAt).toLocaleDateString("ko-KR")}
+                      {new Date(user.createdAt).toLocaleDateString("en-US")}
                     </p>
                   </div>
                 </div>
@@ -174,7 +174,7 @@ export default function AdminPage() {
                           onClick={() => handleStatusChange(user.email, "approved")}
                           className="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors"
                         >
-                          승인
+                          Approve
                         </button>
                       )}
                       {user.status !== "rejected" && (
@@ -183,7 +183,7 @@ export default function AdminPage() {
                           onClick={() => handleStatusChange(user.email, "rejected")}
                           className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
                         >
-                          거부
+                          Reject
                         </button>
                       )}
                       <button
@@ -195,7 +195,7 @@ export default function AdminPage() {
                             : "bg-gray-50 text-gray-500 hover:bg-gray-100"
                         }`}
                       >
-                        쿼타
+                        Quota
                       </button>
                     </div>
                   )}

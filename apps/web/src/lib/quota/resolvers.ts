@@ -380,7 +380,7 @@ export function buildPersistPayload(state: NormalizedUserState) {
     plan: state.plan,
     quota: {
       ...state.quota,
-      // Legacy compatibility fields (P1 migration 이전 경로 보호)
+      // Legacy compatibility fields (P1 migration legacy path protection)
       dailyLimit: DEFAULT_QUOTA.dailyLimit,
       monthlyLimit: Math.max(
         state.quota.flash.monthlyLimit,

@@ -32,21 +32,21 @@ export function useGenerationNotifications({
 
     if (failedCount > 0) {
       setToast({
-        message: `교안 생성 완료 (${completedCount}건 성공, ${failedCount}건 실패)`,
+        message: `Handout generation complete (${completedCount} succeeded, ${failedCount} failed)`,
         type: "error",
       });
-      sendBrowserNotification("교안 생성 완료", {
-        body: `${completedCount}건 성공, ${failedCount}건 실패`,
+      sendBrowserNotification("Handout Generation Complete", {
+        body: `${completedCount} succeeded, ${failedCount} failed`,
       });
       return;
     }
 
     setToast({
-      message: `교안 ${completedCount}건 생성이 완료되었습니다!`,
+      message: `${completedCount} handout(s) generated successfully!`,
       type: "success",
     });
-    sendBrowserNotification("교안 생성 완료", {
-      body: `${completedCount}건 생성이 완료되었습니다!`,
+    sendBrowserNotification("Handout Generation Complete", {
+      body: `${completedCount} handout(s) generated!`,
     });
   }, [hasNotifiedRef, hasStartedRef, results, setToast]);
 }

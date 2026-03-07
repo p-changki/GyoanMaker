@@ -32,7 +32,7 @@ export default function ResultActions({
           disabled={isCancelling}
           className="inline-flex items-center justify-center px-4 py-2 text-xs font-black text-white bg-red-500 rounded-xl hover:bg-red-600 disabled:opacity-60 disabled:hover:bg-red-500 transition-all"
         >
-          {isCancelling ? "중단 중..." : "생성 중단"}
+          {isCancelling ? "Stopping..." : "Stop Generation"}
         </button>
       )}
 
@@ -43,7 +43,7 @@ export default function ResultActions({
             .map((r) => `【${r.id}】\n${normalizeHandoutRawText(r.outputText)}`)
             .join("\n\n---\n\n")
         }
-        label="전체 복사"
+        label="Copy All"
         className="bg-white border-gray-200 hover:border-gray-300 shadow-sm rounded-xl font-bold text-xs h-9 px-4"
         disabled={completed === 0}
       />
@@ -55,7 +55,7 @@ export default function ResultActions({
           disabled={generating > 0}
           className="inline-flex items-center justify-center px-4 py-2 text-xs font-black text-white bg-amber-500 rounded-xl hover:bg-amber-600 disabled:opacity-60 disabled:hover:bg-amber-500 transition-all"
         >
-          실패한 것만 재시도 ({failed})
+          Retry Failed ({failed})
         </button>
       )}
 
@@ -76,14 +76,14 @@ export default function ResultActions({
           strokeLinejoin="round"
           className="mr-2"
         >
-          <title>합본 교안 작성 아이콘</title>
+          <title>Compile handout icon</title>
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
           <line x1="16" y1="17" x2="8" y2="17" />
           <polyline points="10 9 9 9 8 9" />
         </svg>
-        합본 교안 작성
+        Compile Handout
       </button>
     </div>
   );

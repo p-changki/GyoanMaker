@@ -87,7 +87,7 @@ const SectionNavItem = memo(function SectionNavItem({
           {id}
         </span>
         <span className="text-sm font-bold tracking-tight">
-          지문 {id.slice(1)}
+          Passage {id.slice(1)}
         </span>
       </div>
 

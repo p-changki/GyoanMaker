@@ -154,7 +154,7 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
         onClick={() => setIsOpen(true)}
         className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
         style={{ fontFamily: "GmarketSans, sans-serif" }}
-        aria-label="헤더 텍스트 편집"
+        aria-label="Edit header text"
       >
         <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
           {customHeaderText}
@@ -163,7 +163,7 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
       </button>
       {isOpen && (
         <EditFieldModal
-          label="헤더 텍스트"
+          label="Header text"
           value={customHeaderText}
           maxLength={40}
           themeColor={themeColor}
@@ -205,16 +205,16 @@ export const EditableAnalysisTitle = memo(function EditableAnalysisTitle({
         onClick={() => setIsOpen(true)}
         className="group/edit bg-transparent border-0 p-0 m-0 font-bold hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
         style={{ color: "inherit" }}
-        aria-label="구문 분석 제목 편집"
+        aria-label="Edit analysis title"
       >
         <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
-          {analysisTitleText} {pageNum > 1 ? "(계속)" : ""}
+          {analysisTitleText} {pageNum > 1 ? "(cont.)" : ""}
         </span>
         <PencilHintIcon className="opacity-0 group-hover/edit:opacity-50" />
       </button>
       {isOpen && (
         <EditFieldModal
-          label="구문 분석 제목"
+          label="Analysis title"
           value={analysisTitleText}
           maxLength={80}
           themeColor={themeColor}
@@ -251,7 +251,7 @@ export const EditableSummaryTitleText = memo(function EditableSummaryTitleText()
         type="button"
         onClick={() => setIsOpen(true)}
         className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
-        aria-label="요약 제목 편집"
+        aria-label="Edit summary title"
       >
         <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
           {summaryTitleText}
@@ -260,7 +260,7 @@ export const EditableSummaryTitleText = memo(function EditableSummaryTitleText()
       </button>
       {isOpen && (
         <EditFieldModal
-          label="요약 제목"
+          label="Summary title"
           value={summaryTitleText}
           maxLength={40}
           themeColor={themeColor}

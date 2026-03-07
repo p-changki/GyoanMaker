@@ -14,7 +14,7 @@ export default function ProgressBar({
   return (
     <div className={`w-full space-y-1.5 ${className}`}>
       <div className="flex justify-between items-center text-xs font-medium text-gray-500">
-        <span>생성 진행률</span>
+        <span>Generation Progress</span>
         <span>{percentage}% ({completed}/{total})</span>
       </div>
       <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">

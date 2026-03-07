@@ -9,8 +9,8 @@ import { getFirestore, type Firestore } from "firebase-admin/firestore";
 let _db: Firestore | null = null;
 
 /**
- * Firestore 인스턴스를 lazy하게 초기화하여 반환.
- * 빌드 시점에 환경변수가 없어도 에러가 발생하지 않도록 한다.
+ * Lazy-initialize and return Firestore instance.
+ * Prevents errors when env vars are missing at build time.
  */
 export function getDb(): Firestore {
   if (_db) return _db;
@@ -21,7 +21,7 @@ export function getDb(): Firestore {
 
   if (!projectId || !clientEmail || !privateKey) {
     throw new Error(
-      "Firebase Admin 환경변수가 설정되지 않았습니다: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY"
+      "Firebase Admin env vars not set: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY"
     );
   }
 
@@ -38,6 +38,6 @@ export function getDb(): Firestore {
     return _db;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Firebase Admin 초기화 실패: ${message}`);
+    throw new Error(`Firebase Admin initialization failed: ${message}`);
   }
 }

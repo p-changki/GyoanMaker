@@ -106,7 +106,7 @@ export function useChunkGeneration() {
           prev,
           successMap,
           failedSet,
-          progress.errorMessage || "생성에 실패했습니다."
+          progress.errorMessage || "Generation failed."
         )
       );
     },
@@ -209,10 +209,10 @@ export function useChunkGeneration() {
           return;
         }
 
-        setResults((prev) => markIndexesFailed(prev, pendingSet, "결과를 찾을 수 없습니다.", true));
+        setResults((prev) => markIndexesFailed(prev, pendingSet, "Results not found.", true));
         setApiError(
           response.failed.length > 0
-            ? `일부 지문 생성에 실패했습니다. 실패한 항목만 재시도하세요. (${response.failed.length}개)`
+            ? `Some passages failed. Please retry the failed items. (${response.failed.length} item(s))`
             : null
         );
         setEtaSeconds(null);
@@ -227,9 +227,9 @@ export function useChunkGeneration() {
         const aborted = requestError.name === "AbortError";
         const message = aborted
           ? isCancellingRef.current
-            ? "생성이 취소되었습니다."
-            : "요청이 취소되었습니다."
-          : requestError.message || "알 수 없는 오류";
+            ? "Generation was cancelled."
+            : "Request was cancelled."
+          : requestError.message || "Unknown error";
 
         setApiError(message);
         setResults((prev) => markIndexesFailed(prev, pendingSet, message, true));

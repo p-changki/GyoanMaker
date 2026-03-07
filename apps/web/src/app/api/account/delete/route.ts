@@ -26,7 +26,7 @@ export async function DELETE() {
   } catch (err) {
     console.error("[account/delete] Failed:", err);
     return NextResponse.json(
-      { error: "계정 삭제 중 오류가 발생했습니다." },
+      { error: "Error occurred while deleting account." },
       { status: 500 }
     );
   }

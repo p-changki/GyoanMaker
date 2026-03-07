@@ -7,7 +7,7 @@ export async function GET() {
 
   if (!session?.user?.email) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
     );
   }
@@ -41,7 +41,7 @@ export async function GET() {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`[api/quota] Failed to get quota: ${message}`);
     return NextResponse.json(
-      { error: { code: "QUOTA_ERROR", message: "쿼타 조회에 실패했습니다." } },
+      { error: { code: "QUOTA_ERROR", message: "Failed to fetch quota." } },
       { status: 500 }
     );
   }

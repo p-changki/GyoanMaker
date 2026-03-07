@@ -87,7 +87,7 @@ export function useChunkGenerationActions({
           persistCachedResults();
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "알 수 없는 오류";
+        const message = error instanceof Error ? error.message : "Unknown error";
         setResults((prev) => {
           const next = [...prev];
           next[index] = {
@@ -165,15 +165,15 @@ export function useChunkGenerationActions({
         }
       );
 
-      setResults((prev) => markIndexesFailed(prev, retrySet, "결과를 찾을 수 없습니다.", false));
+      setResults((prev) => markIndexesFailed(prev, retrySet, "Results not found.", false));
 
       if (response.failed.length > 0) {
-        setApiError(`재시도 후에도 실패한 지문이 있습니다. (${response.failed.length}개)`);
+        setApiError(`Some passages still failed after retry. (${response.failed.length} item(s))`);
       } else {
         setApiError(null);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "알 수 없는 오류";
+      const message = error instanceof Error ? error.message : "Unknown error";
       setApiError(message);
       setResults((prev) => markIndexesFailed(prev, retrySet, message, true));
     } finally {

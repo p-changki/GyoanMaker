@@ -22,13 +22,13 @@ export default function MockPaymentModal({
   return (
     <div className="fixed inset-0 z-[80] bg-black/40 px-4 py-8">
       <div className="mx-auto max-w-md rounded-2xl bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-gray-900">Mock 결제</h3>
+        <h3 className="text-lg font-bold text-gray-900">Mock Payment</h3>
         <p className="mt-2 text-sm text-gray-600">{title}</p>
         <p className="mt-3 text-2xl font-extrabold text-gray-900">
-          ₩{amount.toLocaleString("ko-KR")}
+          ₩{amount.toLocaleString()}
         </p>
         <p className="mt-2 text-xs text-gray-400">
-          실제 결제는 발생하지 않으며 테스트 성공 응답만 반환됩니다.
+          No actual payment will be processed. This is a test response only.
         </p>
 
         <div className="mt-6 flex items-center gap-2 justify-end">
@@ -38,7 +38,7 @@ export default function MockPaymentModal({
             onClick={onClose}
             disabled={processing}
           >
-            취소
+            Cancel
           </button>
           <button
             type="button"
@@ -46,7 +46,7 @@ export default function MockPaymentModal({
             onClick={onConfirm}
             disabled={processing}
           >
-            {processing ? "결제 중..." : "결제 진행"}
+            {processing ? "Processing..." : "Proceed"}
           </button>
         </div>
       </div>
