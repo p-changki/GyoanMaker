@@ -101,6 +101,7 @@ export interface CreditEntry {
   remaining: number;
   purchasedAt: string;
   expiresAt: string;
+  orderId?: string;
 }
 
 export interface UserQuota {

@@ -1,12 +1,9 @@
 "use client";
 
-import { TOP_UP_PACKAGES, type TopUpPackageId } from "@gyoanmaker/shared/plans";
+import { TOP_UP_PACKAGES } from "@gyoanmaker/shared/plans";
+import TossPaymentButton from "@/components/billing/TossPaymentButton";
 
-interface TopUpPanelProps {
-  onSelectPackage: (packageId: TopUpPackageId) => void;
-}
-
-export default function TopUpPanel({ onSelectPackage }: TopUpPanelProps) {
+export default function TopUpPanel() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <h3 className="text-base font-bold text-gray-900">Top Up Credits</h3>
@@ -23,13 +20,14 @@ export default function TopUpPanel({ onSelectPackage }: TopUpPanelProps) {
             <p className="mt-1 text-base font-bold text-gray-900">
               ₩{pkg.price.toLocaleString()}
             </p>
-            <button
-              type="button"
-              className="mt-3 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
-              onClick={() => onSelectPackage(pkg.id)}
-            >
-              Top Up
-            </button>
+            <div className="mt-3">
+              <TossPaymentButton
+                type="topup"
+                packageId={pkg.id}
+                label="Top Up"
+                className="w-full"
+              />
+            </div>
           </div>
         ))}
       </div>

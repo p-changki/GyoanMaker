@@ -16,6 +16,7 @@
     "@gyoanmaker/shared": "workspace:*",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "@tosspayments/tosspayments-sdk": "^2.5.0",
     "clsx": "^2.1.1",
     "firebase-admin": "^13.7.0",
     "framer-motion": "^12.35.0",

@@ -3,6 +3,22 @@ export type PlanStatus = "active" | "past_due" | "canceled";
 export type PaymentMethod = "mock" | "toss";
 export type QuotaModel = "flash" | "pro";
 export type TopUpPackageId = "flash_50" | "flash_100" | "pro_20" | "pro_50";
+export type OrderType = "subscription" | "topup";
+export type OrderStatus = "pending" | "confirmed" | "failed" | "paid_not_applied";
+
+export interface PendingOrder {
+  orderId: string;
+  email: string;
+  type: OrderType;
+  planId?: PlanId;
+  packageId?: TopUpPackageId;
+  amount: number;
+  orderName: string;
+  status: OrderStatus;
+  createdAt: string;
+  confirmedAt?: string;
+  paymentKey?: string;
+}
 
 export interface PlanDefinition {
   flashLimit: number;
