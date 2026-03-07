@@ -16,8 +16,15 @@ export default function BillingSummary() {
 
   useEffect(() => {
     fetch("/api/admin/billing/summary")
-      .then((r) => r.json())
-      .then((d) => setData(d))
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to fetch");
+        return r.json();
+      })
+      .then((d) => {
+        if (typeof d.monthlyRevenue === "number") {
+          setData(d);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
