@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash, timingSafeEqual } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase-admin";
@@ -22,7 +22,8 @@ interface WebhookPayload {
 function isValidWebhookAuthHeader(header: string | null): boolean {
   const secret = process.env.TOSS_SECRET_KEY?.trim();
   if (!secret) {
-    return true;
+    console.error("[webhook] TOSS_SECRET_KEY is not configured — rejecting request (fail-closed)");
+    return false;
   }
 
   if (!header || !header.startsWith("Basic ")) {
@@ -31,7 +32,13 @@ function isValidWebhookAuthHeader(header: string | null): boolean {
 
   const token = header.replace("Basic ", "").trim();
   const expected = Buffer.from(`${secret}:`).toString("base64");
-  return token === expected;
+
+  const tokenBuf = Buffer.from(token);
+  const expectedBuf = Buffer.from(expected);
+  if (tokenBuf.length !== expectedBuf.length) {
+    return false;
+  }
+  return timingSafeEqual(tokenBuf, expectedBuf);
 }
 
 function resolveEventId(rawBody: string, payload: WebhookPayload): string {

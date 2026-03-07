@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { cn } from "@/lib/cn";
+import { createCustomerKey } from "@/lib/toss-utils";
 import { type PlanId, type TopUpPackageId } from "@gyoanmaker/shared/plans";
 
 interface CheckoutInitResponse {
@@ -26,19 +27,6 @@ interface TossPaymentButtonProps {
   label: string;
   className?: string;
   disabled?: boolean;
-}
-
-function createCustomerKey(email: string | null | undefined): string {
-  if (!email) {
-    return "user_unknown";
-  }
-
-  const normalized = email
-    .toLowerCase()
-    .replace(/[^a-z0-9@._=-]/g, "_")
-    .slice(0, 44);
-
-  return `u_${normalized}`;
 }
 
 function resolveErrorMessage(payload: unknown, fallback: string): string {

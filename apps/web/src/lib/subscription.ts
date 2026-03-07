@@ -11,6 +11,7 @@ import {
 import type { CreditEntry, UserCredits, UserPlan } from "@gyoanmaker/shared/types";
 
 const COLLECTION = "users";
+const PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface UserDocLike {
   plan?: UserPlan;
@@ -54,28 +55,26 @@ function normalizeCredits(doc: UserDocLike): UserCredits {
   };
 }
 
-function upsertPlanLimits(doc: UserDocLike, targetPlan: PlanId) {
-  const target = PLANS[targetPlan];
-  const flashUsed = Math.min(
-    target.flashLimit,
-    Math.max(0, Math.floor(doc.quota?.flash?.used ?? 0))
-  );
-  const proUsed = Math.min(
-    target.proLimit,
-    Math.max(0, Math.floor(doc.quota?.pro?.used ?? 0))
-  );
-  const monthKeyKst = doc.quota?.flash?.monthKeyKst ?? doc.quota?.pro?.monthKeyKst ?? "";
+function buildPeriodEnd(startIso: string): string {
+  return new Date(new Date(startIso).getTime() + PERIOD_MS).toISOString();
+}
 
+function upsertPlanLimits(
+  doc: UserDocLike,
+  targetPlan: PlanId,
+  periodKey: string
+) {
+  const target = PLANS[targetPlan];
   return {
     flash: {
       monthlyLimit: target.flashLimit,
-      used: flashUsed,
-      monthKeyKst,
+      used: 0,
+      monthKeyKst: periodKey,
     },
     pro: {
       monthlyLimit: target.proLimit,
-      used: proUsed,
-      monthKeyKst,
+      used: 0,
+      monthKeyKst: periodKey,
     },
     storageLimit: target.storageLimit,
     storageUsed: Math.max(0, Math.floor(doc.quota?.storageUsed ?? 0)),
@@ -109,6 +108,7 @@ export async function changePlan(
     const currentPrice = PLANS[currentPlan.tier].price;
     const targetPrice = PLANS[targetPlan].price;
     const now = getNowIso();
+    const periodKey = now.slice(0, 10);
 
     if (options.forceImmediate || targetPrice >= currentPrice) {
       const resolvedPaymentMethod =
@@ -121,7 +121,7 @@ export async function changePlan(
         tier: targetPlan,
         status: "active",
         currentPeriodStartAt: now,
-        currentPeriodEndAt: null,
+        currentPeriodEndAt: targetPlan === "free" ? null : buildPeriodEnd(now),
         paymentMethod: resolvedPaymentMethod,
       };
 
@@ -130,7 +130,7 @@ export async function changePlan(
         {
           plan: nextPlan,
           planPendingTier: FieldValue.delete(),
-          quota: upsertPlanLimits(data, targetPlan),
+          quota: upsertPlanLimits(data, targetPlan, periodKey),
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -139,8 +139,7 @@ export async function changePlan(
     }
 
     const nextPeriodEnd =
-      currentPlan.currentPeriodEndAt ??
-      new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      currentPlan.currentPeriodEndAt ?? buildPeriodEnd(currentPlan.currentPeriodStartAt);
     const scheduledPlan: UserPlan = {
       ...currentPlan,
       currentPeriodEndAt: nextPeriodEnd,
@@ -201,20 +200,141 @@ export async function addTopUpCredits(
   });
 }
 
-export async function cancelSubscription(email: string): Promise<void> {
+export async function cancelSubscription(email: string): Promise<UserPlan> {
   const key = email.toLowerCase();
-  await getDb()
-    .collection(COLLECTION)
-    .doc(key)
-    .set(
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = (snap.data() ?? {}) as UserDocLike;
+    const currentPlan = normalizePlan(data);
+
+    if (currentPlan.tier === "free") {
+      return currentPlan;
+    }
+
+    if (currentPlan.status === "canceled") {
+      return currentPlan;
+    }
+
+    const periodEnd =
+      currentPlan.currentPeriodEndAt ?? buildPeriodEnd(currentPlan.currentPeriodStartAt);
+
+    const canceledPlan: UserPlan = {
+      ...currentPlan,
+      status: "canceled",
+      currentPeriodEndAt: periodEnd,
+    };
+
+    tx.set(
+      docRef,
       {
-        plan: {
-          status: "canceled",
-          currentPeriodEndAt:
-            new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        },
+        plan: canceledPlan,
+        planPendingTier: "free",
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
+
+    return canceledPlan;
+  });
+}
+
+
+export async function renewSubscription(email: string): Promise<UserPlan> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = (snap.data() ?? {}) as UserDocLike;
+    const currentPlan = normalizePlan(data);
+
+    if (currentPlan.tier === "free") {
+      return currentPlan;
+    }
+
+    const now = getNowIso();
+    const periodKey = now.slice(0, 10);
+
+    const renewedPlan: UserPlan = {
+      tier: currentPlan.tier,
+      status: "active",
+      currentPeriodStartAt: now,
+      currentPeriodEndAt: buildPeriodEnd(now),
+      paymentMethod: currentPlan.paymentMethod,
+    };
+
+    tx.set(
+      docRef,
+      {
+        plan: renewedPlan,
+        quota: upsertPlanLimits(data, currentPlan.tier, periodKey),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return renewedPlan;
+  });
+}
+
+export async function markPlanPastDue(email: string): Promise<UserPlan> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = (snap.data() ?? {}) as UserDocLike;
+    const currentPlan = normalizePlan(data);
+
+    if (currentPlan.tier === "free") {
+      return currentPlan;
+    }
+
+    const pastDuePlan: UserPlan = {
+      ...currentPlan,
+      status: "past_due",
+    };
+
+    tx.set(
+      docRef,
+      {
+        plan: pastDuePlan,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return pastDuePlan;
+  });
+}
+
+export interface SubscriptionExtended {
+  subscription: UserPlan;
+  planPendingTier: PlanId | null;
+  createdAt: string | null;
+  credits: { flash: CreditEntry[]; pro: CreditEntry[] };
+}
+
+export async function getSubscriptionExtended(
+  email: string
+): Promise<SubscriptionExtended> {
+  const key = email.toLowerCase();
+  const snap = await getDb().collection(COLLECTION).doc(key).get();
+  const data = (snap.data() ?? {}) as UserDocLike & {
+    planPendingTier?: PlanId;
+    createdAt?: string;
+  };
+
+  const subscription = normalizePlan(data);
+  const credits = normalizeCredits(data);
+  const planPendingTier =
+    typeof data.planPendingTier === "string" && data.planPendingTier in PLANS
+      ? (data.planPendingTier as PlanId)
+      : null;
+  const createdAt =
+    typeof data.createdAt === "string" ? data.createdAt : null;
+
+  return { subscription, planPendingTier, createdAt, credits };
 }

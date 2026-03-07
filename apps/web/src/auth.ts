@@ -1,6 +1,8 @@
+import { headers } from "next/headers";
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
 import { findOrCreateUser, getUserStatus } from "@/lib/users";
+import { signInLimiter } from "@/lib/rate-limit";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -8,6 +10,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...authConfig.callbacks,
     async signIn({ user }) {
       if (!user.email) return false;
+
+      const hdrs = await headers();
+      const ip = hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+      if (!signInLimiter.check(ip)) {
+        return false;
+      }
+
       await findOrCreateUser(user.email, user.name ?? null, user.image ?? null);
       return true;
     },

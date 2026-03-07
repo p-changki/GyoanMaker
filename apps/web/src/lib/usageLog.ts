@@ -114,3 +114,77 @@ export function estimateCostUsd(
     (outputTokens / 1_000_000) * TOKEN_PRICING.outputPerMillion
   );
 }
+
+// ── User Usage Logs ────────────────────────────────────
+
+export interface UsageLogRow {
+  requestId: string;
+  model: string;
+  level: string;
+  passageCount: number;
+  totalTokens: number;
+  createdAt: string;
+}
+
+interface RawUsageLog {
+  requestId?: string;
+  model?: string;
+  level?: string;
+  passageCount?: number;
+  totalTokens?: number;
+  createdAt?: { toDate?: () => Date } | string;
+}
+
+function toIsoFromTimestamp(
+  value: { toDate?: () => Date } | string | undefined
+): string {
+  if (!value) return new Date().toISOString();
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && typeof value.toDate === "function") {
+    return value.toDate().toISOString();
+  }
+  return new Date().toISOString();
+}
+
+export interface UserUsageLogsResult {
+  logs: UsageLogRow[];
+  summary: { totalRequests: number; totalPassages: number };
+}
+
+export async function getUserUsageLogs(
+  email: string,
+  limit: number
+): Promise<UserUsageLogsResult> {
+  const key = email.toLowerCase();
+  const db = getDb();
+
+  const snap = await db
+    .collection(COLLECTION)
+    .where("email", "==", key)
+    .orderBy("createdAt", "desc")
+    .limit(limit)
+    .get();
+
+  let totalPassages = 0;
+  const logs: UsageLogRow[] = snap.docs.map((doc) => {
+    const data = doc.data() as RawUsageLog;
+    const passageCount =
+      typeof data.passageCount === "number" ? data.passageCount : 0;
+    totalPassages += passageCount;
+
+    return {
+      requestId: data.requestId ?? doc.id,
+      model: typeof data.model === "string" ? data.model : "unknown",
+      level: typeof data.level === "string" ? data.level : "unknown",
+      passageCount,
+      totalTokens:
+        typeof data.totalTokens === "number" ? data.totalTokens : 0,
+      createdAt: toIsoFromTimestamp(data.createdAt),
+    };
+  });
+
+  return {
+    logs,
+    summary: { totalRequests: logs.length, totalPassages },
+  };
+}
