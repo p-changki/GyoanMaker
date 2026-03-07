@@ -8,6 +8,29 @@ Users sign in via **Google OAuth** and must be **approved by an admin** before a
 
 **Live**: [https://gyoan-maker.store](https://gyoan-maker.store) (Cloudflare → Vercel)
 
+## Why GyoanMaker?
+
+### The Problem
+
+Academy instructors spend **2–3 hours per passage** manually crafting handouts: sentence-by-sentence analysis, vocabulary tables with synonyms/antonyms, topic summaries, and pixel-perfect formatting — all before a single student walks through the door.
+
+Multiply that by 5–10 passages per week, and handout preparation becomes the biggest time sink in an instructor's workflow.
+
+### The Solution
+
+GyoanMaker automates the entire pipeline. Paste a passage, click **Generate**, and receive a **print-ready PDF handout in under 30 seconds** — formatted exactly like a real academy-distributed document.
+
+### What Makes It Different
+
+| | Manual | GyoanMaker |
+|---|---|---|
+| **Time per passage** | 2–3 hours | ~30 seconds |
+| **Sentence analysis** | Hand-typed | AI-generated (Gemini 2.5 Pro/Flash) |
+| **Vocabulary table** | Copy-paste from dictionaries | Auto-extracted with CEFR-level synonyms/antonyms |
+| **Summary & flow** | Written from scratch | AI-structured 4-step flow + bilingual summary |
+| **PDF formatting** | Manual layout in Word/HWP | Pixel-perfect, auto-formatted, one-click export |
+| **Customization** | Start over | Live editing with template settings |
+
 ## Screenshots
 
 |          1. Landing Page           |       2. AI Analysis & Parsing        |         3. PDF Compile & Export         |
@@ -143,6 +166,29 @@ Google Gemini 2.5 Pro / Flash를 활용하여 영어 지문을 분석하고, 실
 **Google OAuth**로 로그인하고, 관리자 승인을 받은 사용자만 서비스를 이용할 수 있습니다. 공개 랜딩 페이지에서 서비스 소개를 확인할 수 있습니다.
 
 **운영 URL**: [https://gyoan-maker.store](https://gyoan-maker.store) (Cloudflare → Vercel)
+
+## 왜 GyoanMaker인가?
+
+### 문제
+
+학원 강사는 지문 한 개당 **2~3시간**을 수작업으로 교안을 만드는 데 씁니다 — 문장별 분석, 유의어/반의어가 포함된 어휘 테이블, 토픽 요약, 그리고 픽셀 단위의 레이아웃 포맷팅까지. 수업 하나 시작하기도 전에 말입니다.
+
+이걸 주당 5~10개 지문씩 반복하면, 교안 작성은 강사 업무에서 가장 큰 시간 소모 요인이 됩니다.
+
+### 해결
+
+GyoanMaker는 이 전체 파이프라인을 자동화합니다. 지문을 붙여넣고 **Generate** 버튼을 누르면, **30초 이내에 인쇄 가능한 PDF 교안**이 — 실제 학원 배포 문서와 동일한 포맷으로 완성됩니다.
+
+### 차별점
+
+| | 수작업 | GyoanMaker |
+| --- | --- | --- |
+| **지문당 소요 시간** | 2~3시간 | ~30초 |
+| **구문 분석** | 직접 타이핑 | AI 자동 생성 (Gemini 2.5 Pro/Flash) |
+| **어휘 테이블** | 사전에서 복사 붙여넣기 | CEFR 수준 유의어/반의어 자동 추출 |
+| **요약 & 흐름** | 처음부터 작성 | AI 구조화 4단계 흐름 + 이중 언어 요약 |
+| **PDF 포맷** | Word/한글에서 수동 레이아웃 | 자동 포맷, 원클릭 추출 |
+| **커스터마이징** | 처음부터 다시 | 템플릿 설정으로 실시간 편집 |
 
 ## 스크린샷 (Screenshots)
 
