@@ -1,6 +1,13 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "./firebase-admin";
-import { getCreditExpiryIso, getNowIso, type PlanId, PLANS, type QuotaModel } from "@gyoanmaker/shared/plans";
+import {
+  getCreditExpiryIso,
+  getNowIso,
+  type PaymentMethod,
+  type PlanId,
+  PLANS,
+  type QuotaModel,
+} from "@gyoanmaker/shared/plans";
 import type { CreditEntry, UserCredits, UserPlan } from "@gyoanmaker/shared/types";
 
 const COLLECTION = "users";
@@ -33,6 +40,11 @@ function normalizePlan(doc: UserDocLike): UserPlan {
       doc.plan?.currentPeriodEndAt === undefined ? null : doc.plan.currentPeriodEndAt,
     paymentMethod: doc.plan?.paymentMethod ?? null,
   };
+}
+
+export interface ChangePlanOptions {
+  forceImmediate?: boolean;
+  paymentMethod?: PaymentMethod | null;
 }
 
 function normalizeCredits(doc: UserDocLike): UserCredits {
@@ -77,7 +89,11 @@ export async function getSubscription(email: string): Promise<UserPlan> {
   return normalizePlan(data);
 }
 
-export async function changePlan(email: string, targetPlan: PlanId): Promise<UserPlan> {
+export async function changePlan(
+  email: string,
+  targetPlan: PlanId,
+  options: ChangePlanOptions = {}
+): Promise<UserPlan> {
   const key = email.toLowerCase();
   const docRef = getDb().collection(COLLECTION).doc(key);
 
@@ -94,13 +110,19 @@ export async function changePlan(email: string, targetPlan: PlanId): Promise<Use
     const targetPrice = PLANS[targetPlan].price;
     const now = getNowIso();
 
-    if (targetPrice >= currentPrice) {
+    if (options.forceImmediate || targetPrice >= currentPrice) {
+      const resolvedPaymentMethod =
+        options.paymentMethod !== undefined
+          ? options.paymentMethod
+          : targetPlan === "free"
+            ? null
+            : currentPlan.paymentMethod ?? "mock";
       const nextPlan: UserPlan = {
         tier: targetPlan,
         status: "active",
         currentPeriodStartAt: now,
         currentPeriodEndAt: null,
-        paymentMethod: currentPlan.paymentMethod ?? "mock",
+        paymentMethod: resolvedPaymentMethod,
       };
 
       tx.set(
@@ -141,7 +163,8 @@ export async function changePlan(email: string, targetPlan: PlanId): Promise<Use
 export async function addTopUpCredits(
   email: string,
   type: QuotaModel,
-  amount: number
+  amount: number,
+  orderId?: string
 ): Promise<UserCredits> {
   const key = email.toLowerCase();
   const docRef = getDb().collection(COLLECTION).doc(key);
@@ -151,6 +174,7 @@ export async function addTopUpCredits(
     remaining: Math.max(0, Math.floor(amount)),
     purchasedAt,
     expiresAt: getCreditExpiryIso(now),
+    ...(orderId ? { orderId } : {}),
   };
 
   return getDb().runTransaction(async (tx) => {
