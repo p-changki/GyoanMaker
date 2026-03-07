@@ -1,4 +1,5 @@
 import type { PlanId, PaymentMethod, TopUpPackageId } from "@gyoanmaker/shared/plans";
+import { buildTossBasicAuth } from "./toss-utils";
 
 export interface PaymentRequest {
   type: "subscription" | "topup";
@@ -74,9 +75,7 @@ export async function processPayment(
   return mockPayment(req);
 }
 
-function buildTossBasicAuth(secretKey: string): string {
-  return `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
-}
+
 
 function parseTossErrorBody(payload: unknown): TossErrorBody {
   if (!payload || typeof payload !== "object") {
@@ -92,31 +91,6 @@ function parseTossErrorBody(payload: unknown): TossErrorBody {
   };
 }
 
-function toMockConfirmResult(
-  paymentKey: string,
-  orderId: string,
-  amount: number
-): TossConfirmResult {
-  const now = new Date().toISOString();
-  return {
-    paymentKey,
-    orderId,
-    totalAmount: amount,
-    status: "DONE",
-    method: "MOCK",
-    approvedAt: now,
-    raw: {
-      paymentKey,
-      orderId,
-      totalAmount: amount,
-      status: "DONE",
-      method: "MOCK",
-      approvedAt: now,
-      mocked: true,
-    },
-  };
-}
-
 export async function confirmTossPayment(
   paymentKey: string,
   orderId: string,
@@ -124,7 +98,10 @@ export async function confirmTossPayment(
 ): Promise<TossConfirmResult> {
   const secretKey = process.env.TOSS_SECRET_KEY?.trim();
   if (!secretKey) {
-    return toMockConfirmResult(paymentKey, orderId, amount);
+    throw new TossPaymentError(
+      "TOSS_SECRET_KEY is not configured — payment confirmation rejected (fail-closed).",
+      { code: "SECRET_KEY_MISSING", statusCode: 500 }
+    );
   }
 
   const res = await fetch("https://api.tosspayments.com/v1/payments/confirm", {

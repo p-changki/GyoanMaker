@@ -5,6 +5,42 @@ import { NextResponse } from "next/server";
 const { auth } = NextAuth(authConfig);
 
 /**
+ * CSRF: Origin 헤더 검증
+ * POST/PUT/PATCH/DELETE 요청에 대해 허용된 Origin만 통과시킵니다.
+ */
+function validateOrigin(req: import("next/server").NextRequest): boolean {
+  const method = req.method.toUpperCase();
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    return true;
+  }
+
+  const { pathname } = req.nextUrl;
+
+  // Webhook, NextAuth 콜백은 외부 Origin 허용
+  const csrfExemptPaths = ["/api/auth", "/api/billing/webhook", "/api/cron"];
+  if (csrfExemptPaths.some((p) => pathname.startsWith(p))) {
+    return true;
+  }
+
+  const origin = req.headers.get("origin");
+  if (!origin) {
+    return false;
+  }
+
+  const allowedOrigins = new Set<string>();
+  const nextAuthUrl = process.env.NEXTAUTH_URL;
+  if (nextAuthUrl) {
+    try {
+      allowedOrigins.add(new URL(nextAuthUrl).origin);
+    } catch { /* invalid URL — skip */ }
+  }
+  allowedOrigins.add("http://localhost:3000");
+
+  return allowedOrigins.has(origin);
+}
+
+
+/**
  * 관리자 이메일 목록
  */
 function getAdminEmails(): Set<string> {
@@ -21,6 +57,14 @@ function getAdminEmails(): Set<string> {
  * Edge Runtime 환경이므로 가벼운 auth 설정을 사용합니다.
  */
 export default auth((req) => {
+  // CSRF Origin 검증
+  if (!validateOrigin(req)) {
+    return new NextResponse(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { pathname } = req.nextUrl;
 
   // 루트 랜딩 페이지는 공개 (startsWith 사용 시 모든 경로 통과 방지)
@@ -37,6 +81,7 @@ export default auth((req) => {
     "/terms",
     "/api/auth",
     "/api/billing/webhook",
+    "/api/cron",
     "/_next",
     "/favicon.ico",
     "/icon",
