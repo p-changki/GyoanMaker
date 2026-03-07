@@ -1,9 +1,11 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/Toast";
 
 export default function PendingPage() {
   const { data: session, update } = useSession();
+  const { toast } = useToast();
 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#fef9f0] via-[#f8f9fc] to-[#fff7ed] flex items-center justify-center px-4">
@@ -64,7 +66,7 @@ export default function PendingPage() {
               if (res?.user?.approved) {
                 window.location.href = "/generate";
               } else {
-                alert("Still pending approval. Please try again later.");
+                toast("Still pending approval. Please try again later.", "info");
               }
             }}
             className="w-full py-4 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all"

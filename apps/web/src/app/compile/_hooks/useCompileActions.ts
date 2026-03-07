@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useCallback, useRef } from "react";
 import { parseHandoutSection } from "@/lib/parseHandout";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+import { useToast } from "@/components/ui/Toast";
 import {
   COMPILED_PREFIX,
   normalizeRawExportText,
@@ -26,6 +27,7 @@ export function useCompileActions({
   setIsExportingPdf,
   setExportProgress,
 }: UseCompileActionsParams) {
+  const { toast } = useToast();
   const isApplyingRef = useRef(false);
 
   const handleApplyTemplate = useCallback(async () => {
@@ -103,7 +105,7 @@ export function useCompileActions({
       .join("\n\n" + "=".repeat(30) + "\n\n");
 
     navigator.clipboard.writeText(allText);
-    alert("Full handout content copied to clipboard.");
+    toast("Full handout content copied to clipboard.", "success");
   }, []);
 
   const handleDownloadTxt = useCallback(() => {
@@ -136,7 +138,7 @@ export function useCompileActions({
         });
 
       if (exportIds.length === 0) {
-        alert("No parsed passages available for PDF export.");
+        toast("No parsed passages available for PDF export.", "error");
         return;
       }
 
@@ -236,7 +238,7 @@ export function useCompileActions({
         }
 
         if (capturedCount === 0 || !pdf) {
-          alert("No sections found for PDF export.");
+          toast("No sections found for PDF export.", "error");
           return;
         }
 
@@ -249,7 +251,7 @@ export function useCompileActions({
         pdf.save(finalFileName);
       } catch (error) {
         console.error("Failed to export PDF", error);
-        alert("Error generating PDF. Please try again.");
+        toast("Error generating PDF. Please try again.", "error");
       } finally {
         setIsExportingPdf(false);
         setExportProgress({ current: 0, total: 0 });

@@ -1,88 +1,291 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-const SAMPLES = [
+interface Sample {
+  label: string;
+  category: string;
+  image: string;
+  color: string;
+}
+
+const SAMPLES: Sample[] = [
   {
     label: "Sentence Analysis",
-    category: "SENTENCE ANALYSIS",
+    category: "ANALYSIS",
     image: "/images/samples/sample-1.png",
+    color: "from-violet-500/20 to-indigo-500/20",
   },
   {
     label: "Core Vocabulary",
-    category: "CORE VOCABULARY",
+    category: "VOCABULARY",
     image: "/images/samples/sample-2.png",
+    color: "from-blue-500/20 to-cyan-500/20",
   },
   {
     label: "Lecture Handout (1)",
-    category: "LECTURE HANDOUT",
+    category: "HANDOUT",
     image: "/images/samples/sample-3.png",
+    color: "from-emerald-500/20 to-teal-500/20",
   },
   {
     label: "Lecture Handout (2)",
-    category: "LECTURE HANDOUT",
+    category: "HANDOUT",
     image: "/images/samples/sample-4.png",
+    color: "from-amber-500/20 to-orange-500/20",
   },
   {
-    label: "Generate Handout",
+    label: "Generate Page",
     category: "GENERATE",
     image: "/images/samples/sample-5.png",
+    color: "from-rose-500/20 to-pink-500/20",
   },
 ];
 
 const ITEMS = [...SAMPLES, ...SAMPLES];
 
-export default function SampleCarousel() {
+function CarouselCard({
+  item,
+  index,
+  onSelect,
+}: {
+  item: Sample;
+  index: number;
+  onSelect: (item: Sample, id: string) => void;
+}) {
+  const layoutId = `sample-card-${item.label}-${index}`;
+
   return (
-    <section className="overflow-hidden bg-white pb-20 pt-8">
-      <div className="relative">
+    <motion.div
+      whileHover={{ y: -12, scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="flex-shrink-0"
+    >
+      <motion.div
+        layoutId={layoutId}
+        onClick={() => onSelect(item, layoutId)}
+        className="group relative flex h-[480px] w-[360px] cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-lg transition-shadow hover:shadow-2xl sm:h-[580px] sm:w-[440px]"
+      >
+        {/* Browser-style top bar */}
+        <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/80 px-4 py-3">
+          <div className="flex gap-1.5">
+            <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+            <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+            <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
+          </div>
+          <div className="ml-2 flex-1 rounded-md bg-white px-3 py-1 text-[11px] text-gray-400">
+            gyoan-maker.store
+          </div>
+        </div>
+
+        {/* Image area */}
+        <div className={`relative flex-1 bg-gradient-to-br ${item.color}`}>
+          <Image
+            src={item.image}
+            alt={item.label}
+            fill
+            className="object-contain p-3"
+            sizes="(min-width: 640px) 440px, 360px"
+          />
+        </div>
+
+        {/* Bottom label */}
+        <div className="border-t border-gray-100 bg-white px-5 py-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600/70">
+            {item.category}
+          </p>
+          <p className="mt-0.5 text-base font-bold text-gray-900">
+            {item.label}
+          </p>
+        </div>
+
+        {/* Click hint */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="rounded-full bg-black/50 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
+            Click to expand
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function ExpandedOverlay({
+  item,
+  layoutId,
+  onClose,
+}: {
+  item: Sample;
+  layoutId: string;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={onClose}
+        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+      />
+
+      {/* Expanded card */}
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 sm:p-8">
+        <motion.div
+          layoutId={layoutId}
+          className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-2xl"
+        >
+          {/* Browser-style top bar */}
+          <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/80 px-5 py-3">
+            <div className="flex gap-1.5">
+              <div className="h-3 w-3 rounded-full bg-red-400" />
+              <div className="h-3 w-3 rounded-full bg-amber-400" />
+              <div className="h-3 w-3 rounded-full bg-green-400" />
+            </div>
+            <div className="ml-3 flex-1 rounded-md bg-white px-4 py-1.5 text-xs text-gray-400">
+              gyoan-maker.store
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="ml-2 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Close"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Full image area */}
+          <div
+            className={`relative flex-1 overflow-auto bg-gradient-to-br ${item.color}`}
+            style={{ minHeight: "60vh" }}
+          >
+            <Image
+              src={item.image}
+              alt={item.label}
+              fill
+              className="object-contain p-4 sm:p-6"
+              sizes="(min-width: 768px) 900px, 100vw"
+              priority
+            />
+          </div>
+
+          {/* Bottom label */}
+          <div className="border-t border-gray-100 bg-white px-6 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600/70">
+              {item.category}
+            </p>
+            <p className="mt-0.5 text-lg font-bold text-gray-900">
+              {item.label}
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    </>
+  );
+}
+
+export default function SampleCarousel() {
+  const [selected, setSelected] = useState<{
+    item: Sample;
+    layoutId: string;
+  } | null>(null);
+
+  const handleSelect = useCallback((item: Sample, layoutId: string) => {
+    setSelected({ item, layoutId });
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setSelected(null);
+  }, []);
+
+  return (
+    <section className="overflow-hidden bg-gradient-to-b from-white to-gray-50/80 pb-24 pt-16">
+      {/* Section header */}
+      <div className="mx-auto max-w-3xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-sm font-bold uppercase tracking-widest text-blue-600"
+        >
+          Sample Outputs
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.1 }}
+          className="mt-3 text-3xl font-black text-gray-900 sm:text-4xl"
+        >
+          See What You Can Create
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+          className="mt-4 text-base text-gray-500 sm:text-lg"
+        >
+          From passage analysis to printable handouts — all generated
+          automatically.
+        </motion.p>
+      </div>
+
+      {/* Carousel */}
+      <div className="relative mt-14">
         {/* Fade overlays */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent sm:w-36" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent sm:w-36" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-white to-transparent sm:w-48" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-gray-50/80 to-transparent sm:w-48" />
 
         <motion.div
-          className="flex gap-5 px-4"
+          className="flex gap-6 px-4 sm:gap-8"
           animate={{ x: ["0%", "-50%"] }}
           transition={{
             x: {
-              duration: 35,
+              duration: 40,
               repeat: Infinity,
               ease: "linear",
             },
           }}
         >
           {ITEMS.map((item, i) => (
-            <motion.div
+            <CarouselCard
               key={`${item.label}-${i}`}
-              whileHover={{ scale: 1.03, y: -8 }}
-              transition={{ duration: 0.3 }}
-              className="flex-shrink-0"
-            >
-              <div className="relative h-[360px] w-[290px] overflow-hidden rounded-3xl shadow-xl sm:h-[440px] sm:w-[350px]">
-                {/* Image */}
-                <Image
-                  src={item.image}
-                  alt={item.label}
-                  fill
-                  className="object-cover"
-                  sizes="350px"
-                />
-
-                {/* Bottom gradient overlay */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-6 pb-6 pt-20">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-                    {item.category}
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-white">
-                    {item.label}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+              item={item}
+              index={i}
+              onSelect={handleSelect}
+            />
           ))}
         </motion.div>
       </div>
+
+      {/* Expanded overlay */}
+      <AnimatePresence>
+        {selected && (
+          <ExpandedOverlay
+            item={selected.item}
+            layoutId={selected.layoutId}
+            onClose={handleClose}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }
