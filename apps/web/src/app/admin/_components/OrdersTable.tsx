@@ -36,30 +36,43 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function OrdersTable() {
-  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [allOrders, setAllOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
 
-  const fetchOrders = useCallback(async (status: StatusFilter) => {
+  const fetchAllOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ status, limit: "50" });
+      const params = new URLSearchParams({ status: "all", limit: "50" });
       const res = await fetch(`/api/admin/billing/orders?${params}`);
       if (!res.ok) throw new Error("Failed to load orders");
       const data = await res.json();
-      setOrders(data.orders ?? []);
+      setAllOrders(data.orders ?? []);
     } catch {
-      setOrders([]);
+      setAllOrders([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchOrders(activeFilter);
-  }, [activeFilter, fetchOrders]);
+    fetchAllOrders();
+  }, [fetchAllOrders]);
+
+  const filteredOrders =
+    activeFilter === "all"
+      ? allOrders
+      : allOrders.filter((o) => o.status === activeFilter);
+
+  const tabCounts: Record<StatusFilter, number> = {
+    all: allOrders.length,
+    confirmed: allOrders.filter((o) => o.status === "confirmed").length,
+    paid_not_applied: allOrders.filter((o) => o.status === "paid_not_applied").length,
+    failed: allOrders.filter((o) => o.status === "failed").length,
+    pending: allOrders.filter((o) => o.status === "pending").length,
+  };
 
   const handleRetry = async (orderId: string) => {
     setRetrying(orderId);
@@ -74,7 +87,7 @@ export default function OrdersTable() {
         alert(data?.error?.message ?? "Retry failed");
         return;
       }
-      await fetchOrders(activeFilter);
+      await fetchAllOrders();
     } catch {
       alert("Retry request failed");
     } finally {
@@ -107,6 +120,11 @@ export default function OrdersTable() {
             }`}
           >
             {tab.label}
+            {!loading && (
+              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-white/60">
+                {tabCounts[tab.key]}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -116,11 +134,11 @@ export default function OrdersTable() {
           <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-2" />
           Loading...
         </div>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <div className="text-center py-12 text-gray-400">No orders found</div>
       ) : (
         <div className="space-y-2">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div
               key={order.orderId}
               className="bg-white border border-gray-200/60 rounded-xl shadow-sm overflow-hidden"

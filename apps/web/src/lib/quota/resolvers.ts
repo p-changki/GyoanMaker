@@ -136,30 +136,30 @@ function normalizeModelQuota(
       }
     | undefined,
   fallbackLimit: number,
-  monthKeyKst: string,
+  periodKey: string,
   legacyUsed: number
 ): { quota: UserQuota["flash"]; changed: boolean } {
   const rawLimit = toNonNegativeInt(raw?.monthlyLimit, fallbackLimit);
   const monthlyLimit = rawLimit > 0 ? rawLimit : fallbackLimit;
   const rawKey = raw?.monthKeyKst;
-  const isSameMonth = rawKey === monthKeyKst;
+  const isSamePeriod = rawKey === periodKey;
   const usedFromRaw = toNonNegativeInt(raw?.used, 0);
   const used = Math.min(
     monthlyLimit,
-    isSameMonth ? usedFromRaw : Math.max(0, legacyUsed)
+    isSamePeriod ? usedFromRaw : Math.max(0, legacyUsed)
   );
 
   const changed =
     raw == null ||
     raw.monthlyLimit !== monthlyLimit ||
-    raw.monthKeyKst !== monthKeyKst ||
+    raw.monthKeyKst !== periodKey ||
     raw.used !== used;
 
   return {
     quota: {
       monthlyLimit,
       used,
-      monthKeyKst,
+      monthKeyKst: periodKey,
     },
     changed,
   };
@@ -168,7 +168,7 @@ function normalizeModelQuota(
 function resolveMonthlyLimits(
   data: UserDocLike,
   planTier: PlanId,
-  monthKeyKst: string,
+  periodKey: string,
   legacyMonthlyCount: number
 ) {
   const flashLimitFallback = getFallbackModelLimit(data, planTier, "flash");
@@ -178,35 +178,50 @@ function resolveMonthlyLimits(
     flash: normalizeModelQuota(
       data.quota?.flash,
       flashLimitFallback,
-      monthKeyKst,
+      periodKey,
       legacyMonthlyCount
     ),
     pro: normalizeModelQuota(
       data.quota?.pro,
       proLimitFallback,
-      monthKeyKst,
+      periodKey,
       legacyMonthlyCount
     ),
   };
+}
+
+/**
+ * Derive the period key for quota resets.
+ * - Free users: calendar month (e.g. "2026-03") — resets on the 1st
+ * - Paid users: subscription start date (e.g. "2026-03-07") — resets on renewal
+ */
+function derivePeriodKey(plan: UserPlan, now: Date): string {
+  if (plan.tier === "free") {
+    return getMonthKeyKst(now);
+  }
+  return plan.currentPeriodStartAt.slice(0, 10);
 }
 
 export function normalizeUserState(
   data: UserDocLike,
   now: Date
 ): NormalizedUserState {
-  const monthKeyKst = getMonthKeyKst(now);
-  const legacyMonth = getLegacyMonthKey(data);
-  const legacyMonthlyCount =
-    legacyMonth === monthKeyKst
-      ? toNonNegativeInt(data.usage?.monthly?.count, 0)
-      : 0;
+  const calendarMonthKey = getMonthKeyKst(now);
   const plan = resolveUserPlan(data);
   const planTier = plan.tier;
+  const periodKey = derivePeriodKey(plan, now);
+
+  const legacyMonth = getLegacyMonthKey(data);
+  const legacyMonthlyCount =
+    legacyMonth === calendarMonthKey
+      ? toNonNegativeInt(data.usage?.monthly?.count, 0)
+      : 0;
+
   const fallbackStorageLimit = PLANS[planTier].storageLimit;
   const normalizedMonthly = resolveMonthlyLimits(
     data,
     planTier,
-    monthKeyKst,
+    periodKey,
     legacyMonthlyCount
   );
 
@@ -230,7 +245,7 @@ export function normalizeUserState(
   const legacyMonthlyKey =
     typeof data.usage?.monthly?.key === "string"
       ? data.usage?.monthly.key
-      : monthKeyKst;
+      : calendarMonthKey;
   const legacyMonthlyCountNormalized = toNonNegativeInt(
     data.usage?.monthly?.count,
     0
@@ -380,7 +395,7 @@ export function buildPersistPayload(state: NormalizedUserState) {
     plan: state.plan,
     quota: {
       ...state.quota,
-      // Legacy compatibility fields (P1 migration legacy path protection)
+      // Legacy compatibility fields
       dailyLimit: DEFAULT_QUOTA.dailyLimit,
       monthlyLimit: Math.max(
         state.quota.flash.monthlyLimit,

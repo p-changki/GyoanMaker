@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getQuotaStatus } from "@/lib/quota";
-import { getSubscription } from "@/lib/subscription";
+import { getSubscriptionExtended } from "@/lib/subscription";
 
 export async function GET() {
   const session = await auth();
@@ -15,14 +15,17 @@ export async function GET() {
   }
 
   try {
-    const [subscription, quota] = await Promise.all([
-      getSubscription(email),
+    const [extended, quota] = await Promise.all([
+      getSubscriptionExtended(email),
       getQuotaStatus(email),
     ]);
 
     return NextResponse.json({
-      subscription,
+      subscription: extended.subscription,
       quota,
+      planPendingTier: extended.planPendingTier,
+      account: { createdAt: extended.createdAt },
+      credits: extended.credits,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
