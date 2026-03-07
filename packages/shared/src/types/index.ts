@@ -11,6 +11,23 @@ export type {
   TopUpPackageId,
 } from "../plans";
 export type * from "./handout";
+export type * from "./templateSettings";
+export {
+  DEFAULT_TEMPLATE_SETTINGS,
+  VALID_PAGE2_SECTIONS,
+  PAGE2_SECTION_LABELS,
+  THEME_PRESETS,
+  VALID_THEME_PRESETS,
+  VALID_FONT_SCALES,
+  VALID_FONT_FAMILIES,
+  VALID_TITLE_WEIGHTS,
+  FONT_SCALE_MAP,
+  FONT_FAMILY_MAP,
+  TITLE_WEIGHT_MAP,
+  FONT_SIZE_PRESETS,
+  FONT_SIZE_SLOT_META,
+  FONT_SIZE_GROUPS,
+} from "./templateSettings";
 
 export type ResultStatus = "generating" | "completed" | "failed";
 

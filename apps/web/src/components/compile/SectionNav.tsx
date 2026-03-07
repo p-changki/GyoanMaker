@@ -3,7 +3,11 @@
 import { memo, useCallback, useMemo } from "react";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 
-export default function SectionNav() {
+interface SectionNavProps {
+  onNavigate?: () => void;
+}
+
+export default function SectionNav({ onNavigate: onNavCallback }: SectionNavProps) {
   const sections = useHandoutStore((state) => state.sections);
   const setActiveId = useHandoutStore((state) => state.setActiveId);
 
@@ -25,8 +29,9 @@ export default function SectionNav() {
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+      onNavCallback?.();
     },
-    [setActiveId]
+    [setActiveId, onNavCallback]
   );
 
   return (
