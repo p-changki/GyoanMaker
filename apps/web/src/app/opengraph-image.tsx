@@ -1,12 +1,12 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "GyoanMaker - AI 영어 교안 자동 생성";
+export const alt = "GyoanMaker - AI-Powered English Handout Generator";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OgImage() {
-  // 한글 렌더링 에러(500) 방지를 위해 ttf 폰트 동적 로드
+  // Dynamic TTF font loading to prevent rendering errors
   const fontData = await fetch(
     "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/packages/pretendard/dist/public/static/alternative/Pretendard-ExtraBold.ttf"
   ).then((res) => res.arrayBuffer());
@@ -75,9 +75,9 @@ export default async function OgImage() {
           marginBottom: "20px",
         }}
       >
-        <span>영어 지문 분석부터</span>
+        <span>From passage analysis</span>
         <span style={{ color: "#2563eb", marginTop: "12px" }}>
-          교안 출력까지, 한 번에
+          to handout export, all in one
         </span>
       </div>
 
@@ -89,7 +89,7 @@ export default async function OgImage() {
           textAlign: "center",
         }}
       >
-        AI가 문장 분석 · 핵심 어휘 · 요약을 자동 생성합니다
+        AI auto-generates sentence analysis, core vocabulary, and summaries
       </div>
     </div>,
     {

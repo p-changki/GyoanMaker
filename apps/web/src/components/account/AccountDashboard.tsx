@@ -25,7 +25,7 @@ interface BillingStatusResponse {
 
 async function fetchBillingStatus(): Promise<BillingStatusResponse> {
   const res = await fetch("/api/billing/status");
-  if (!res.ok) throw new Error("결제 상태 조회 실패");
+  if (!res.ok) throw new Error("Failed to fetch billing status");
   return res.json();
 }
 
@@ -55,7 +55,7 @@ export default function AccountDashboard() {
           {session?.user?.image ? (
             <Image
               src={session.user.image}
-              alt="프로필"
+              alt="Profile"
               width={56}
               height={56}
               className="h-14 w-14 rounded-full border border-gray-200"
@@ -68,7 +68,7 @@ export default function AccountDashboard() {
           )}
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              {session?.user?.name ?? "사용자"}
+              {session?.user?.name ?? "User"}
             </h2>
             <p className="text-sm text-gray-500">{session?.user?.email}</p>
           </div>
@@ -85,8 +85,8 @@ export default function AccountDashboard() {
               {currentPlan.toUpperCase()}
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              빠른 생성 {data.quota.flash.remaining}건 / 정밀 생성{" "}
-              {data.quota.pro.remaining}건 남음
+              Speed {data.quota.flash.remaining} / Precision{" "}
+              {data.quota.pro.remaining} remaining
             </p>
           </div>
           <button
@@ -94,21 +94,21 @@ export default function AccountDashboard() {
             disabled
             className="rounded-xl bg-gray-300 px-4 py-2 text-sm font-bold text-white cursor-not-allowed"
           >
-            준비중
+            Coming Soon
           </button>
         </div>
       </section>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <UsageBar
-          label="빠른 생성"
+          label="Speed Mode"
           used={data.quota.flash.used}
           limit={data.quota.flash.limit}
           remaining={data.quota.flash.remaining}
           credits={data.quota.flash.credits}
         />
         <UsageBar
-          label="정밀 생성"
+          label="Precision Mode"
           used={data.quota.pro.used}
           limit={data.quota.pro.limit}
           remaining={data.quota.pro.remaining}
@@ -118,25 +118,25 @@ export default function AccountDashboard() {
 
       <section className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
         <p className="text-sm font-medium text-gray-500">
-          결제 시스템 준비중입니다
+          Payment system is under development
         </p>
         <p className="mt-1 text-xs text-gray-400">
-          플랜 변경 및 크레딧 충전은 곧 오픈 예정입니다.
+          Plan changes and credit top-ups will be available soon.
         </p>
       </section>
 
       {/* Danger zone */}
       <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
-        <h3 className="text-sm font-bold text-red-700">위험 구역</h3>
+        <h3 className="text-sm font-bold text-red-700">Danger Zone</h3>
         <p className="mt-1 text-xs text-gray-500">
-          계정을 삭제하면 모든 데이터가 영구 삭제되며 복구할 수 없습니다.
+          Deleting your account will permanently remove all data and cannot be undone.
         </p>
         <button
           type="button"
           onClick={() => setShowDeleteModal(true)}
           className="mt-4 rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 transition-colors"
         >
-          계정 탈퇴
+          Delete Account
         </button>
       </section>
 
@@ -145,7 +145,7 @@ export default function AccountDashboard() {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={async () => {
           const res = await fetch("/api/account/delete", { method: "DELETE" });
-          if (!res.ok) throw new Error("삭제 실패");
+          if (!res.ok) throw new Error("Deletion failed");
           signOut({ callbackUrl: "/" });
         }}
       />

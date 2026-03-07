@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { updateUserStatus, deleteUser, isAdmin, type UserStatus } from "@/lib/users";
 
 /**
- * PATCH /api/admin/users/[email] — 사용자 상태 변경
+ * PATCH /api/admin/users/[email] — Update user status
  * Body: { status: "approved" | "rejected" | "pending" }
  */
 export async function PATCH(
@@ -35,7 +35,7 @@ export async function PATCH(
 }
 
 /**
- * DELETE /api/admin/users/[email] — 사용자 삭제
+ * DELETE /api/admin/users/[email] — Delete user
  */
 export async function DELETE(
   _req: NextRequest,

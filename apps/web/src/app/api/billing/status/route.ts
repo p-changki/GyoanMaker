@@ -9,7 +9,7 @@ export async function GET() {
 
   if (!email) {
     return NextResponse.json(
-      { error: { code: "UNAUTHORIZED", message: "로그인이 필요합니다." } },
+      { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
     );
   }

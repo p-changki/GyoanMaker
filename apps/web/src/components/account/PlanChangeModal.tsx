@@ -21,13 +21,13 @@ export default function PlanChangeModal({
     <div className="fixed inset-0 z-[70] bg-black/40 px-4 py-8">
       <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">플랜 변경</h3>
+          <h3 className="text-lg font-bold text-gray-900">Change Plan</h3>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg border border-gray-200 px-3 py-1 text-sm text-gray-500"
           >
-            닫기
+            Close
           </button>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -49,10 +49,10 @@ export default function PlanChangeModal({
                 {planId.toUpperCase()}
               </p>
               <p className="mt-1 text-sm text-gray-600">
-                빠른 생성 {plan.flashLimit} / 정밀 생성 {plan.proLimit}
+                Speed {plan.flashLimit} / Precision {plan.proLimit}
               </p>
               <p className="mt-1 text-sm font-semibold text-gray-900">
-                ₩{plan.price.toLocaleString("ko-KR")} /월
+                ₩{plan.price.toLocaleString()} /mo
               </p>
             </button>
           ))}

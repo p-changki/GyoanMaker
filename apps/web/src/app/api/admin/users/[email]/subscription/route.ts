@@ -7,7 +7,7 @@ import { changePlan, getSubscription } from "@/lib/subscription";
 import { isAdmin } from "@/lib/users";
 
 /**
- * GET /api/admin/users/[email]/subscription — 사용자 구독 상태 조회
+ * GET /api/admin/users/[email]/subscription — Get user subscription status
  */
 export async function GET(
   _req: NextRequest,
@@ -25,7 +25,7 @@ export async function GET(
 }
 
 /**
- * PATCH /api/admin/users/[email]/subscription — 사용자 플랜 변경
+ * PATCH /api/admin/users/[email]/subscription — Change user plan
  * Body: { planId: "free" | "basic" | "standard" | "pro" }
  */
 export async function PATCH(
@@ -48,7 +48,7 @@ export async function PATCH(
     body.planId !== "pro"
   ) {
     return NextResponse.json(
-      { error: { code: "INVALID_BODY", message: "유효한 planId가 필요합니다." } },
+      { error: { code: "INVALID_BODY", message: "Valid planId is required." } },
       { status: 400 }
     );
   }

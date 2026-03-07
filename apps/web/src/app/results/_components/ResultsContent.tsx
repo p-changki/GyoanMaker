@@ -34,9 +34,9 @@ export default function ResultsContent({
   return (
     <main className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-10 space-y-2">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">생성된 교안</h1>
+        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Generated Handouts</h1>
         <p className="text-gray-500 font-medium">
-          입력하신 지문을 바탕으로 분석된 결과입니다.
+          Analysis results based on your input passages.
         </p>
       </div>
 

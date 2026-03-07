@@ -33,7 +33,7 @@ export default function UsageBar({
         />
       </div>
       <p className="mt-2 text-xs text-gray-500">
-        잔여 {remaining}건 (충전 크레딧 {credits}건)
+        {remaining} remaining (credits: {credits})
       </p>
     </div>
   );

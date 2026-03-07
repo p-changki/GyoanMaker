@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * 결제 웹훅 엔드포인트
- * - 현재는 Mock 결제 단계이므로 이벤트를 기록만 하고 처리하지 않습니다.
- * - Toss 연동 시 서명 검증 + 이벤트 멱등 처리 로직을 여기에 추가합니다.
+ * Payment webhook endpoint
+ * - Currently in mock payment phase - events are logged but not processed.
+ * - Add signature verification + idempotent event handling when integrating Toss.
  */
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);

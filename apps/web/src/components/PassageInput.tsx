@@ -49,19 +49,19 @@ export default function PassageInput({
           htmlFor="passage-text"
           className="text-sm font-medium text-gray-700"
         >
-          지문 입력 (텍스트 블록)
+          Passage Input (Text Block)
         </label>
         <span
           className={`text-sm font-medium ${passageCount > 20 ? "text-red-500" : "text-blue-600"}`}
         >
-          감지된 지문: {passageCount}개 {passageCount > 20 && "(최대 20개)"}
+          Detected: {passageCount} {passageCount > 20 && "(max 20)"}
         </span>
       </div>
       <textarea
         id="passage-text"
         ref={textareaRef}
         className="w-full min-h-[300px] p-4 text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-all placeholder:text-gray-400 overflow-hidden"
-        placeholder="영어 지문을 입력하세요. 여러 지문은 --- 로 구분합니다."
+        placeholder="Enter English passages. Separate multiple passages with ---"
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
@@ -70,9 +70,9 @@ export default function PassageInput({
 
       <div className="space-y-2">
         <p className="text-xs text-gray-500">
-          * <code className="bg-gray-100 px-1 rounded text-gray-700">---</code>{" "}
-          로 구분하면 자동 분리됩니다. 권장 길이: 지문당 {RECOMMENDED_MIN_WORDS}
-          ~{RECOMMENDED_MAX_WORDS} 단어
+          * Separate with <code className="bg-gray-100 px-1 rounded text-gray-700">---</code>{" "}
+          for auto-splitting. Recommended: {RECOMMENDED_MIN_WORDS}
+          ~{RECOMMENDED_MAX_WORDS} words per passage
         </p>
 
         {passageStats.length > 0 && (
@@ -88,11 +88,11 @@ export default function PassageInput({
                       : "bg-amber-50 text-amber-600 border border-amber-200"
                 }`}
               >
-                P{String(stat.index + 1).padStart(2, "0")}: {stat.words}단어
-                {stat.status === "short" && " (짧음)"}
-                {stat.status === "long" && " (긴 지문)"}
+                P{String(stat.index + 1).padStart(2, "0")}: {stat.words} words
+                {stat.status === "short" && " (short)"}
+                {stat.status === "long" && " (long)"}
                 {stat.status === "over_limit" &&
-                  ` (${MAX_WORDS_PER_PASSAGE}단어 초과)`}
+                  ` (exceeds ${MAX_WORDS_PER_PASSAGE})`}
               </span>
             ))}
           </div>
@@ -100,8 +100,8 @@ export default function PassageInput({
 
         {hasWarning && (
           <p className="text-xs text-amber-600">
-            {RECOMMENDED_MIN_WORDS}~{RECOMMENDED_MAX_WORDS} 단어 범위의 지문에서
-            가장 안정적인 교안이 생성됩니다.
+            Passages with {RECOMMENDED_MIN_WORDS}~{RECOMMENDED_MAX_WORDS} words
+            produce the most reliable handouts.
           </p>
         )}
       </div>

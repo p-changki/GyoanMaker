@@ -30,15 +30,14 @@ export default function EditableHintBanner() {
     <div className="mb-6 flex items-center gap-3 bg-[#5E35B1]/5 border border-[#5E35B1]/15 rounded-xl px-4 py-3">
       <PencilHintIcon className="text-[#5E35B1]/60 w-4! h-4!" />
       <p className="text-xs text-[#5E35B1]/80 font-medium flex-1">
-        <strong className="font-bold">교안 제목을 클릭하여 수정할 수 있습니다.</strong> 헤더
-        텍스트, 구문 분석 제목, 요약 제목을 마우스로 클릭하면 편집 모드로
-        전환됩니다.
+        <strong className="font-bold">Click on handout titles to edit.</strong> Click
+        the header text, analysis title, or summary title to enter edit mode.
       </p>
       <button
         type="button"
         onClick={() => setDismissed(true)}
         className="text-[#5E35B1]/40 hover:text-[#5E35B1]/70 transition-colors p-1"
-        aria-label="안내 닫기"
+        aria-label="Dismiss hint"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path

@@ -17,7 +17,7 @@ interface DuplicateWarningModalProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("ko-KR", {
+  return new Date(iso).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -51,11 +51,11 @@ export default function DuplicateWarningModal({
           </div>
           <div>
             <h3 className="text-base font-bold text-gray-900">
-              이미 생성된 교안이 있습니다
+              Duplicate handout found
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              동일한 지문으로 생성된 교안이 있어요. 다시 생성하면 이용 횟수가
-              차감됩니다.
+              A handout with the same passages already exists. Generating again
+              will consume your quota.
             </p>
           </div>
         </div>
@@ -70,11 +70,11 @@ export default function DuplicateWarningModal({
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-gray-900">{d.title}</p>
                 <p className="text-xs text-gray-400">
-                  {d.passageCount}개 지문 · {formatDate(d.createdAt)}
+                  {d.passageCount} passages · {formatDate(d.createdAt)}
                 </p>
               </div>
               <span className="ml-3 shrink-0 text-xs font-bold text-blue-600">
-                열기
+                Open
               </span>
             </Link>
           ))}
@@ -86,14 +86,14 @@ export default function DuplicateWarningModal({
             onClick={onClose}
             className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
           >
-            취소
+            Cancel
           </button>
           <button
             type="button"
             onClick={onProceed}
             className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-white hover:bg-amber-600 transition-colors"
           >
-            그래도 생성
+            Generate Anyway
           </button>
         </div>
       </div>

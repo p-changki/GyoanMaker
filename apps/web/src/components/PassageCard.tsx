@@ -43,11 +43,11 @@ export default function PassageCard({
                     : "text-amber-600 bg-amber-50"
               }`}
             >
-              {words}단어
-              {status === "short" && " (짧음)"}
-              {status === "long" && " (긴 지문)"}
+              {words} words
+              {status === "short" && " (short)"}
+              {status === "long" && " (long)"}
               {status === "over_limit" &&
-                ` (${MAX_WORDS_PER_PASSAGE}단어 초과)`}
+                ` (exceeds ${MAX_WORDS_PER_PASSAGE})`}
             </span>
           )}
         </div>
@@ -55,7 +55,7 @@ export default function PassageCard({
           type="button"
           onClick={onRemove}
           className="text-gray-400 hover:text-red-500 transition-colors p-1"
-          aria-label="지문 삭제"
+          aria-label="Remove passage"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -77,7 +77,7 @@ export default function PassageCard({
       </div>
       <textarea
         className="w-full h-32 p-3 text-sm border border-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-all placeholder:text-gray-300"
-        placeholder="영어 지문을 입력하세요."
+        placeholder="Enter an English passage."
         value={text}
         onChange={(e) => onChange(e.target.value)}
       />

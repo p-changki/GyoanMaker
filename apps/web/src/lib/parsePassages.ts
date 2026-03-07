@@ -96,7 +96,7 @@ export function validatePassageLimits(
       .join(", ");
     return {
       type: "per_passage",
-      message: `${labels} 지문이 ${MAX_WORDS_PER_PASSAGE}단어를 초과합니다. 지문을 분리하거나 줄여주세요.`,
+      message: `${labels} passage(s) exceed ${MAX_WORDS_PER_PASSAGE} words. Please split or shorten them.`,
       passageIndices: overIndices,
     };
   }
@@ -104,7 +104,7 @@ export function validatePassageLimits(
   if (totalWords > MAX_TOTAL_WORDS) {
     return {
       type: "total",
-      message: `전체 단어수(${totalWords.toLocaleString()}단어)가 최대 ${MAX_TOTAL_WORDS.toLocaleString()}단어를 초과합니다.`,
+      message: `Total word count (${totalWords.toLocaleString()}) exceeds maximum of ${MAX_TOTAL_WORDS.toLocaleString()} words.`,
     };
   }
 

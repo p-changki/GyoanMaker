@@ -40,7 +40,7 @@ export default function CompileLayout({
           type="button"
           onClick={() => setIsNavOpen(!isNavOpen)}
           className="absolute top-4 left-3 z-30 w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 shadow-sm hover:bg-purple-50 hover:border-[#5E35B1] transition-colors group"
-          title={isNavOpen ? "목록 닫기" : "지문 목록"}
+          title={isNavOpen ? "Close list" : "Passage list"}
         >
           <svg
             className={`w-4 h-4 text-gray-500 group-hover:text-[#5E35B1] transition-transform ${isNavOpen ? "rotate-180" : ""}`}

@@ -54,7 +54,7 @@ function getProxyRateLimitMax(): number {
 function getClientAddress(req: NextRequest): string {
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor && forwardedFor.trim().length > 0) {
-    // 마지막 IP를 사용: Vercel/Cloud Run 등 신뢰된 프록시가 추가한 실제 클라이언트 IP
+    // Use last IP: actual client IP added by trusted proxies (Vercel/Cloud Run)
     const ips = forwardedFor
       .split(",")
       .map((ip) => ip.trim())
@@ -131,8 +131,8 @@ function getProxyTimeoutMs(baseUrl: string): number {
 /**
  * Vercel API Proxy
  *
- * 브라우저에서 Cloud Run URL과 API Key가 노출되는 것을 방지하기 위해
- * Next.js 서버 사이드에서 요청을 대신 전달한다.
+ * To prevent exposing Cloud Run URL and API Key to the browser,
+ * the request is proxied through Next.js server-side.
  */
 export async function POST(req: NextRequest) {
   const requestId = getRequestId(req);
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
           {
             error: {
               code: "PASSAGE_TOO_LONG",
-              message: `${labels} 지문이 ${MAX_WORDS_PER_PASSAGE}단어를 초과합니다.`,
+              message: `${labels} passage(s) exceed ${MAX_WORDS_PER_PASSAGE} words.`,
             },
           },
           { status: 422 }
@@ -219,7 +219,7 @@ export async function POST(req: NextRequest) {
           {
             error: {
               code: "TOTAL_WORDS_EXCEEDED",
-              message: `전체 단어수(${totalWords.toLocaleString()})가 최대 ${MAX_TOTAL_WORDS.toLocaleString()}단어를 초과합니다.`,
+              message: `Total word count (${totalWords.toLocaleString()}) exceeds the maximum of ${MAX_TOTAL_WORDS.toLocaleString()} words.`,
             },
           },
           { status: 422 }
@@ -244,8 +244,8 @@ export async function POST(req: NextRequest) {
               code: "QUOTA_EXCEEDED",
               message:
                 selectedModel === "flash"
-                  ? "Flash 사용 한도를 초과했습니다."
-                  : "Pro 사용 한도를 초과했습니다.",
+                  ? "Flash usage limit exceeded."
+                  : "Pro usage limit exceeded.",
             },
           },
           { status: 429 }
