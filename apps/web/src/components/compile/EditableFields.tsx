@@ -152,14 +152,14 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[14px] font-bold hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
-        style={{ fontFamily: "GmarketSans, sans-serif" }}
+        className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        style={{ fontFamily: "inherit", fontWeight: "inherit" }}
         aria-label="Edit header text"
       >
-        <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
+        <span className="border-b border-dashed border-transparent group-hover/edit:border-current/60 transition-colors">
           {customHeaderText}
         </span>
-        <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
+        <PencilHintIcon className="opacity-0 group-hover/edit:opacity-70" />
       </button>
       {isOpen && (
         <EditFieldModal
@@ -250,13 +250,14 @@ export const EditableSummaryTitleText = memo(function EditableSummaryTitleText()
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group/edit bg-transparent border-0 p-0 m-0 text-white text-[15px] font-black tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        style={{ fontWeight: "inherit" }}
         aria-label="Edit summary title"
       >
-        <span className="border-b border-dashed border-transparent group-hover/edit:border-white/60 transition-colors">
+        <span className="border-b border-dashed border-transparent group-hover/edit:border-current/60 transition-colors">
           {summaryTitleText}
         </span>
-        <PencilHintIcon className="text-white/0 group-hover/edit:text-white/70" />
+        <PencilHintIcon className="opacity-0 group-hover/edit:opacity-70" />
       </button>
       {isOpen && (
         <EditFieldModal

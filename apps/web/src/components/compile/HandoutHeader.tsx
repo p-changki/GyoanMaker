@@ -1,16 +1,64 @@
 "use client";
 
+import type React from "react";
 import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
-import { THEME_PRESETS } from "@gyoanmaker/shared/types";
+import { THEME_PRESETS, FONT_FAMILY_MAP, DEFAULT_SECTION_STYLE, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
+import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
+import type { EditorFocus } from "@/stores/useEditorFocusStore";
 import { EditableHeaderText } from "./EditableFields";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { PencilHintIcon } from "./EditableHintBanner";
 
 function useTheme() {
   const preset = useTemplateSettingsStore((s) => s.themePreset);
-  return THEME_PRESETS[preset];
+  const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
+  const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
+  const base = THEME_PRESETS[preset];
+  return useCustom && customColors ? { ...base, ...customColors } : base;
+}
+
+function HeaderClickZone({
+  children,
+  focusKey,
+  label,
+  className = "",
+}: {
+  children: React.ReactNode;
+  focusKey: EditorFocus;
+  label: string;
+  className?: string;
+}) {
+  const focus = useEditorFocusStore((s) => s.focus);
+  const setFocus = useEditorFocusStore((s) => s.setFocus);
+  const isActive = focus === focusKey;
+  const preset = useTemplateSettingsStore((s) => s.themePreset);
+  const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
+  const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
+  const primary = (useCustom && customColors?.primary) ? customColors.primary : THEME_PRESETS[preset].primary;
+
+  return (
+    <div
+      className={`relative cursor-pointer ${className}`}
+      style={{
+        outline: isActive ? `2px solid ${primary}` : undefined,
+        outlineOffset: isActive ? "2px" : undefined,
+      }}
+      onClick={(e) => { e.stopPropagation(); setFocus(focusKey); }}
+    >
+      <div
+        data-html2canvas-ignore="true"
+        className={`absolute -top-0.5 -right-0.5 z-[100] px-1.5 py-0.5 text-[8px] font-bold text-white rounded-bl-lg rounded-tr-sm transition-opacity pointer-events-none ${
+          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-80"
+        }`}
+        style={{ backgroundColor: primary }}
+      >
+        {isActive ? "편집 중" : label}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 export function HandoutHeader({
@@ -22,40 +70,82 @@ export function HandoutHeader({
 }) {
   const theme = useTheme();
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
+  const headerStyle = useTemplateSettingsStore((s) => s.headerStyle) ?? DEFAULT_SECTION_STYLE;
+  const headerBadgeStyle = useTemplateSettingsStore((s) => s.headerBadgeStyle) ?? DEFAULT_SECTION_STYLE;
+  const globalFontFamily = useTemplateSettingsStore((s) => s.fontFamily);
   const academyName = useTemplateSettingsStore((s) => s.academyName);
   const logoBase64 = useTemplateSettingsStore((s) => s.logoBase64);
   const setAcademyName = useTemplateSettingsStore((s) => s.setAcademyName);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+
+  // Derive effective colors from headerStyle
+  const hTitleColor = headerStyle.titleColor || theme.primary;
+  const hBgColor = headerStyle.bgColor || theme.headerBg;
+  const hFontCss = headerStyle.fontFamily ? FONT_FAMILY_MAP[headerStyle.fontFamily].css : (globalFontFamily ? FONT_FAMILY_MAP[globalFontFamily].css : "GmarketSans, sans-serif");
+
+  // Derive badge colors
+  const badgeBg = headerBadgeStyle.bgColor || theme.primary;
+  const badgeTextColor = headerBadgeStyle.titleColor || "#FFFFFF";
+  const badgeFontCss = headerBadgeStyle.fontFamily ? FONT_FAMILY_MAP[headerBadgeStyle.fontFamily].css : undefined;
+
+  // Derive font weights
+  const globalTitleWeight = useTemplateSettingsStore((s) => s.titleWeight);
+  const hWeight = TITLE_WEIGHT_MAP[headerStyle.titleWeight || globalTitleWeight]?.value ?? 700;
+  const badgeWeight = TITLE_WEIGHT_MAP[headerBadgeStyle.titleWeight || globalTitleWeight]?.value ?? 700;
 
   // Continuation pages: minimal header
   if (pageNum > 1) {
     return (
       <header
         className="mb-8 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 shrink-0"
-        style={{ backgroundColor: theme.headerBg }}
+        style={{
+          backgroundColor: hBgColor,
+          paddingTop: headerStyle.paddingTop ? `${headerStyle.paddingTop + 32}px` : undefined,
+          paddingBottom: headerStyle.paddingBottom ? `${headerStyle.paddingBottom}px` : undefined,
+          borderBottom: headerStyle.borderStyle && headerStyle.borderStyle !== "none"
+            ? `1px ${headerStyle.borderStyle} ${headerStyle.borderColor || hTitleColor}`
+            : undefined,
+        }}
       >
         <div className="flex items-center justify-between pb-3 pt-4">
-          <div
-            className="tracking-tighter leading-none"
-            style={{ fontFamily: "GmarketSans, sans-serif", color: theme.primary }}
-          >
-            {academyName ? (
-              <span className="font-bold" style={{ fontSize: `${Math.round(fontSizes.headerLogo * 0.56)}px` }}>{academyName}</span>
-            ) : (
-              <>
-                <span className="font-bold" style={{ fontSize: `${Math.round(fontSizes.headerLogo * 0.67)}px` }}>L</span>
-                <span className="font-medium" style={{ fontSize: `${Math.round(fontSizes.headerLogo * 0.67)}px` }}>ogic</span>
-              </>
-            )}
-          </div>
-          <div
-            className="px-3 py-1 text-white font-bold shrink-0 whitespace-nowrap"
-            style={{ backgroundColor: theme.primary, fontSize: `${fontSizes.headerBadge}px` }}
-          >
-            <EditableHeaderText />
-          </div>
+          <HeaderClickZone focusKey="header" label="헤더">
+            <div
+              className="tracking-tighter leading-none"
+              style={{ fontFamily: hFontCss, color: hTitleColor }}
+            >
+              {academyName ? (
+                <span style={{ fontSize: `${Math.round(fontSizes.headerLogo * 0.56)}px`, fontWeight: hWeight }}>{academyName}</span>
+              ) : (
+                <>
+                  <span style={{ fontSize: `${Math.round(fontSizes.headerLogo * 0.67)}px`, fontWeight: hWeight }}>L</span>
+                  <span style={{ fontSize: `${Math.round(fontSizes.headerLogo * 0.67)}px`, fontWeight: Math.max(400, hWeight - 200) }}>ogic</span>
+                </>
+              )}
+            </div>
+          </HeaderClickZone>
+          <HeaderClickZone focusKey="header-badge" label="배지">
+            <div
+              className="px-3 py-1 shrink-0 whitespace-nowrap"
+              style={{
+                backgroundColor: badgeBg,
+                color: badgeTextColor,
+                fontSize: `${fontSizes.headerBadge}px`,
+                fontFamily: badgeFontCss,
+                fontWeight: badgeWeight,
+                paddingTop: headerBadgeStyle.paddingTop ? `${headerBadgeStyle.paddingTop}px` : undefined,
+                paddingBottom: headerBadgeStyle.paddingBottom ? `${headerBadgeStyle.paddingBottom}px` : undefined,
+                borderTop: headerBadgeStyle.borderStyle && headerBadgeStyle.borderStyle !== "none"
+                  ? `1px ${headerBadgeStyle.borderStyle} ${headerBadgeStyle.borderColor || badgeBg}`
+                  : undefined,
+              }}
+            >
+              <EditableHeaderText />
+            </div>
+          </HeaderClickZone>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-[3px]" style={{ backgroundColor: theme.primary }} />
+        {!headerStyle.borderStyle && (
+          <div className="absolute bottom-0 left-0 w-full h-[3px]" style={{ backgroundColor: hTitleColor }} />
+        )}
       </header>
     );
   }
@@ -64,55 +154,77 @@ export function HandoutHeader({
   return (
     <header
       className="mb-8 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 shrink-0"
-      style={{ backgroundColor: theme.headerBg }}
+      style={{
+        backgroundColor: hBgColor,
+        paddingTop: headerStyle.paddingTop ? `${headerStyle.paddingTop + 32}px` : undefined,
+        paddingBottom: headerStyle.paddingBottom ? `${headerStyle.paddingBottom}px` : undefined,
+        borderBottom: headerStyle.borderStyle && headerStyle.borderStyle !== "none"
+          ? `1px ${headerStyle.borderStyle} ${headerStyle.borderColor || hTitleColor}`
+          : undefined,
+      }}
     >
       <div className="flex items-end justify-between pb-4 pt-6 gap-4">
-        <div className="flex flex-col relative flex-1 h-[56px]">
-          {/* Passage number badge */}
-          <div className="absolute -top-[45px] left-0 bg-[#D1D5DB] rounded-b-[1.25rem] w-[64px] h-[60px] rounded-tr-none z-0 translate-x-2 translate-y-2" />
+        <HeaderClickZone focusKey="header" label="헤더" className="flex-1">
+          <div className="flex flex-col relative h-[56px]">
+            {/* Passage number badge */}
+            <div className="absolute -top-[45px] left-0 bg-[#D1D5DB] rounded-b-[1.25rem] w-[64px] h-[60px] rounded-tr-none z-0 translate-x-2 translate-y-2" />
+            <div
+              className="absolute -top-[45px] left-0 rounded-b-[1.25rem] rounded-tr-none w-[64px] h-[60px] flex items-center justify-center z-10"
+              style={{
+                backgroundColor: hTitleColor,
+                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
+              }}
+            >
+              <span className="text-white font-black tracking-tighter leading-none mt-1" style={{ fontSize: `${fontSizes.passageNumber}px` }}>
+                {section.passageId.slice(1).padStart(2, "0")}
+              </span>
+            </div>
+
+            <h1
+              className="absolute bottom-0 left-0 tracking-tighter leading-none"
+              style={{ fontFamily: hFontCss, color: hTitleColor }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsNameModalOpen(true)}
+                className="group/edit bg-transparent border-0 p-0 m-0 hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
+                style={{ color: hTitleColor }}
+                aria-label="학원명 편집"
+              >
+                {academyName ? (
+                  <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors" style={{ fontSize: `${fontSizes.headerLogo}px`, fontWeight: hWeight }}>
+                    {academyName}
+                  </span>
+                ) : (
+                  <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
+                    <span style={{ fontSize: `${fontSizes.headerLogo}px`, fontWeight: hWeight }}>L</span>
+                    <span style={{ fontSize: `${fontSizes.headerLogo}px`, fontWeight: Math.max(400, hWeight - 200) }}>ogic</span>
+                  </span>
+                )}
+                <PencilHintIcon className="opacity-0 group-hover/edit:opacity-50" />
+              </button>
+            </h1>
+          </div>
+        </HeaderClickZone>
+        <HeaderClickZone focusKey="header-badge" label="배지" className="shrink-0">
           <div
-            className="absolute -top-[45px] left-0 rounded-b-[1.25rem] rounded-tr-none w-[64px] h-[60px] flex items-center justify-center z-10"
+            className="px-4 py-1.5 whitespace-nowrap translate-y-4 relative z-20"
             style={{
-              backgroundColor: theme.primary,
-              boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
+              backgroundColor: badgeBg,
+              color: badgeTextColor,
+              fontSize: `${fontSizes.headerBadge}px`,
+              fontFamily: badgeFontCss,
+              fontWeight: badgeWeight,
+              paddingTop: headerBadgeStyle.paddingTop ? `${headerBadgeStyle.paddingTop}px` : undefined,
+              paddingBottom: headerBadgeStyle.paddingBottom ? `${headerBadgeStyle.paddingBottom}px` : undefined,
+              borderTop: headerBadgeStyle.borderStyle && headerBadgeStyle.borderStyle !== "none"
+                ? `1px ${headerBadgeStyle.borderStyle} ${headerBadgeStyle.borderColor || badgeBg}`
+                : undefined,
             }}
           >
-            <span className="text-white font-black tracking-tighter leading-none mt-1" style={{ fontSize: `${fontSizes.passageNumber}px` }}>
-              {section.passageId.slice(1).padStart(2, "0")}
-            </span>
+            <EditableHeaderText />
           </div>
-
-          <h1
-            className="absolute bottom-0 left-0 tracking-tighter leading-none"
-            style={{ fontFamily: "GmarketSans, sans-serif", color: theme.primary }}
-          >
-            <button
-              type="button"
-              onClick={() => setIsNameModalOpen(true)}
-              className="group/edit bg-transparent border-0 p-0 m-0 hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
-              style={{ color: theme.primary }}
-              aria-label="학원명 편집"
-            >
-              {academyName ? (
-                <span className="font-bold border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors" style={{ fontSize: `${fontSizes.headerLogo}px` }}>
-                  {academyName}
-                </span>
-              ) : (
-                <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
-                  <span className="font-bold" style={{ fontSize: `${fontSizes.headerLogo}px` }}>L</span>
-                  <span className="font-medium" style={{ fontSize: `${fontSizes.headerLogo}px` }}>ogic</span>
-                </span>
-              )}
-              <PencilHintIcon className="opacity-0 group-hover/edit:opacity-50" />
-            </button>
-          </h1>
-        </div>
-        <div
-          className="px-4 py-1.5 text-white font-bold shrink-0 whitespace-nowrap translate-y-4 relative z-20"
-          style={{ backgroundColor: theme.primary, fontSize: `${fontSizes.headerBadge}px` }}
-        >
-          <EditableHeaderText />
-        </div>
+        </HeaderClickZone>
       </div>
 
       {/* Custom logo — right side */}
@@ -127,7 +239,9 @@ export function HandoutHeader({
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 w-full h-[3px]" style={{ backgroundColor: theme.primary }} />
+      {!headerStyle.borderStyle && (
+        <div className="absolute bottom-0 left-0 w-full h-[3px]" style={{ backgroundColor: hTitleColor }} />
+      )}
 
       {isNameModalOpen && (
         <AcademyNameModal

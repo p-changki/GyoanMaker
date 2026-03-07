@@ -14,6 +14,8 @@ export type * from "./handout";
 export type * from "./templateSettings";
 export {
   DEFAULT_TEMPLATE_SETTINGS,
+  DEFAULT_PAGE1_LAYOUT,
+  DEFAULT_SECTION_STYLE,
   VALID_PAGE2_SECTIONS,
   PAGE2_SECTION_LABELS,
   THEME_PRESETS,
@@ -27,6 +29,8 @@ export {
   FONT_SIZE_PRESETS,
   FONT_SIZE_SLOT_META,
   FONT_SIZE_GROUPS,
+  SECTION_FONT_SIZE_KEYS,
+  EDITABLE_SECTION_LABELS,
 } from "./templateSettings";
 
 export type ResultStatus = "generating" | "completed" | "failed";
