@@ -16,6 +16,41 @@ export interface PaymentResult {
   method: PaymentMethod;
 }
 
+export interface TossConfirmResult {
+  paymentKey: string;
+  orderId: string;
+  totalAmount: number;
+  status: string;
+  method: string | null;
+  approvedAt: string | null;
+  raw: unknown;
+}
+
+interface TossErrorBody {
+  code?: string;
+  message?: string;
+}
+
+interface TossPaymentErrorOptions {
+  code?: string;
+  statusCode?: number;
+  raw?: unknown;
+}
+
+export class TossPaymentError extends Error {
+  code?: string;
+  statusCode?: number;
+  raw?: unknown;
+
+  constructor(message: string, options: TossPaymentErrorOptions = {}) {
+    super(message);
+    this.name = "TossPaymentError";
+    this.code = options.code;
+    this.statusCode = options.statusCode;
+    this.raw = options.raw;
+  }
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -37,4 +72,115 @@ export async function processPayment(
   req: PaymentRequest
 ): Promise<PaymentResult> {
   return mockPayment(req);
+}
+
+function buildTossBasicAuth(secretKey: string): string {
+  return `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
+}
+
+function parseTossErrorBody(payload: unknown): TossErrorBody {
+  if (!payload || typeof payload !== "object") {
+    return {};
+  }
+
+  const asRecord = payload as Record<string, unknown>;
+  return {
+    code:
+      typeof asRecord.code === "string" ? asRecord.code : undefined,
+    message:
+      typeof asRecord.message === "string" ? asRecord.message : undefined,
+  };
+}
+
+function toMockConfirmResult(
+  paymentKey: string,
+  orderId: string,
+  amount: number
+): TossConfirmResult {
+  const now = new Date().toISOString();
+  return {
+    paymentKey,
+    orderId,
+    totalAmount: amount,
+    status: "DONE",
+    method: "MOCK",
+    approvedAt: now,
+    raw: {
+      paymentKey,
+      orderId,
+      totalAmount: amount,
+      status: "DONE",
+      method: "MOCK",
+      approvedAt: now,
+      mocked: true,
+    },
+  };
+}
+
+export async function confirmTossPayment(
+  paymentKey: string,
+  orderId: string,
+  amount: number
+): Promise<TossConfirmResult> {
+  const secretKey = process.env.TOSS_SECRET_KEY?.trim();
+  if (!secretKey) {
+    return toMockConfirmResult(paymentKey, orderId, amount);
+  }
+
+  const res = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: buildTossBasicAuth(secretKey),
+    },
+    body: JSON.stringify({
+      paymentKey,
+      orderId,
+      amount,
+    }),
+  });
+
+  const payload = (await res.json().catch(() => null)) as unknown;
+  if (!res.ok) {
+    const parsed = parseTossErrorBody(payload);
+    throw new TossPaymentError(
+      parsed.message ?? "Failed to confirm payment with Toss Payments.",
+      {
+        code: parsed.code,
+        statusCode: res.status,
+        raw: payload,
+      }
+    );
+  }
+
+  if (!payload || typeof payload !== "object") {
+    throw new TossPaymentError("Invalid Toss confirm response.", {
+      statusCode: res.status,
+      raw: payload,
+    });
+  }
+
+  const record = payload as Record<string, unknown>;
+  const totalAmount = typeof record.totalAmount === "number" ? record.totalAmount : NaN;
+  const status = typeof record.status === "string" ? record.status : "UNKNOWN";
+  const method = typeof record.method === "string" ? record.method : null;
+  const approvedAt = typeof record.approvedAt === "string" ? record.approvedAt : null;
+
+  if (!Number.isFinite(totalAmount)) {
+    throw new TossPaymentError("Toss response missing totalAmount.", {
+      statusCode: res.status,
+      raw: payload,
+    });
+  }
+
+  return {
+    paymentKey:
+      typeof record.paymentKey === "string" ? record.paymentKey : paymentKey,
+    orderId: typeof record.orderId === "string" ? record.orderId : orderId,
+    totalAmount,
+    status,
+    method,
+    approvedAt,
+    raw: payload,
+  };
 }

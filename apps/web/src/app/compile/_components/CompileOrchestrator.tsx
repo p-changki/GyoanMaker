@@ -117,7 +117,7 @@ export default function CompileOrchestrator() {
                   if (e.key === "Enter") handleSaveConfirm();
                 }}
               />
-              <p className="text-xs text-gray-400 mt-2">Leave empty to use today's date.</p>
+              <p className="text-xs text-gray-400 mt-2">Leave empty to use today&apos;s date.</p>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
               <button

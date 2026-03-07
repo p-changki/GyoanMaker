@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import BillingSummary from "./_components/BillingSummary";
+import OrdersTable from "./_components/OrdersTable";
 import QuotaPanel from "./_components/QuotaPanel";
 import UsageDashboard from "./_components/UsageDashboard";
 
@@ -97,11 +99,12 @@ export default function AdminPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
       <div>
-        <h1 className="text-3xl font-extrabold text-gray-900">User Management</h1>
-        <p className="mt-1 text-gray-500">Manage user approvals and quotas</p>
+        <h1 className="text-3xl font-extrabold text-gray-900">Admin Dashboard</h1>
+        <p className="mt-1 text-gray-500">Manage users, quotas, and billing</p>
       </div>
 
       <UsageDashboard />
+      <BillingSummary />
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
@@ -109,22 +112,25 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="flex gap-2 flex-wrap">
-        {TAB_CONFIG.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              activeTab === tab.key
-                ? `${tab.color} shadow-sm scale-[1.02]`
-                : "bg-gray-50 text-gray-400 hover:bg-gray-100"
-            }`}
-          >
-            {tab.label}
-            <span className="ml-1.5 text-xs opacity-70">{tabCounts[tab.key]}</span>
-          </button>
-        ))}
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-3">User Management</h2>
+        <div className="flex gap-2 flex-wrap">
+          {TAB_CONFIG.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === tab.key
+                  ? `${tab.color} shadow-sm scale-[1.02]`
+                  : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+              }`}
+            >
+              {tab.label}
+              <span className="ml-1.5 text-xs opacity-70">{tabCounts[tab.key]}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -207,6 +213,8 @@ export default function AdminPage() {
           ))}
         </div>
       )}
+
+      <OrdersTable />
     </div>
   );
 }
