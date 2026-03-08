@@ -157,6 +157,23 @@ export async function setStorageUsed(email: string, used: number): Promise<void>
     );
 }
 
+export async function incrementStorageUsed(
+  email: string,
+  delta: number
+): Promise<void> {
+  const key = email.toLowerCase();
+  await getDb()
+    .collection(COLLECTION)
+    .doc(key)
+    .set(
+      {
+        quota: { storageUsed: FieldValue.increment(delta) },
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+}
+
 export async function purgeExpiredCredits(email: string): Promise<number> {
   const key = email.toLowerCase();
   const docRef = getDb().collection(COLLECTION).doc(key);

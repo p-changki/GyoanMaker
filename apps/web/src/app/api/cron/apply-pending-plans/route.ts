@@ -151,6 +151,8 @@ async function processAutoRenewals(now: Date): Promise<RenewalResult[]> {
         confirmedAmount: chargeResult.totalAmount,
         approvedAt: chargeResult.approvedAt,
         autoRenewal: true,
+        refundStatus: "none",
+        refundAmount: 0,
       });
 
       await renewSubscription(doc.id);

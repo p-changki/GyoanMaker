@@ -297,6 +297,19 @@ export default function AccountDashboard() {
         illustration={data.credits.illustration}
       />
 
+      {/* Refund Guide */}
+      <section className="rounded-2xl border border-blue-200 bg-blue-50/50 p-6">
+        <h3 className="text-sm font-bold text-blue-700">환불 요청 안내</h3>
+        <p className="mt-1 text-xs text-gray-600">
+          환불은 현재 이메일 접수 기반으로 처리됩니다. 아래 필수 항목을 함께 보내주세요.
+        </p>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-xs text-gray-600">
+          <li>접수 이메일: dnsxj12345aa@gmail.com</li>
+          <li>필수 기재 항목: 주문 ID, 계정 이메일, 환불 사유</li>
+          <li>처리 기준: 영업일 7일 이내 순차 처리</li>
+        </ul>
+      </section>
+
       {/* Danger Zone */}
       <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
         <h3 className="text-sm font-bold text-red-700">Danger Zone</h3>

@@ -20,12 +20,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       await findOrCreateUser(user.email, user.name ?? null, user.image ?? null);
       return true;
     },
-    async jwt({ token }) {
-      // 매 요청마다 DB에서 최신 상태를 조회 (signIn, update 뿐 아니라 항상)
-      if (token.email) {
+    async jwt({ token, trigger }) {
+      // Refresh user status on sign-in, explicit update, or every 5 minutes.
+      // Avoids a Firestore read on every authenticated request.
+      const STATUS_TTL_MS = 5 * 60 * 1000;
+      const isStale =
+        !token.statusCheckedAt ||
+        Date.now() - (token.statusCheckedAt as number) > STATUS_TTL_MS;
+      if (token.email && (trigger === "signIn" || trigger === "update" || isStale)) {
         const status = await getUserStatus(token.email);
         token.approved = status === "approved";
         token.userStatus = status ?? "pending";
+        token.statusCheckedAt = Date.now();
       }
       return token;
     },

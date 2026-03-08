@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import type {
   HandoutIllustration,
-  HandoutIllustrations,
   IllustrationAspectRatio,
   IllustrationBubbleStyle,
   IllustrationConceptMode,
@@ -29,52 +28,96 @@ import {
 import { getDb } from "./firebase-admin";
 import { uploadIllustrationBase64 } from "./firebase-storage";
 import { getHandout } from "./handouts";
-const USER_COLLECTION = "users";
-const JOB_COLLECTION = "illustration_jobs";
-const PROFILE_ID = "default";
-const DEFAULT_PROFILE: IllustrationProfile = {
-  profileId: PROFILE_ID,
-  styleEnabled: false,
-  styleName: "",
-  characterGuide: "",
-  palette: "",
-  lineStyle: "",
-  mood: "",
-  negativePrompt: "blurry, watermark, logo, text overlay, gore, nsfw",
-  bannedKeywords: ["celebrity", "copyright character"],
-  defaultQuality: "standard",
-  aspectRatio: "4:3",
-  updatedAt: new Date(0).toISOString(),
+
+// --- Imports from split modules ---
+import {
+  IllustrationJobNotFoundError,
+  IllustrationPolicyBlockedError,
+  IllustrationJobConflictError,
+} from "./illustration-errors";
+import {
+  nowIso,
+  toSafeText,
+  normalizeReferenceImage,
+  normalizeProfile,
+  normalizeJob,
+  profileHash as _profileHash,
+} from "./illustration-normalizers";
+import {
+  buildScenePrompt,
+  buildBackgroundKnowledge,
+  shouldIncludePassage as _shouldIncludePassage,
+} from "./illustration-prompt-builder";
+
+// Re-export from split modules for backwards compatibility
+export {
+  IllustrationJobNotFoundError,
+  IllustrationPolicyBlockedError,
+  IllustrationJobConflictError,
 };
 export { ILLUSTRATION_CREDIT_COST, IllustrationCreditError, getIllustrationCredits };
-export class IllustrationJobNotFoundError extends Error {
-  readonly code = "ILLUSTRATION_JOB_NOT_FOUND";
-  constructor(jobId: string) {
-    super(`Illustration job not found: ${jobId}`);
-    this.name = "IllustrationJobNotFoundError";
-  }
+
+// --- Constants ---
+const USER_COLLECTION = "users";
+const JOB_COLLECTION = "illustration_jobs";
+
+// --- Small utils (kept here as they depend on getDb or are trivial) ---
+function userDocRef(email: string) {
+  return getDb().collection(USER_COLLECTION).doc(email.toLowerCase());
 }
-export class IllustrationPolicyBlockedError extends Error {
-  readonly code = "ILLUSTRATION_POLICY_BLOCKED";
-  readonly keyword: string;
-  constructor(keyword: string) {
-    super(`Illustration prompt is blocked by policy keyword: ${keyword}`);
-    this.name = "IllustrationPolicyBlockedError";
-    this.keyword = keyword;
-  }
+
+function jobDocRef(email: string, jobId: string) {
+  return userDocRef(email).collection(JOB_COLLECTION).doc(jobId);
 }
-export class IllustrationJobConflictError extends Error {
-  readonly code = "ILLUSTRATION_JOB_IN_PROGRESS";
-  readonly jobId: string;
-  constructor(jobId: string) {
-    super(`Another illustration job is already running for this handout: ${jobId}`);
-    this.name = "IllustrationJobConflictError";
-    this.jobId = jobId;
-  }
+
+function hashSha256(value: string): string {
+  return crypto.createHash("sha256").update(value, "utf8").digest("hex");
 }
+
+function findBlockedKeyword(text: string, keywords: string[]): string | null {
+  const normalized = text.toLowerCase();
+  for (const keyword of keywords) {
+    const candidate = keyword.trim().toLowerCase();
+    if (!candidate) continue;
+    if (normalized.includes(candidate)) {
+      return keyword;
+    }
+  }
+  return null;
+}
+
+function getQualitySize(
+  quality: IllustrationQuality,
+  ratio: IllustrationAspectRatio
+): { width: number; height: number } {
+  const baseLong = quality === "draft" ? 768 : quality === "hq" ? 1536 : 1024;
+  if (ratio === "1:1") return { width: baseLong, height: baseLong };
+  if (ratio === "16:9") return { width: baseLong, height: Math.round((baseLong * 9) / 16) };
+  return { width: baseLong, height: Math.round((baseLong * 3) / 4) };
+}
+
+// Wrap profileHash with local hashSha256
+function profileHash(profile: IllustrationProfile): string {
+  return _profileHash(profile, hashSha256);
+}
+
+// Wrap shouldIncludePassage with local hashSha256
+function shouldIncludePassage(
+  passageId: string,
+  rawText: string,
+  existing: Parameters<typeof _shouldIncludePassage>[2],
+  scope: Parameters<typeof _shouldIncludePassage>[3],
+  scopePassageSet: Set<string> | null,
+  overwritePolicy: Parameters<typeof _shouldIncludePassage>[5]
+): boolean {
+  return _shouldIncludePassage(passageId, rawText, existing, scope, scopePassageSet, overwritePolicy, hashSha256);
+}
+
+// --- Internal types ---
 interface UserDocLike {
   illustrationProfile?: Partial<IllustrationProfile>;
 }
+
 interface CreateJobInput {
   handoutId: string;
   scope: "all" | "passages" | "stale";
@@ -90,340 +133,14 @@ interface CreateJobInput {
   bubbleStyle?: IllustrationBubbleStyle;
   customBubbleTexts?: string[];
 }
+
 interface ListJobsOptions {
   handoutId?: string;
   activeOnly?: boolean;
   limit?: number;
 }
-function userDocRef(email: string) {
-  return getDb().collection(USER_COLLECTION).doc(email.toLowerCase());
-}
-function jobDocRef(email: string, jobId: string) {
-  return userDocRef(email).collection(JOB_COLLECTION).doc(jobId);
-}
-function nowIso(): string {
-  return new Date().toISOString();
-}
-function toSafeText(value: unknown, max: number, fallback = ""): string {
-  if (typeof value !== "string") return fallback;
-  return value.trim().slice(0, max);
-}
-function hashSha256(value: string): string {
-  return crypto.createHash("sha256").update(value, "utf8").digest("hex");
-}
-function findBlockedKeyword(text: string, keywords: string[]): string | null {
-  const normalized = text.toLowerCase();
-  for (const keyword of keywords) {
-    const candidate = keyword.trim().toLowerCase();
-    if (!candidate) continue;
-    if (normalized.includes(candidate)) {
-      return keyword;
-    }
-  }
-  return null;
-}
-function getQualitySize(
-  quality: IllustrationQuality,
-  ratio: IllustrationAspectRatio
-): { width: number; height: number } {
-  const baseLong = quality === "draft" ? 768 : quality === "hq" ? 1536 : 1024;
-  if (ratio === "1:1") return { width: baseLong, height: baseLong };
-  if (ratio === "16:9") return { width: baseLong, height: Math.round((baseLong * 9) / 16) };
-  return { width: baseLong, height: Math.round((baseLong * 3) / 4) };
-}
-function normalizeReferenceImage(
-  raw: Partial<IllustrationReferenceImage> | null | undefined
-): IllustrationReferenceImage | undefined {
-  if (!raw || typeof raw !== "object") return undefined;
-  const imageUrl = toSafeText(raw.imageUrl, 2000, "");
-  const storagePath = toSafeText(raw.storagePath, 500, "");
-  if (!imageUrl || !storagePath) return undefined;
 
-  const mimeType =
-    raw.mimeType === "image/jpeg" || raw.mimeType === "image/webp"
-      ? raw.mimeType
-      : "image/png";
-  const source = raw.source === "sample" ? "sample" : "upload";
-  const width =
-    typeof raw.width === "number" && Number.isFinite(raw.width) && raw.width > 0
-      ? Math.round(raw.width)
-      : undefined;
-  const height =
-    typeof raw.height === "number" && Number.isFinite(raw.height) && raw.height > 0
-      ? Math.round(raw.height)
-      : undefined;
-
-  return {
-    imageUrl,
-    storagePath,
-    mimeType,
-    source,
-    width,
-    height,
-    updatedAt:
-      typeof raw.updatedAt === "string" && raw.updatedAt.trim().length > 0
-        ? raw.updatedAt
-        : nowIso(),
-  };
-}
-function normalizeProfile(
-  raw:
-    | (Omit<Partial<IllustrationProfile>, "referenceImage"> & {
-        referenceImage?: Partial<IllustrationReferenceImage> | null;
-      })
-    | undefined
-): IllustrationProfile {
-  const fallback = DEFAULT_PROFILE;
-  const quality = raw?.defaultQuality;
-  const aspectRatio = raw?.aspectRatio;
-  const bannedKeywords = Array.isArray(raw?.bannedKeywords)
-    ? raw?.bannedKeywords
-        .filter((item): item is string => typeof item === "string")
-        .map((item) => item.trim())
-        .filter(Boolean)
-        .slice(0, 20)
-    : fallback.bannedKeywords;
-  const referenceImage = normalizeReferenceImage(raw?.referenceImage);
-  return {
-    profileId: PROFILE_ID,
-  styleEnabled: false,
-    styleName: toSafeText(raw?.styleName, 60, fallback.styleName),
-    characterGuide: toSafeText(raw?.characterGuide, 300, fallback.characterGuide),
-    palette: toSafeText(raw?.palette, 60, fallback.palette),
-    lineStyle: toSafeText(raw?.lineStyle, 60, fallback.lineStyle),
-    mood: toSafeText(raw?.mood, 60, fallback.mood),
-    negativePrompt: toSafeText(raw?.negativePrompt, 400, fallback.negativePrompt),
-    bannedKeywords,
-    referenceImage,
-    defaultQuality:
-      quality === "draft" || quality === "standard" || quality === "hq"
-        ? quality
-        : fallback.defaultQuality,
-    aspectRatio:
-      aspectRatio === "1:1" || aspectRatio === "16:9" || aspectRatio === "4:3"
-        ? aspectRatio
-        : fallback.aspectRatio,
-    updatedAt:
-      typeof raw?.updatedAt === "string" && raw.updatedAt.length > 0
-        ? raw.updatedAt
-        : fallback.updatedAt,
-  };
-}
-function profileHash(profile: IllustrationProfile): string {
-  return hashSha256(
-    JSON.stringify({
-      styleName: profile.styleName,
-      characterGuide: profile.characterGuide,
-      palette: profile.palette,
-      lineStyle: profile.lineStyle,
-      mood: profile.mood,
-      negativePrompt: profile.negativePrompt ?? "",
-      bannedKeywords: profile.bannedKeywords ?? [],
-      referenceImage: profile.referenceImage
-        ? {
-            storagePath: profile.referenceImage.storagePath,
-            mimeType: profile.referenceImage.mimeType,
-            source: profile.referenceImage.source,
-          }
-        : null,
-      defaultQuality: profile.defaultQuality,
-      aspectRatio: profile.aspectRatio,
-    })
-  );
-}
-/** Strip Korean / CJK characters so the image-gen model won't render them. */
-function stripNonLatinText(text: string): string {
-  // Remove Korean (Hangul), CJK Unified Ideographs, and fullwidth forms
-  return text
-    .replace(/[　-鿿가-힯豈-﫿︰-﹏＀-￯]+/g, " ")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-}
-
-function buildProfileStyleSection(profile: IllustrationProfile): string {
-  const parts: string[] = [];
-
-  if (profile.styleName) {
-    parts.push(`Art style: ${profile.styleName}.`);
-  }
-  if (profile.palette) {
-    parts.push(`Color palette: ${profile.palette}.`);
-  }
-  if (profile.lineStyle) {
-    parts.push(`Line style: ${profile.lineStyle}.`);
-  }
-
-  if (parts.length === 0) {
-    parts.push("Clean, appealing educational illustration style.");
-  }
-
-  return parts.join(" ");
-}
-
-function buildScenePrompt(
-  passageId: string,
-  rawText: string,
-  profile: IllustrationProfile,
-  referenceImage?: IllustrationReferenceImage,
-  conceptMode?: IllustrationConceptMode,
-  conceptText?: string
-): string {
-  const concise = stripNonLatinText(rawText.replace(/\s+/g, " ").trim()).slice(0, 1200);
-  const banned = (profile.bannedKeywords ?? []).join(", ");
-  const includeText = profile.includeKoreanText ?? false;
-
-  // Concept enforcement lines based on mode
-  const conceptLine = (() => {
-    if (!conceptText || !conceptMode || conceptMode === "off") return "";
-    if (conceptMode === "soft") {
-      return `Visual concept reference (soft, treat as style inspiration): ${conceptText.slice(0, 200)}`;
-    }
-    return [
-      `=== ABSOLUTE REQUIREMENT (HIGHEST PRIORITY) ===`,
-      `ALL characters in this illustration MUST follow this concept: "${conceptText.slice(0, 200)}".`,
-      `If the concept describes animals, draw ONLY anthropomorphic animals — NEVER humans.`,
-      `If the concept describes robots, draw ONLY robots — NEVER humans.`,
-      `The concept defines WHO appears in the scene. The passage text below defines WHAT they are doing.`,
-      `Combine them: concept characters performing passage activities.`,
-      `VIOLATION: Drawing characters that don't match the concept is a critical error.`,
-      `=== END REQUIREMENT ===`,
-    ].join(" ");
-  })();
-
-  const styleSection = buildProfileStyleSection(profile);
-
-  const characterGuideLine =
-    profile.characterGuide && !(conceptMode === "hard" && conceptText)
-      ? `Character guide: ${profile.characterGuide}.`
-      : "";
-
-  const bubbleCount = profile.bubbleCount ?? 3;
-  const bubbleStyleMap = { round: "round/oval speech bubbles", square: "rectangular/sharp-cornered speech bubbles", cloud: "cloud-shaped thought/speech bubbles" } as const;
-  const bubbleStyleDesc = bubbleStyleMap[profile.bubbleStyle ?? "round"];
-  const customTexts = profile.customBubbleTexts ?? [];
-  const customTextLine = customTexts.length > 0
-    ? `Use these EXACT Korean texts for the speech bubbles (in order): ${customTexts.map((t, i) => `${i + 1}. "${t}"`).join(", ")}.`
-    : "Generate contextually appropriate Korean speech bubble texts based on the passage content.";
-
-  const textInstructions = includeText
-    ? [
-        "**Structured Scene Layout:**",
-        "1. **Title banner (top):** A prominent banner at the top with a Korean sentence summarizing the passage theme.",
-        `2. **Character speech bubbles:** Draw exactly ${bubbleCount} ${bubbleStyleDesc} with Korean text. ${customTextLine}`,
-        "3. **Keyword labels:** Arrows or annotation labels pointing to key concepts, written in Korean.",
-        "4. **Summary caption (bottom):** A rectangular caption box at the bottom with a Korean wrap-up sentence.",
-        "5. **Background:** Setting should match the passage context.",
-        "All text MUST be in Korean (\ud55c\uad6d\uc5b4).",
-      ].join("\n")
-    : "Do NOT include any text, speech bubbles, labels, or letters inside the image. Express meaning through visuals only.";
-
-  const moodLine = profile.mood
-    ? `Mood: ${profile.mood}. Add small decorative elements relevant to the scene.`
-    : "Mood: Warm, friendly, educational. Add small decorative elements (hearts, sparkles, icons).";
-
-  const refLine = referenceImage
-    ? conceptMode === "hard"
-      ? "Reference style image is attached. The characters in this reference are the ONLY type of characters allowed. Copy their species/type exactly."
-      : "Reference style image is attached. Preserve visual style but generate new scene content."
-    : "";
-
-  const negativePromptLine = (() => {
-    const base = profile.negativePrompt ?? "";
-    const hardSuffix = conceptMode === "hard" ? ", realistic human figures" : "";
-    if (base) return `Negative prompt: ${base}${hardSuffix}`;
-    if (hardSuffix) return `Negative prompt: realistic human figures`;
-    return "";
-  })();
-
-  return [
-    `Create a single-panel educational illustration for passage ${passageId}.`,
-    "",
-    `**Style:** ${styleSection}`,
-    conceptLine,
-    characterGuideLine,
-    "",
-    `**Scene:** Depict the main theme as a concrete scene: ${concise}`,
-    "",
-    textInstructions,
-    "",
-    moodLine,
-    negativePromptLine,
-    banned ? `Avoid keywords: ${banned}` : "",
-    refLine,
-    "No watermark. No photorealistic elements.",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
-function buildBackgroundKnowledge(rawText: string): string {
-  const cleaned = rawText.replace(/\s+/g, " ").trim();
-  if (!cleaned) return "";
-  return cleaned.slice(0, 240);
-}
-function shouldIncludePassage(
-  passageId: string,
-  rawText: string,
-  existing: HandoutIllustrations | undefined,
-  scope: CreateJobInput["scope"],
-  scopePassageSet: Set<string> | null,
-  overwritePolicy: "skip_completed" | "overwrite_all" | "stale_only"
-): boolean {
-  const current = existing?.[passageId];
-  const sourceHash = hashSha256(rawText);
-  const isCompleted = current?.status === "completed" && !!current?.imageUrl;
-  const isStale = !!current && current.sourceHash !== sourceHash;
-  if (scope === "passages" && scopePassageSet && !scopePassageSet.has(passageId)) {
-    return false;
-  }
-  if (scope === "stale") {
-    return isStale || !current || current.status === "failed";
-  }
-  if (overwritePolicy === "overwrite_all") return true;
-  if (overwritePolicy === "stale_only") return isStale || !current;
-  if (overwritePolicy === "skip_completed") return !isCompleted;
-  return true;
-}
-function normalizeJob(input: Partial<IllustrationJob>): IllustrationJob {
-  const rawItems = input.items || {};
-  const items = Object.fromEntries(
-    Object.entries(rawItems).map(([passageId, item]) => {
-      const rawItem = item as IllustrationJobItem;
-      return [
-        passageId,
-        {
-          ...rawItem,
-          referenceImage: normalizeReferenceImage(rawItem.referenceImage),
-        } satisfies IllustrationJobItem,
-      ];
-    })
-  ) as Record<string, IllustrationJobItem>;
-  return {
-    id: input.id || "",
-    handoutId: input.handoutId || "",
-    referenceImage: normalizeReferenceImage(input.referenceImage),
-    status: input.status || "queued",
-    quality: input.quality || "standard",
-    aspectRatio: input.aspectRatio || "4:3",
-    total: input.total || 0,
-    completed: input.completed || 0,
-    failed: input.failed || 0,
-    reservedCredits: input.reservedCredits || 0,
-    consumedCredits: input.consumedCredits || 0,
-    refundedCredits: input.refundedCredits || 0,
-    failedRefundedAt: input.failedRefundedAt,
-    overwritePolicy: input.overwritePolicy || "skip_completed",
-    conceptMode: input.conceptMode,
-    conceptText: input.conceptText,
-    includeKoreanText: input.includeKoreanText ?? false,
-    bubbleCount: input.bubbleCount,
-    bubbleStyle: input.bubbleStyle,
-    customBubbleTexts: input.customBubbleTexts,
-    items,
-    createdAt: input.createdAt || nowIso(),
-    updatedAt: input.updatedAt || nowIso(),
-  };
-}
+// --- Public API ---
 export async function getIllustrationProfile(
   email: string
 ): Promise<IllustrationProfile> {
@@ -431,6 +148,7 @@ export async function getIllustrationProfile(
   const data = (snap.data() ?? {}) as UserDocLike;
   return normalizeProfile(data.illustrationProfile);
 }
+
 export async function updateIllustrationProfile(
   email: string,
   patch: Omit<Partial<IllustrationProfile>, "referenceImage"> & {
@@ -467,6 +185,7 @@ export async function updateIllustrationProfile(
   }
   return next;
 }
+
 export async function listIllustrationJobs(
   email: string,
   options: ListJobsOptions = {}
@@ -485,6 +204,7 @@ export async function listIllustrationJobs(
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return rows.slice(0, limit);
 }
+
 export async function createIllustrationJob(
   email: string,
   input: CreateJobInput
@@ -523,7 +243,10 @@ export async function createIllustrationJob(
   const now = nowIso();
   const pHash = profileHash(profile);
   const conceptMode = input.conceptMode ?? "off";
-  const conceptText = conceptMode !== "off" && input.conceptText ? input.conceptText.trim().slice(0, 300) : undefined;
+  const conceptText =
+    conceptMode !== "off" && input.conceptText
+      ? input.conceptText.trim().slice(0, 300)
+      : undefined;
   const items: Record<string, IllustrationJobItem> = {};
   const bannedKeywords = profile.bannedKeywords ?? [];
   for (const passageId of selectedPassageIds) {
@@ -604,6 +327,7 @@ export async function createIllustrationJob(
   });
   return job;
 }
+
 export async function getIllustrationJob(
   email: string,
   jobId: string
@@ -615,6 +339,7 @@ export async function getIllustrationJob(
   }
   return normalizeJob(doc.data() as Partial<IllustrationJob>);
 }
+
 export async function runIllustrationJob(
   email: string,
   jobId: string,
@@ -826,6 +551,7 @@ ${JSON.stringify(sceneAnalysis, null, 2)}`
   };
   return finalizeIllustrationJob(email, ref, nextJob);
 }
+
 async function finalizeIllustrationJob(
   email: string,
   ref: FirebaseFirestore.DocumentReference,
@@ -884,6 +610,7 @@ async function finalizeIllustrationJob(
   );
   return next;
 }
+
 export async function retryIllustrationJob(
   email: string,
   jobId: string
@@ -931,6 +658,7 @@ export async function retryIllustrationJob(
     updatedAt: now,
   };
 }
+
 export async function cancelIllustrationJob(
   email: string,
   jobId: string
@@ -970,6 +698,7 @@ export async function cancelIllustrationJob(
     updatedAt: now,
   };
 }
+
 export async function generateIllustrationSample(
   email: string,
   input: {
@@ -1029,3 +758,18 @@ export async function generateIllustrationSample(
     prompt: generated.revisedPrompt || prompt,
   };
 }
+
+// Named re-exports for utilities that were previously internal but may be consumed by other modules
+export {
+  toSafeText,
+  nowIso,
+  hashSha256,
+  findBlockedKeyword,
+  getQualitySize,
+  normalizeReferenceImage,
+  normalizeProfile,
+  normalizeJob,
+  profileHash,
+  buildScenePrompt,
+  buildBackgroundKnowledge,
+};

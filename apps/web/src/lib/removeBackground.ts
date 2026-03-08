@@ -1,11 +1,15 @@
-import { removeBackground as removeBg } from "@imgly/background-removal";
-
 /**
  * Remove background from an image using client-side AI (ONNX/WebAssembly).
  * Returns a base64 data URL of the transparent PNG result.
  * Uses full-precision "isnet" model (~80MB) for best edge accuracy.
+ * Library is loaded on-demand (dynamic import) to avoid bundling ~80MB ONNX
+ * assets until the user actually clicks "Remove Background".
  */
 export async function removeBackground(base64DataUrl: string): Promise<string> {
+  const { removeBackground: removeBg } = await import(
+    "@imgly/background-removal"
+  );
+
   // Convert data URL to Blob for the library
   const response = await fetch(base64DataUrl);
   const blob = await response.blob();

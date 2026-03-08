@@ -13,6 +13,7 @@ export type TopUpPackageId =
   | "illu_120";
 export type OrderType = "subscription" | "topup";
 export type OrderStatus = "pending" | "confirmed" | "failed" | "paid_not_applied";
+export type RefundStatus = "none" | "requested" | "processed" | "rejected";
 
 export interface PendingOrder {
   orderId: string;
@@ -26,6 +27,17 @@ export interface PendingOrder {
   createdAt: string;
   confirmedAt?: string;
   paymentKey?: string;
+  /**
+   * Refund metadata (manual ops first, API automation later)
+   * - none: default state (no refund workflow started)
+   * - requested: user requested refund
+   * - processed: refund completed
+   * - rejected: refund request rejected
+   */
+  refundStatus?: RefundStatus;
+  refundRequestedAt?: string;
+  refundProcessedAt?: string;
+  refundAmount?: number;
 }
 
 export interface PlanDefinition {

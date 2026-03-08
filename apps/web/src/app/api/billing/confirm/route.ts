@@ -399,6 +399,8 @@ export async function POST(req: NextRequest) {
       confirmedAmount: confirmed.totalAmount,
       paymentMethod: confirmed.method,
       approvedAt: confirmed.approvedAt,
+      refundStatus: order.refundStatus ?? "none",
+      refundAmount: order.refundAmount ?? 0,
       updatedAt: confirmedAt,
     };
 

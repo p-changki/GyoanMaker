@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createHandout, listHandouts } from "@/lib/handouts";
-import { getQuotaStatus, setStorageUsed } from "@/lib/quota";
+import { getQuotaStatus, incrementStorageUsed } from "@/lib/quota";
 import type { HandoutIllustrations } from "@gyoanmaker/shared/types";
 
 /**
@@ -75,11 +75,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const [quota, currentHandouts] = await Promise.all([
-      getQuotaStatus(session.user.email),
-      listHandouts(session.user.email, 1000),
-    ]);
-    const currentStorageUsed = currentHandouts.length;
+    // Use stored counter (O(1)) instead of listing all handouts
+    const quota = await getQuotaStatus(session.user.email);
+    const currentStorageUsed = quota.storage.used;
 
     if (
       quota.storage.limit !== null &&
@@ -89,8 +87,7 @@ export async function POST(req: NextRequest) {
         {
           error: {
             code: "STORAGE_LIMIT_EXCEEDED",
-            message:
-              "Storage limit exceeded. Please upgrade your plan.",
+            message: "Storage limit exceeded. Please upgrade your plan.",
           },
         },
         { status: 403 }
@@ -109,7 +106,7 @@ export async function POST(req: NextRequest) {
       customTexts,
     });
 
-    await setStorageUsed(session.user.email, currentStorageUsed + 1);
+    await incrementStorageUsed(session.user.email, 1);
 
     return NextResponse.json(handout, { status: 201 });
   } catch (error) {
