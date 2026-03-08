@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { TemplateSettingsPanel } from "./template-settings";
@@ -95,18 +95,18 @@ export default function ControlPanel({
   const [illustrationScope, setIllustrationScope] = useState<
     "all" | "stale" | "passages"
   >("all");
-  const [conceptMode, setConceptMode] = useState<IllustrationConceptMode>("off");
+  const derivedConceptDefault: IllustrationConceptMode = activeSample ? "hard" : "off";
+  const [conceptMode, setConceptMode] = useState<IllustrationConceptMode>(derivedConceptDefault);
+  const [lastSampleId, setLastSampleId] = useState<string | null>(activeSample?.sampleId ?? null);
 
-  // Auto-set to "hard" when an active sample is loaded for the first time
-  const prevHadSample = useRef(false);
-  useEffect(() => {
-    if (activeSample && !prevHadSample.current) {
+  // Sync concept mode when activeSample changes (React recommended pattern for derived state)
+  const currentSampleId = activeSample?.sampleId ?? null;
+  if (currentSampleId !== lastSampleId) {
+    setLastSampleId(currentSampleId);
+    if (currentSampleId && !lastSampleId) {
       setConceptMode("hard");
-      prevHadSample.current = true;
-    } else if (!activeSample) {
-      prevHadSample.current = false;
     }
-  }, [activeSample]);
+  }
   const [illustrationQuality, setIllustrationQuality] = useState<
     "draft" | "standard" | "hq"
   >("standard");
