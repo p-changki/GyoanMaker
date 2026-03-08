@@ -13,15 +13,15 @@ import { useTemplateFontLoader } from "./useTemplateFontLoader";
 
 function useTheme() {
   useTemplateFontLoader();
-  const preset = useTemplateSettingsStore((s) => s.themePreset);
+  const themePreset = useTemplateSettingsStore((s) => s.themePreset);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
   const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
   const titleWeight = useTemplateSettingsStore((s) => s.titleWeight);
-  const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
-  const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
+  const useCustomTheme = useTemplateSettingsStore((s) => s.useCustomTheme);
+  const customThemeColors = useTemplateSettingsStore((s) => s.customThemeColors);
 
-  const baseColors = THEME_PRESETS[preset];
-  const colors = useCustom && customColors ? { ...baseColors, ...customColors } : baseColors;
+  const baseColors = THEME_PRESETS[themePreset];
+  const colors = useCustomTheme && customThemeColors ? { ...baseColors, ...customThemeColors } : baseColors;
 
   return {
     ...colors,
