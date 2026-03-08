@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { TOP_UP_PACKAGES } from "@gyoanmaker/shared/plans";
+import { TOP_UP_PACKAGES, MODEL_DISPLAY_NAMES } from "@gyoanmaker/shared/plans";
 import TossPaymentButton from "@/components/billing/TossPaymentButton";
 
 interface TopUpModalProps {
@@ -46,7 +46,7 @@ export default function TopUpModal({ open, onClose }: TopUpModalProps) {
     >
       <div className="p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Top Up Credits</h2>
+          <h2 className="text-lg font-bold text-gray-900">크레딧 충전</h2>
           <button
             type="button"
             onClick={onClose}
@@ -64,9 +64,9 @@ export default function TopUpModal({ open, onClose }: TopUpModalProps) {
               key={pkg.id}
               className="rounded-xl border border-gray-100 bg-gray-50 p-4"
             >
-              <p className="text-sm font-semibold text-gray-900">{pkg.id}</p>
+              <p className="text-sm font-semibold text-gray-900">{pkg.label}</p>
               <p className="mt-1 text-sm text-gray-600">
-                {pkg.type.toUpperCase()} {pkg.amount} credits
+                {MODEL_DISPLAY_NAMES[pkg.type]} {pkg.amount} 크레딧
               </p>
               <p className="mt-1 text-base font-bold text-gray-900">
                 ₩{pkg.price.toLocaleString()}
@@ -75,7 +75,7 @@ export default function TopUpModal({ open, onClose }: TopUpModalProps) {
                 <TossPaymentButton
                   type="topup"
                   packageId={pkg.id}
-                  label="Top Up"
+                  label="충전하기"
                   className="w-full"
                 />
               </div>
