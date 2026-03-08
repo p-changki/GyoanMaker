@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getUserOrders } from "@/lib/orders";
 
-const MAX_LIMIT = 50;
+const MAX_LIMIT = 200;
 
 export async function GET() {
   const session = await auth();

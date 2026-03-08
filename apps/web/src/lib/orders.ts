@@ -82,10 +82,18 @@ export async function getUserOrders(
     rows.push(row);
   }
 
+  // Mark stale pending orders (older than 1 hour) as expired so users can see them.
+  const STALE_MS = 60 * 60 * 1000;
+  const now = Date.now();
   for (const doc of pendingSnap.docs) {
     const data = { ...doc.data(), orderId: doc.id } as RawOrder;
     if (seenIds.has(data.orderId ?? "")) continue;
-    rows.push(toOrderRow(data));
+    const row = toOrderRow(data);
+    const age = now - new Date(row.createdAt).getTime();
+    if (age > STALE_MS) {
+      row.status = "expired";
+    }
+    rows.push(row);
   }
 
   rows.sort(
