@@ -11,6 +11,7 @@
   font-style: normal;
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
     format("woff");
+  font-display: swap;
 }
 
 @font-face {
@@ -19,6 +20,7 @@
   font-style: normal;
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
     format("woff");
+  font-display: swap;
 }
 
 @font-face {
@@ -27,6 +29,7 @@
   font-style: normal;
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
     format("woff");
+  font-display: swap;
 }
 
 @font-face {
@@ -35,6 +38,7 @@
   font-style: normal;
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
     format("woff");
+  font-display: swap;
 }
 
 @font-face {
@@ -43,6 +47,7 @@
   font-style: normal;
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/KoPubDotumMedium.woff")
     format("woff");
+  font-display: swap;
 }
 :root {
   color-scheme: light;

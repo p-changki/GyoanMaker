@@ -1,10 +1,11 @@
+import { memo } from "react";
 import type { HandoutSection, VocabItem } from "@gyoanmaker/shared/types/handout";
 import type { FontSizeConfig } from "@gyoanmaker/shared/types";
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { useSectionStyle } from "./useSectionStyle";
 
-function VocabRow4({
+const VocabRow4 = memo(function VocabRow4({
   vocab,
   index,
   fontSizes,
@@ -56,9 +57,9 @@ function VocabRow4({
       )}
     </tr>
   );
-}
+});
 
-function VocabRow3({
+const VocabRow3 = memo(function VocabRow3({
   vocab,
   index,
   fontSizes,
@@ -97,9 +98,9 @@ function VocabRow3({
       </td>
     </tr>
   );
-}
+});
 
-function VocabRow2({
+const VocabRow2 = memo(function VocabRow2({
   vocab,
   index,
   fontSizes,
@@ -136,7 +137,7 @@ function VocabRow2({
       </td>
     </tr>
   );
-}
+});
 
 export function VocabularySection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("vocabulary");

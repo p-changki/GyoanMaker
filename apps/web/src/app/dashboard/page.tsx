@@ -59,6 +59,8 @@ export default function DashboardPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const {
     data: handouts,
@@ -74,6 +76,7 @@ export default function DashboardPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["handouts"] });
       setDeletingId(null);
+      setCurrentPage((p) => Math.max(1, p));
     },
   });
 
@@ -100,6 +103,11 @@ export default function DashboardPage() {
   function confirmDelete(id: string) {
     setDeletingId(id);
   }
+
+  const totalPages = handouts ? Math.ceil(handouts.length / PAGE_SIZE) : 0;
+  const paginatedHandouts = handouts
+    ? handouts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : [];
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -145,8 +153,9 @@ export default function DashboardPage() {
       )}
 
       {!isLoading && handouts && handouts.length > 0 && (
+        <>
         <div className="space-y-3">
-          {handouts.map((h) => (
+          {paginatedHandouts.map((h) => (
             <div
               key={h.id}
               className="bg-white border border-gray-200 rounded-xl p-5 hover:border-gray-300 transition-colors"
@@ -253,6 +262,43 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-500 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              이전
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors ${
+                  page === currentPage
+                    ? "bg-[#5E35B1] text-white"
+                    : "border border-gray-200 text-gray-500 hover:border-gray-300"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-500 hover:border-gray-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              다음
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

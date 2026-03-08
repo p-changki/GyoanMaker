@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, DEFAULT_IMAGE_DISPLAY } from "@gyoanmaker/shared/types";
 import { EditableAnalysisTitle, EditableSummaryTitleText } from "./EditableFields";
@@ -29,7 +29,7 @@ function useTheme() {
   };
 }
 
-function ClickZone({
+const ClickZone = memo(function ClickZone({
   children,
   focusKey,
   label,
@@ -67,7 +67,7 @@ function ClickZone({
       </div>
     </div>
   );
-}
+});
 
 function renderSentenceNumber(index: number, pageNum: number, style: "padded" | "plain" | "circle"): React.ReactNode {
   const num = (pageNum - 1) * 7 + index + 1;
@@ -95,12 +95,37 @@ export function ParsedHandoutViewPage1({
   const p1TextColor = page1Style.textColor || "#111827";
   const p1FontFamily = page1Style.fontFamily ? FONT_FAMILY_MAP[page1Style.fontFamily].css : theme.fontCss;
   const p1TextAlign = (page1Style.textAlign || "left") as "left" | "center" | "right";
+  const badgeShape = page1Style.badgeShape || "rounded-full";
+  const badgeBgColor = page1Style.badgeBgColor || "transparent";
+  const badgeFontSize = page1Style.badgeFontSize || 14;
+  const badgeAlign = page1Style.badgeAlign || "left";
 
   const enRatio = page1Layout.sentenceColumnRatio;
   const koRatio = 1 - enRatio;
   const borderWidth = page1Layout.tableOuterBorderWidth;
   const showSentenceNumbers = page1Layout.showSentenceNumbers ?? true;
   const showKoreanColumn = page1Layout.showKoreanColumn ?? true;
+
+  const tableBorderStyle = useMemo(() => ({
+    borderTop: `${borderWidth}px solid ${p1TitleColor}`,
+    borderBottom: `${borderWidth}px solid ${p1TitleColor}`,
+    paddingTop: page1Style.paddingTop ? `${page1Style.paddingTop}px` : undefined,
+    paddingBottom: page1Style.paddingBottom ? `${page1Style.paddingBottom}px` : undefined,
+  }), [borderWidth, p1TitleColor, page1Style.paddingTop, page1Style.paddingBottom]);
+
+  const enTextStyle = useMemo(() => ({
+    fontSize: `${theme.fontSizes.analysisEn}pt`,
+    fontFamily: p1FontFamily,
+    color: p1TextColor,
+    textAlign: p1TextAlign,
+  } as const), [theme.fontSizes.analysisEn, p1FontFamily, p1TextColor, p1TextAlign]);
+
+  const koTextStyle = useMemo(() => ({
+    fontSize: `${theme.fontSizes.analysisKo}pt`,
+    fontFamily: p1FontFamily,
+    color: p1TextColor,
+    textAlign: p1TextAlign,
+  } as const), [theme.fontSizes.analysisKo, p1FontFamily, p1TextColor, p1TextAlign]);
 
   return (
     <div
@@ -112,24 +137,30 @@ export function ParsedHandoutViewPage1({
       )}
 
       <section className="mb-8 relative flex-1 w-full">
-        <div
-          className="inline-flex items-center justify-center bg-white text-sm font-bold px-3 py-1.5 border rounded-full mb-3 z-10 relative leading-none"
-          style={{ color: p1TitleColor, borderColor: p1TitleColor }}
-        >
-          <span className="translate-y-px">
-            <EditableAnalysisTitle pageNum={pageNum} />
-          </span>
-        </div>
+        <ClickZone focusKey="page1-title" label="타이틀 편집">
+          <div
+            className={`mb-3 z-10 relative ${badgeAlign === "center" ? "text-center" : badgeAlign === "right" ? "text-right" : "text-left"}`}
+          >
+            <div
+              className={`inline-flex items-center justify-center font-bold px-3 py-1.5 border leading-none ${badgeShape}`}
+              style={{
+                color: p1TitleColor,
+                borderColor: p1TitleColor,
+                backgroundColor: badgeBgColor === "transparent" ? "white" : badgeBgColor,
+                fontSize: `${badgeFontSize}px`,
+              }}
+            >
+              <span className="translate-y-px">
+                <EditableAnalysisTitle pageNum={pageNum} />
+              </span>
+            </div>
+          </div>
+        </ClickZone>
 
         <ClickZone focusKey="page1-body" label="문장 테이블">
           <div
             className="w-full"
-            style={{
-              borderTop: `${borderWidth}px solid ${p1TitleColor}`,
-              borderBottom: `${borderWidth}px solid ${p1TitleColor}`,
-              paddingTop: page1Style.paddingTop ? `${page1Style.paddingTop}px` : undefined,
-              paddingBottom: page1Style.paddingBottom ? `${page1Style.paddingBottom}px` : undefined,
-            }}
+            style={tableBorderStyle}
           >
             <div className="flex relative w-full">
               {showKoreanColumn && (
@@ -152,7 +183,7 @@ export function ParsedHandoutViewPage1({
                       )}
                       <div
                         className="flex-1 font-normal leading-[2.1]"
-                        style={{ fontSize: `${theme.fontSizes.analysisEn}pt`, fontFamily: p1FontFamily, color: p1TextColor, textAlign: p1TextAlign }}
+                        style={enTextStyle}
                       >
                         {pair.en.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
                       </div>
@@ -161,7 +192,7 @@ export function ParsedHandoutViewPage1({
                       <div className="py-6 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
                         <div
                           className="font-normal leading-[2.1]"
-                          style={{ fontSize: `${theme.fontSizes.analysisKo}pt`, fontFamily: p1FontFamily, color: p1TextColor, textAlign: p1TextAlign }}
+                          style={koTextStyle}
                         >
                           {pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
                         </div>
@@ -234,6 +265,13 @@ export function ParsedHandoutViewPage2({
   const page2HeaderStyle = useTemplateSettingsStore((s) => s.page2HeaderStyle);
   const setFocus = useEditorFocusStore((s) => s.setFocus);
 
+  const avatarStyle = useMemo(() => ({
+    top: `${-46 + avatarDisplay.offsetY}px`,
+    left: `${24 + avatarDisplay.offsetX}px`,
+    width: `${90 * avatarDisplay.scale}px`,
+    height: `${90 * avatarDisplay.scale}px`,
+  }), [avatarDisplay.offsetY, avatarDisplay.offsetX, avatarDisplay.scale]);
+
   return (
     <div
       className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
@@ -244,16 +282,12 @@ export function ParsedHandoutViewPage2({
         {/* Avatar - separate from bar for z-index layering */}
         <div
           className={`absolute ${avatarDisplay.layer === "back" ? "z-0" : "z-20"}`}
-          style={{
-            top: `${-46 + avatarDisplay.offsetY}px`,
-            left: `${24 + avatarDisplay.offsetX}px`,
-            width: `${90 * avatarDisplay.scale}px`,
-            height: `${90 * avatarDisplay.scale}px`,
-          }}
+          style={avatarStyle}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={avatarBase64 ?? "/images/avatar.png"}
+            loading="lazy"
             alt="Teacher Avatar"
             className="w-full h-full object-contain"
             style={{ filter: "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))" }}

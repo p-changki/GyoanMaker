@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, THEME_PRESETS } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
@@ -33,6 +35,19 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
   const flowItemColor = subSectionColors?.visual_summary_flow_item || `${themeColor}12`;
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
+  const titleStyle = useMemo(() => ({
+    fontFamily: "GmarketSans, sans-serif" as const,
+    fontSize: `${fontSizes.sectionTitle}px`,
+    fontWeight: titleFontWeight,
+  }), [fontSizes.sectionTitle, titleFontWeight]);
+
+  const flowItemStyle = useMemo(() => ({
+    backgroundColor: flowItemColor,
+    fontSize: `${Math.max(9, (fontSizes.flowText ?? fontSizes.visualEn) * 0.85)}px`,
+    fontFamily: fontCss,
+    color: textColor,
+  }), [flowItemColor, fontSizes.flowText, fontSizes.visualEn, fontCss, textColor]);
+
   return (
     <div
       className="rounded-xl"
@@ -49,11 +64,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
           >
             <h3
               className="leading-none"
-              style={{
-                fontFamily: "GmarketSans, sans-serif",
-                fontSize: `${fontSizes.sectionTitle}px`,
-                fontWeight: titleFontWeight,
-              }}
+              style={titleStyle}
             >
               {mainTitle}
             </h3>
@@ -65,6 +76,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
                 src={illustration.imageUrl}
                 alt={`${section.passageId} visual summary`}
                 crossOrigin="anonymous"
+                loading="lazy"
                 className="w-full object-contain max-h-[260px]"
               />
             ) : (
@@ -90,11 +102,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
             >
               <h3
                 className="leading-none"
-                style={{
-                  fontFamily: "GmarketSans, sans-serif",
-                  fontSize: `${fontSizes.sectionTitle}px`,
-                  fontWeight: titleFontWeight,
-                }}
+                style={titleStyle}
               >
                 {flowSubTitle}
               </h3>
@@ -109,12 +117,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
                   <div
                     key={step.text}
                     className="px-2 py-2.5 rounded-md font-semibold text-center whitespace-nowrap overflow-hidden text-ellipsis text-xs"
-                    style={{
-                      backgroundColor: flowItemColor,
-                      fontSize: `${Math.max(9, (fontSizes.flowText ?? fontSizes.visualEn) * 0.85)}px`,
-                      fontFamily: fontCss,
-                      color: textColor,
-                    }}
+                    style={flowItemStyle}
                   >
                     {step.text}
                   </div>
