@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
-import { PAGE2_SECTION_LABELS, DEFAULT_SECTION_STYLE, THEME_PRESETS } from "@gyoanmaker/shared/types";
+import { PAGE2_SECTION_LABELS, DEFAULT_SECTION_STYLE, THEME_PRESETS, isBuiltInSectionKey } from "@gyoanmaker/shared/types";
 import type { Page2SectionKey, SectionStyleConfig } from "@gyoanmaker/shared/types";
 import { ALL_SECTIONS } from "./constants";
 
@@ -153,7 +153,7 @@ export default function SectionStyleSection({ targetKey }: Props) {
     return (
       <div>
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">
-          {PAGE2_SECTION_LABELS[targetKey]} 스타일
+          {isBuiltInSectionKey(targetKey) ? PAGE2_SECTION_LABELS[targetKey] : "커스텀"} 스타일
         </p>
         <SectionStyleItem sectionKey={targetKey} />
       </div>
@@ -176,7 +176,7 @@ export default function SectionStyleSection({ targetKey }: Props) {
         <div className="space-y-4">
           {keys.map((key) => (
             <div key={key} className="space-y-1 p-2 rounded-lg bg-white border border-gray-100">
-              <span className="text-xs font-semibold text-gray-700">{PAGE2_SECTION_LABELS[key]}</span>
+              <span className="text-xs font-semibold text-gray-700">{isBuiltInSectionKey(key) ? PAGE2_SECTION_LABELS[key] : "커스텀"}</span>
               <SectionStyleItem sectionKey={key} />
             </div>
           ))}

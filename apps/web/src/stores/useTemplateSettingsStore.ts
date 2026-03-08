@@ -1,8 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import type { Page2SectionKey, TemplateSettings, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig, Page1LayoutConfig, SectionStyleConfig, VocabColumnLayout, CustomThemeColors } from "@gyoanmaker/shared/types";
-import { DEFAULT_TEMPLATE_SETTINGS, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, FONT_SIZE_PRESETS, FONT_SIZE_SLOT_META } from "@gyoanmaker/shared/types";
+import type { Page2SectionKey, TemplateSettings, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig, Page1LayoutConfig, SectionStyleConfig, VocabColumnLayout, CustomThemeColors, CustomSectionContent, CustomSectionKey, VocabDisplayConfig, SummaryLanguage } from "@gyoanmaker/shared/types";
+import { DEFAULT_TEMPLATE_SETTINGS, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, FONT_SIZE_PRESETS, FONT_SIZE_SLOT_META, MAX_CUSTOM_SECTIONS, isCustomSectionKey, isBuiltInSectionKey } from "@gyoanmaker/shared/types";
 
 interface TemplateSettingsState extends TemplateSettings {
   hydrated: boolean;
@@ -42,6 +42,13 @@ interface TemplateSettingsActions {
   resetPage2HeaderStyle: () => void;
   resetSectionStyleToGlobal: (key: Page2SectionKey) => void;
   setLastSavedSnapshot: (snapshot: TemplateSettings) => void;
+  // Custom sections
+  addCustomSection: () => void;
+  removeCustomSection: (key: CustomSectionKey) => void;
+  setCustomSectionContent: (key: CustomSectionKey, partial: Partial<CustomSectionContent>) => void;
+  // Phase 2 display options
+  setVocabDisplay: (partial: Partial<VocabDisplayConfig>) => void;
+  setSummaryLanguage: (lang: SummaryLanguage) => void;
 }
 
 type TemplateSettingsStore = TemplateSettingsState & TemplateSettingsActions;
@@ -129,11 +136,19 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
       }),
 
     loadSettings: (settings) =>
-      set({
-        ...settings,
-        fontSizes: settings.fontSizes ?? FONT_SIZE_PRESETS[settings.fontScale ?? "medium"],
-        hydrated: true,
-        lastSavedSnapshot: settings,
+      set(() => {
+        // Clean orphan custom keys from page2Sections
+        const validCustomKeys = new Set(Object.keys(settings.customSections ?? {}));
+        const cleanedSections = settings.page2Sections.filter(
+          (k) => isBuiltInSectionKey(k) || validCustomKeys.has(k)
+        );
+        return {
+          ...settings,
+          page2Sections: cleanedSections,
+          fontSizes: settings.fontSizes ?? FONT_SIZE_PRESETS[settings.fontScale ?? "medium"],
+          hydrated: true,
+          lastSavedSnapshot: settings,
+        };
       }),
 
     resetToDefaults: () =>
@@ -149,6 +164,9 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         vocabColumnLayout: undefined,
         customThemeColors: undefined,
         useCustomTheme: undefined,
+        customSections: undefined,
+        vocabDisplay: undefined,
+        summaryLanguage: undefined,
       }),
 
     // Phase 1 actions
@@ -215,6 +233,59 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         return { sectionStyles: Object.keys(next).length > 0 ? next : undefined };
       }),
 
+    // Custom sections
+    addCustomSection: () =>
+      set((state) => {
+        const existing = state.customSections ?? {};
+        const count = Object.keys(existing).length;
+        if (count >= MAX_CUSTOM_SECTIONS) return state;
+        // Find next available ID
+        let nextId = 1;
+        while (existing[`custom_${nextId}`]) nextId++;
+        const key = `custom_${nextId}` as CustomSectionKey;
+        return {
+          customSections: { ...existing, [key]: { title: "새 섹션", body: "" } },
+          page2Sections: [...state.page2Sections, key],
+        };
+      }),
+
+    removeCustomSection: (key) =>
+      set((state) => {
+        if (!isCustomSectionKey(key)) return state;
+        const rest = Object.fromEntries(Object.entries(state.customSections ?? {}).filter(([k]) => k !== key));
+        const nextSections = Object.keys(rest).length > 0 ? rest : undefined;
+        const nextStyles = state.sectionStyles
+          ? Object.fromEntries(Object.entries(state.sectionStyles).filter(([k]) => k !== key))
+          : undefined;
+        return {
+          customSections: nextSections,
+          page2Sections: state.page2Sections.filter((k) => k !== key),
+          sectionStyles: nextStyles && Object.keys(nextStyles).length > 0
+            ? nextStyles as typeof state.sectionStyles
+            : undefined,
+        };
+      }),
+
+    setCustomSectionContent: (key, partial) =>
+      set((state) => {
+        const existing = state.customSections?.[key];
+        if (!existing) return state;
+        return {
+          customSections: {
+            ...state.customSections,
+            [key]: { ...existing, ...partial },
+          },
+        };
+      }),
+
+    // Phase 2 display options
+    setVocabDisplay: (partial) =>
+      set((state) => ({
+        vocabDisplay: { ...(state.vocabDisplay ?? {}), ...partial },
+      })),
+
+    setSummaryLanguage: (summaryLanguage) => set({ summaryLanguage }),
+
     setLastSavedSnapshot: (snapshot) => set({ lastSavedSnapshot: snapshot }),
   })
 );
@@ -242,6 +313,9 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     vocabColumnLayout: state.vocabColumnLayout,
     customThemeColors: state.customThemeColors,
     useCustomTheme: state.useCustomTheme,
+    customSections: state.customSections,
+    vocabDisplay: state.vocabDisplay,
+    summaryLanguage: state.summaryLanguage,
   };
 }
 

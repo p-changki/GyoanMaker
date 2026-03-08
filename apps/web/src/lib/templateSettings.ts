@@ -1,5 +1,5 @@
 import { getDb } from "./firebase-admin";
-import type { TemplateSettings, Page2SectionKey, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig, Page1LayoutConfig, SectionStyleConfig, CustomThemeColors, VocabColumnLayout } from "@gyoanmaker/shared/types";
+import type { TemplateSettings, Page2SectionKey, BuiltInSectionKey, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig, Page1LayoutConfig, SectionStyleConfig, CustomThemeColors, VocabColumnLayout } from "@gyoanmaker/shared/types";
 import {
   DEFAULT_TEMPLATE_SETTINGS,
   DEFAULT_PAGE1_LAYOUT,
@@ -11,6 +11,7 @@ import {
   VALID_TITLE_WEIGHTS,
   FONT_SIZE_PRESETS,
   FONT_SIZE_SLOT_META,
+  isCustomSectionKey,
 } from "@gyoanmaker/shared/types";
 
 const COLLECTION = "users";
@@ -168,7 +169,7 @@ function normalizeSettings(raw: Partial<TemplateSettings> | undefined): Template
 
   const page2Sections = Array.isArray(raw?.page2Sections)
     ? (raw.page2Sections.filter((k): k is Page2SectionKey =>
-        VALID_PAGE2_SECTIONS.has(k as Page2SectionKey)
+        VALID_PAGE2_SECTIONS.has(k as BuiltInSectionKey) || isCustomSectionKey(k as string)
       ))
     : DEFAULT_TEMPLATE_SETTINGS.page2Sections;
 

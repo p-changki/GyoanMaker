@@ -31,6 +31,11 @@ export {
   FONT_SIZE_GROUPS,
   SECTION_FONT_SIZE_KEYS,
   EDITABLE_SECTION_LABELS,
+  isBuiltInSectionKey,
+  isCustomSectionKey,
+  getSectionFontSizeKeys,
+  MAX_CUSTOM_SECTIONS,
+  CUSTOM_SECTION_FONT_SIZE_KEYS,
 } from "./templateSettings";
 
 export type ResultStatus = "generating" | "completed" | "failed";

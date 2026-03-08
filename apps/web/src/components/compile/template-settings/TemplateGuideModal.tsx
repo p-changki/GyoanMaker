@@ -148,10 +148,12 @@ export default function TemplateGuideModal({
               <SettingRow emoji="🏫" title="브랜딩" desc="학원 로고와 캐릭터 이미지를 업로드합니다. 교안 상단과 2페이지에 표시됩니다." />
               <SettingRow emoji="🎨" title="테마" desc="5가지 색상 프리셋(퍼플/블루/그린/블랙/화이트) 중 선택하거나, 커스텀 색상을 직접 지정할 수 있습니다." />
               <SettingRow emoji="🔤" title="폰트" desc="글꼴(프리텐다드/나눔고딕 등), 크기, 제목 굵기를 조절합니다." />
-              <SettingRow emoji="📋" title="섹션 구성" desc="2페이지의 섹션(주제문, 요약, 흐름, 어휘)을 드래그로 순서 변경하거나 숨길 수 있습니다." />
-              <SettingRow emoji="📊" title="어휘 레이아웃" desc="어휘 표를 2열, 3열, 4열 중 선택하여 정보 밀도를 조절합니다." />
+              <SettingRow emoji="📋" title="섹션 구성" desc="2페이지의 섹션(주제문, 요약, 흐름, 어휘)을 드래그로 순서 변경하거나 숨길 수 있습니다. 커스텀 텍스트 섹션을 최대 5개까지 추가할 수도 있습니다." />
+              <SettingRow emoji="✏️" title="커스텀 섹션" desc="'+ 섹션 추가' 버튼으로 나만의 텍스트 섹션을 만들 수 있습니다. 제목과 본문을 자유롭게 입력하고, 스타일도 개별 설정 가능합니다." />
+              <SettingRow emoji="📊" title="어휘 레이아웃" desc="어휘 표를 2열/3열/4열 중 선택하고, 유의어·반의어 열을 개별적으로 표시하거나 숨길 수 있습니다." />
+              <SettingRow emoji="🌐" title="요약 언어" desc="요약 섹션에서 영어+한국어, 영어만, 한국어만 중 표시할 언어를 선택할 수 있습니다." />
               <SettingRow emoji="🖌️" title="섹션별 스타일" desc="각 섹션의 배경색, 제목색, 텍스트색, 여백, 구분선을 개별 조절할 수 있습니다." />
-              <SettingRow emoji="📐" title="1페이지 레이아웃" desc="영어 컬럼 비율, 번호 스타일(01/1/①), 테이블 테두리 두께를 설정합니다." />
+              <SettingRow emoji="📐" title="1페이지 레이아웃" desc="영어 컬럼 비율, 번호 스타일(01/1/①), 테이블 테두리 두께를 설정합니다. 문장 번호와 한국어 열의 표시/숨김도 토글할 수 있습니다." />
             </div>
           </section>
 
