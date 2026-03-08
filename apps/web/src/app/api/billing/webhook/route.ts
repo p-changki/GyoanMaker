@@ -72,7 +72,7 @@ async function revertConfirmedOrder(order: PendingOrder) {
     await getDb().runTransaction(async (tx) => {
       const snap = await tx.get(userRef);
       const data = snap.data() ?? {};
-      const credits = data.credits ?? { flash: [], pro: [] };
+      const credits = data.credits ?? { flash: [], pro: [], illustration: [] };
 
       // Remove credit entries matching this orderId
       const updatedFlash = (credits.flash ?? []).filter(
@@ -81,11 +81,18 @@ async function revertConfirmedOrder(order: PendingOrder) {
       const updatedPro = (credits.pro ?? []).filter(
         (entry: { orderId?: string }) => entry.orderId !== order.orderId
       );
+      const updatedIllustration = (credits.illustration ?? []).filter(
+        (entry: { orderId?: string }) => entry.orderId !== order.orderId
+      );
 
       tx.set(
         userRef,
         {
-          credits: { flash: updatedFlash, pro: updatedPro },
+          credits: {
+            flash: updatedFlash,
+            pro: updatedPro,
+            illustration: updatedIllustration,
+          },
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }

@@ -71,7 +71,7 @@ function logChunk(message: string, payload: Record<string, unknown>): void {
     return;
   }
 
-  console.log(`[generate/chunk] ${message}`, payload);
+  console.debug(`[generate/chunk] ${message}`, payload);
 }
 
 function createAbortError(): Error {

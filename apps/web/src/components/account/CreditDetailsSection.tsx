@@ -5,6 +5,7 @@ import type { CreditEntry } from "@gyoanmaker/shared/types";
 interface CreditDetailsSectionProps {
   flash: CreditEntry[];
   pro: CreditEntry[];
+  illustration: CreditEntry[];
 }
 
 function formatDateKr(iso: string): string {
@@ -26,11 +27,12 @@ function CreditRow({
   type,
   entry,
 }: {
-  type: "flash" | "pro";
+  type: "flash" | "pro" | "illustration";
   entry: CreditEntry;
 }) {
   const expiring = isExpiringSoon(entry.expiresAt);
-  const label = type === "flash" ? "Speed" : "Precision";
+  const label =
+    type === "flash" ? "Speed" : type === "pro" ? "Precision" : "Illustration";
 
   return (
     <div className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 px-4 py-2.5">
@@ -39,7 +41,9 @@ function CreditRow({
           className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
             type === "flash"
               ? "bg-amber-100 text-amber-700"
-              : "bg-violet-100 text-violet-700"
+              : type === "pro"
+                ? "bg-violet-100 text-violet-700"
+                : "bg-emerald-100 text-emerald-700"
           }`}
         >
           {label}
@@ -62,10 +66,12 @@ function CreditRow({
 export default function CreditDetailsSection({
   flash,
   pro,
+  illustration,
 }: CreditDetailsSectionProps) {
   const entries = [
     ...flash.map((e) => ({ type: "flash" as const, entry: e })),
     ...pro.map((e) => ({ type: "pro" as const, entry: e })),
+    ...illustration.map((e) => ({ type: "illustration" as const, entry: e })),
   ].sort(
     (a, b) =>
       new Date(a.entry.purchasedAt).getTime() -

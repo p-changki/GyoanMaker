@@ -70,7 +70,7 @@ function ClickZone({
 }
 
 function renderSentenceNumber(index: number, pageNum: number, style: "padded" | "plain" | "circle"): React.ReactNode {
-  const num = (pageNum - 1) * 10 + index + 1;
+  const num = (pageNum - 1) * 7 + index + 1;
   if (style === "padded") return String(num).padStart(2, "0");
   if (style === "plain") return String(num);
   const circled = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳";
@@ -94,6 +94,7 @@ export function ParsedHandoutViewPage1({
   const p1TitleColor = page1Style.titleColor || theme.primary;
   const p1TextColor = page1Style.textColor || "#111827";
   const p1FontFamily = page1Style.fontFamily ? FONT_FAMILY_MAP[page1Style.fontFamily].css : theme.fontCss;
+  const p1TextAlign = (page1Style.textAlign || "left") as "left" | "center" | "right";
 
   const enRatio = page1Layout.sentenceColumnRatio;
   const koRatio = 1 - enRatio;
@@ -139,8 +140,8 @@ export function ParsedHandoutViewPage1({
               )}
               <div className="flex flex-col w-full relative z-10 divide-y divide-[#E5E7EB]">
                 {sentencesChunk.map((pair, i) => (
-                  <div key={`${pair.en}-${pair.ko}-${i}`} className="flex min-h-[60px] w-full">
-                    <div className="flex py-4 pr-6" style={{ width: `${enRatio * 100}%` }}>
+                  <div key={`${pair.en}-${pair.ko}-${i}`} className="flex min-h-[80px] w-full">
+                    <div className="flex py-6 pr-6" style={{ width: `${enRatio * 100}%` }}>
                       {showSentenceNumbers && (
                         <div
                           className="w-8 shrink-0 font-black pt-0.5"
@@ -151,16 +152,16 @@ export function ParsedHandoutViewPage1({
                       )}
                       <div
                         className="flex-1 font-normal leading-[2.1]"
-                        style={{ fontSize: `${theme.fontSizes.analysisEn}pt`, fontFamily: p1FontFamily, color: p1TextColor }}
+                        style={{ fontSize: `${theme.fontSizes.analysisEn}pt`, fontFamily: p1FontFamily, color: p1TextColor, textAlign: p1TextAlign }}
                       >
                         {pair.en.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
                       </div>
                     </div>
                     {showKoreanColumn && (
-                      <div className="py-4 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
+                      <div className="py-6 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
                         <div
                           className="font-normal leading-[2.1]"
-                          style={{ fontSize: `${theme.fontSizes.analysisKo}pt`, fontFamily: p1FontFamily, color: p1TextColor }}
+                          style={{ fontSize: `${theme.fontSizes.analysisKo}pt`, fontFamily: p1FontFamily, color: p1TextColor, textAlign: p1TextAlign }}
                         >
                           {pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
                         </div>
@@ -171,6 +172,14 @@ export function ParsedHandoutViewPage1({
               </div>
             </div>
           </div>
+          {/* Shadow rendered as real DOM for html2canvas PDF compatibility */}
+          <div
+            className="w-[95%] h-[6px] rounded-b-xl"
+            style={{
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)",
+              marginTop: "-3px",
+            }}
+          />
         </ClickZone>
       </section>
 
@@ -227,17 +236,36 @@ export function ParsedHandoutViewPage2({
 
   return (
     <div
-      className="p-8 md:p-12 xl:p-16 flex flex-col h-full bg-white relative"
+      className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
       onClick={() => setFocus("global")}
     >
       <DiscoveryBanner />
-      <section className="mb-14 relative flex-1 w-full">
+      <section className="mb-2 relative flex-1 w-full">
+        {/* Avatar - separate from bar for z-index layering */}
+        <div
+          className={`absolute ${avatarDisplay.layer === "back" ? "z-0" : "z-20"}`}
+          style={{
+            top: `${-46 + avatarDisplay.offsetY}px`,
+            left: `${24 + avatarDisplay.offsetX}px`,
+            width: `${90 * avatarDisplay.scale}px`,
+            height: `${90 * avatarDisplay.scale}px`,
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={avatarBase64 ?? "/images/avatar.png"}
+            alt="Teacher Avatar"
+            className="w-full h-full object-contain"
+            style={{ filter: "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))" }}
+          />
+        </div>
+
         <ClickZone focusKey="page2-header" label="요약바">
           <div
-            className="relative mb-10 h-12 rounded-r-xl flex items-center pr-10 w-[95%] mt-6"
+            className="relative z-10 mb-3 h-10 rounded-r-xl flex items-center pr-10 w-[95%] mt-1"
             style={{
               backgroundColor: page2HeaderStyle?.bgColor || theme.primary,
-              boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
+              
               paddingTop: page2HeaderStyle?.paddingTop ?? 0,
               paddingBottom: page2HeaderStyle?.paddingBottom ?? 0,
               borderTop: page2HeaderStyle?.borderStyle && page2HeaderStyle.borderStyle !== "none"
@@ -245,23 +273,6 @@ export function ParsedHandoutViewPage2({
                 : undefined,
             }}
           >
-            <div
-              className="absolute z-20"
-              style={{
-                top: `${-40 + avatarDisplay.offsetY}px`,
-                left: `${24 + avatarDisplay.offsetX}px`,
-                width: `${90 * avatarDisplay.scale}px`,
-                height: `${90 * avatarDisplay.scale}px`,
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={avatarBase64 ?? "/images/avatar.png"}
-                alt="Teacher Avatar"
-                className="w-full h-full object-contain"
-                style={{ filter: "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))" }}
-              />
-            </div>
             <span
               className="tracking-wide ml-32 z-30"
               style={{
@@ -274,10 +285,13 @@ export function ParsedHandoutViewPage2({
               <EditableSummaryTitleText />
             </span>
           </div>
+
         </ClickZone>
 
-        <div className="space-y-8 pl-2">
+        <div className="space-y-2 pl-2">
           {page2Sections.map((key) => {
+            // Skip standalone flow when visual_summary is present (flow is embedded inside it)
+            if (key === "flow" && page2Sections.includes("visual_summary")) return null;
             const style = sectionStyles?.[key];
             const wrapStyle = {
               paddingTop: style?.paddingTop ?? 0,

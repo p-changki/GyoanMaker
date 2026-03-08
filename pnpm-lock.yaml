@@ -63,6 +63,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.3)
+      '@google/genai':
+        specifier: ^1.44.0
+        version: 1.44.0
       '@gyoanmaker/shared':
         specifier: workspace:*
         version: link:../../packages/shared

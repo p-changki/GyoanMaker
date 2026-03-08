@@ -122,6 +122,11 @@ export async function findOrCreateUser(
           used: 0,
           monthKeyKst,
         },
+        illustration: {
+          monthlyLimit: freePlan.illustrationMonthlyLimit,
+          used: 0,
+          monthKeyKst,
+        },
         storageLimit: freePlan.storageLimit,
         storageUsed: 0,
       },
@@ -132,6 +137,7 @@ export async function findOrCreateUser(
       credits: {
         flash: [],
         pro: [],
+        illustration: [],
       } satisfies UserCredits,
     });
   console.log(`[users] new pending user: ${key}`);

@@ -88,6 +88,7 @@ function CarouselCard({
             fill
             className="object-contain p-3"
             sizes="(min-width: 640px) 440px, 360px"
+            priority={index === 0}
           />
         </div>
 

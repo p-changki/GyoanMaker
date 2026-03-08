@@ -11,11 +11,13 @@ import {
   FONT_SIZE_PRESETS,
   getSectionFontSizeKeys,
   isBuiltInSectionKey,
+  DEFAULT_SECTION_TITLES,
 } from "@gyoanmaker/shared/types";
 import type {
   EditableSectionKey,
   BuiltInEditableKey,
   Page2SectionKey,
+  BuiltInSectionKey,
   SectionStyleConfig,
   FontFamily,
   FontSizeConfig,
@@ -209,6 +211,22 @@ interface Props {
 
 export default function UnifiedSectionEditor({ sectionKey }: Props) {
   const { theme, style, handleChange, globalFontFamily, globalTitleWeight, effectiveFontFamily, effectiveTitleWeight } = useEditorStyle(sectionKey);
+  const sectionTitles = useTemplateSettingsStore((s) => s.sectionTitles);
+  const subSectionTitles = useTemplateSettingsStore((s) => s.subSectionTitles);
+  const setSubSectionTitle = useTemplateSettingsStore((s) => s.setSubSectionTitle);
+  const subSectionColors = useTemplateSettingsStore((s) => s.subSectionColors);
+  const setSubSectionColor = useTemplateSettingsStore((s) => s.setSubSectionColor);
+  const setSectionTitle = useTemplateSettingsStore((s) => s.setSectionTitle);
+
+  const isPage2Section = !["header", "headerBadge", "page1Body", "page2Header"].includes(sectionKey);
+  const defaultTitle = isBuiltInSectionKey(sectionKey)
+    ? DEFAULT_SECTION_TITLES[sectionKey as BuiltInSectionKey]
+    : "";
+  const customTitle = sectionTitles?.[sectionKey as Page2SectionKey] ?? "";
+  const customSubTitle = subSectionTitles?.visual_summary_flow ?? "";
+  const flowHeaderColor = subSectionColors?.visual_summary_flow_header ?? "";
+  const flowBodyColor = subSectionColors?.visual_summary_flow_body ?? "";
+  const flowItemColor = subSectionColors?.visual_summary_flow_item ?? "";
 
   const fallbacks = {
     titleColor: theme.primary,
@@ -223,6 +241,91 @@ export default function UnifiedSectionEditor({ sectionKey }: Props) {
       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
         {isBuiltInSectionKey(sectionKey) ? EDITABLE_SECTION_LABELS[sectionKey as BuiltInEditableKey] : "커스텀"} 섹션 편집
       </p>
+
+      {/* Title Text */}
+      {isPage2Section && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold text-gray-600">타이틀 문구</p>
+          <input
+            type="text"
+            value={customTitle}
+            onChange={(e) => setSectionTitle(sectionKey as Page2SectionKey, e.target.value)}
+            placeholder={defaultTitle}
+            className="w-full py-1.5 px-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 focus:border-[#5E35B1] focus:outline-none placeholder:text-gray-400"
+          />
+          {customTitle && (
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] font-bold text-[#5E35B1] bg-[#5E35B1]/10 px-1 py-px rounded">
+                커스텀
+              </span>
+              <button
+                type="button"
+                onClick={() => setSectionTitle(sectionKey as Page2SectionKey, "")}
+                className="text-[9px] text-gray-300 hover:text-gray-500"
+                title="기본값으로 초기화"
+              >
+                ↺ 기본값
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Sub-section Title (visual_summary only) */}
+      {sectionKey === "visual_summary" && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold text-gray-600">내용 정리 타이틀</p>
+          <input
+            type="text"
+            value={customSubTitle}
+            onChange={(e) => setSubSectionTitle("visual_summary_flow", e.target.value)}
+            placeholder="내용 정리"
+            className="w-full py-1.5 px-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 focus:border-[#5E35B1] focus:outline-none placeholder:text-gray-400"
+          />
+          {customSubTitle && (
+            <div className="flex items-center justify-between">
+              <span className="text-[8px] font-bold text-[#5E35B1] bg-[#5E35B1]/10 px-1 py-px rounded">
+                커스텀
+              </span>
+              <button
+                type="button"
+                onClick={() => setSubSectionTitle("visual_summary_flow", "")}
+                className="text-[9px] text-gray-300 hover:text-gray-500"
+                title="기본값으로 초기화"
+              >
+                ↺ 기본값
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Background Knowledge Colors (visual_summary only) */}
+      {sectionKey === "visual_summary" && (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold text-gray-600">내용 정리 색상</p>
+          <div className="space-y-1.5 p-2 rounded-lg bg-gray-50">
+            <ColorSlot
+              label="헤더 배경"
+              value={flowHeaderColor}
+              fallback={fallbacks.titleColor}
+              onChange={(hex) => setSubSectionColor("visual_summary_flow_header", hex)}
+            />
+            <ColorSlot
+              label="본문 배경"
+              value={flowBodyColor}
+              fallback="#FFFDF9"
+              onChange={(hex) => setSubSectionColor("visual_summary_flow_body", hex)}
+            />
+            <ColorSlot
+              label="항목 배경"
+              value={flowItemColor}
+              fallback=""
+              onChange={(hex) => setSubSectionColor("visual_summary_flow_item", hex)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Color Group */}
       <div className="space-y-1.5">
@@ -320,6 +423,31 @@ export default function UnifiedSectionEditor({ sectionKey }: Props) {
                   style={{ fontWeight: TITLE_WEIGHT_MAP[key].value }}
                 >
                   {TITLE_WEIGHT_MAP[key].label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Text Align */}
+        <div className="space-y-0.5">
+          <label className="text-[10px] text-gray-500">텍스트 정렬</label>
+          <div className="flex gap-1">
+            {([["left", "왼쪽"], ["center", "가운데"], ["right", "오른쪽"]] as const).map(([value, label]) => {
+              const current = style.textAlign || "left";
+              const isSelected = current === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleChange({ textAlign: value === "left" ? "" : value })}
+                  className={`flex-1 py-1 rounded-lg text-[10px] border transition-all ${
+                    isSelected
+                      ? "border-gray-800 bg-white shadow-sm text-gray-800"
+                      : "border-transparent bg-white/60 text-gray-500 hover:border-gray-200"
+                  }`}
+                >
+                  {label}
                 </button>
               );
             })}

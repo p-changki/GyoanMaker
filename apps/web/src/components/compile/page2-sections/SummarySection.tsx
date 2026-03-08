@@ -8,6 +8,7 @@ export function SummarySection({ section }: { section: HandoutSection }) {
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
   const summaryLanguage = useTemplateSettingsStore((s) => s.summaryLanguage) ?? "both";
+  const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.summary || "요약";
 
   if (!section.summary?.en) return null;
 
@@ -24,7 +25,7 @@ export function SummarySection({ section }: { section: HandoutSection }) {
           className="text-white leading-none"
           style={{ fontFamily: "GmarketSans, sans-serif", fontSize: `${fontSizes.sectionTitle}px`, fontWeight: titleFontWeight }}
         >
-          요약
+          {sectionTitle}
         </h3>
       </div>
       <div className="pl-1">

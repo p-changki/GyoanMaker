@@ -34,6 +34,12 @@ export async function GET() {
         used: status.storage.used,
         remaining: status.storage.remaining,
       },
+      illustration: {
+        limit: status.illustration.limit,
+        used: status.illustration.used,
+        remaining: status.illustration.remaining,
+        credits: status.illustration.credits,
+      },
       canGenerate: status.canGenerate,
       canGenerateByModel: status.canGenerateByModel,
     });

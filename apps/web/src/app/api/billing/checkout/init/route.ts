@@ -22,7 +22,15 @@ function isPlanId(value: unknown): value is PlanId {
 }
 
 function isTopUpPackageId(value: unknown): value is TopUpPackageId {
-  return value === "flash_50" || value === "flash_100" || value === "pro_20" || value === "pro_50";
+  return (
+    value === "flash_50" ||
+    value === "flash_100" ||
+    value === "pro_20" ||
+    value === "pro_50" ||
+    value === "illu_30" ||
+    value === "illu_60" ||
+    value === "illu_120"
+  );
 }
 
 function createOrderId(): string {

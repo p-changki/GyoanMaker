@@ -1,10 +1,12 @@
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
+import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useSectionStyle } from "./useSectionStyle";
 
 export function FlowSection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, sentenceBg, fontSizes, fontFamily, titleWeight } = useSectionStyle("flow");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
+  const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.flow || "내용 정리";
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
   const itemBg = bgColor || `${sentenceBg}99`;
 
@@ -18,7 +20,7 @@ export function FlowSection({ section }: { section: HandoutSection }) {
           className="text-white leading-none"
           style={{ fontFamily: "GmarketSans, sans-serif", fontSize: `${fontSizes.sectionTitle}px`, fontWeight: titleFontWeight }}
         >
-          내용 정리
+          {sectionTitle}
         </h3>
       </div>
       <div className="pl-1 space-y-2">

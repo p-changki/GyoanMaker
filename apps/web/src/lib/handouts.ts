@@ -1,5 +1,8 @@
+import crypto from "crypto";
 import { getDb } from "./firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import type { HandoutIllustration, HandoutIllustrations } from "@gyoanmaker/shared/types";
+import { deleteIllustrationFolder } from "./firebase-storage";
 
 // ── Types ──────────────────────────────────────────────
 
@@ -18,6 +21,8 @@ export interface HandoutMeta {
 export interface HandoutDetail extends HandoutMeta {
   /** Raw text per section keyed by section ID (e.g. "P01") */
   sections: Record<string, string>;
+  /** AI illustration map keyed by passage ID (e.g. "P01") */
+  illustrations?: HandoutIllustrations;
   /** Custom text overrides from the compile editor */
   customTexts: {
     headerText?: string;
@@ -40,6 +45,38 @@ function handoutsCol(ownerEmail: string) {
     .collection("handouts");
 }
 
+function hashSectionRawText(rawText: string): string {
+  return crypto.createHash("sha256").update(rawText, "utf8").digest("hex");
+}
+
+function markStaleIllustrations(
+  sections: Record<string, string>,
+  illustrations: HandoutIllustrations | undefined
+): HandoutIllustrations | undefined {
+  if (!illustrations || typeof illustrations !== "object") return undefined;
+
+  const next: HandoutIllustrations = {};
+  for (const [passageId, rawIllustration] of Object.entries(illustrations)) {
+    const illustration = rawIllustration as HandoutIllustration;
+    const rawText = sections[passageId] ?? "";
+    const nextSourceHash = hashSectionRawText(rawText);
+    const shouldMarkStale =
+      typeof illustration?.sourceHash === "string" &&
+      illustration.sourceHash !== nextSourceHash &&
+      illustration.status !== "queued" &&
+      illustration.status !== "running";
+
+    next[passageId] = shouldMarkStale
+      ? {
+          ...illustration,
+          status: "stale",
+        }
+      : illustration;
+  }
+
+  return next;
+}
+
 // ── Create ─────────────────────────────────────────────
 
 export interface CreateHandoutInput {
@@ -49,6 +86,7 @@ export interface CreateHandoutInput {
   level: string;
   model: string;
   inputHash?: string;
+  illustrations?: HandoutIllustrations;
   customTexts?: {
     headerText?: string;
     analysisTitleText?: string;
@@ -72,6 +110,7 @@ export async function createHandout(
     level: input.level,
     model: input.model,
     sections: input.sections,
+    illustrations: input.illustrations ?? {},
     customTexts: input.customTexts ?? {},
     inputHash: input.inputHash ?? null,
     createdAt: now,
@@ -164,6 +203,14 @@ export async function getHandout(
   if (!doc.exists) return null;
 
   const d = doc.data()!;
+  const sections = d.sections ?? {};
+  const illustrations =
+    d.illustrations && typeof d.illustrations === "object"
+      ? markStaleIllustrations(
+          sections,
+          d.illustrations as HandoutIllustrations
+        )
+      : undefined;
 
   return {
     id: doc.id,
@@ -172,7 +219,8 @@ export async function getHandout(
     passageCount: d.passageCount ?? 0,
     level: d.level ?? "advanced",
     model: d.model ?? "pro",
-    sections: d.sections ?? {},
+    sections,
+    illustrations,
     customTexts: d.customTexts ?? {},
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
@@ -198,6 +246,43 @@ export async function updateHandoutTitle(
   return true;
 }
 
+// ── Update Illustrations ─────────────────────────────
+
+export async function updateHandoutIllustrations(
+  id: string,
+  ownerEmail: string,
+  illustrations: HandoutIllustrations
+): Promise<boolean> {
+  const docRef = handoutsCol(ownerEmail).doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return false;
+
+  await docRef.update({
+    illustrations,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return true;
+}
+
+export async function upsertHandoutIllustration(
+  id: string,
+  ownerEmail: string,
+  passageId: string,
+  illustration: HandoutIllustration
+): Promise<boolean> {
+  const docRef = handoutsCol(ownerEmail).doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return false;
+
+  await docRef.update({
+    [`illustrations.${passageId}`]: illustration,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  return true;
+}
+
 // ── Delete ─────────────────────────────────────────────
 
 export async function deleteHandout(
@@ -208,7 +293,13 @@ export async function deleteHandout(
   const doc = await docRef.get();
   if (!doc.exists) return false;
 
-  await docRef.delete();
+  await Promise.all([
+    docRef.delete(),
+    deleteIllustrationFolder(ownerEmail, id).catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[handouts] Failed to delete illustration folder: ${message}`);
+    }),
+  ]);
   return true;
 }
 

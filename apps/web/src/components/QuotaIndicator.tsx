@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 
 interface ModelQuotaView {
   limit: number;
@@ -33,11 +34,14 @@ function getUsageRatio(data: ModelQuotaView): number {
 }
 
 export default function QuotaIndicator() {
+  const { status } = useSession();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["quota"],
     queryFn: fetchQuota,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
+    enabled: status === "authenticated",
+    retry: false,
   });
 
   if (isLoading) {

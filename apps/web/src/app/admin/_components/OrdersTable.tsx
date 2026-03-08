@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MODEL_DISPLAY_NAMES } from "@gyoanmaker/shared/plans";
-import type { QuotaModel } from "@gyoanmaker/shared/plans";
+import type { TopUpCreditType } from "@gyoanmaker/shared/plans";
 
 interface OrderRow {
   orderId: string;
@@ -52,9 +52,10 @@ function getOrderLabel(order: OrderRow): string {
   }
   // topup: extract model from packageId (e.g. "flash_50" → "Speed 50")
   const pkgId = order.packageId ?? "";
-  const match = pkgId.match(/^(flash|pro)_(\d+)$/);
+  const match = pkgId.match(/^(flash|pro|illu)_(\d+)$/);
   if (match) {
-    const model = match[1] as QuotaModel;
+    const model: TopUpCreditType =
+      match[1] === "illu" ? "illustration" : (match[1] as "flash" | "pro");
     return `${MODEL_DISPLAY_NAMES[model]} ${match[2]}`;
   }
   return pkgId || "충전";

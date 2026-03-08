@@ -1,3 +1,5 @@
+import type { HandoutIllustrations } from "./illustration";
+
 export interface SentencePair {
   en: string;
   ko: string;
@@ -44,5 +46,6 @@ export interface HandoutSection {
 
 export interface CompiledHandout {
   sections: Record<string, HandoutSection>;
+  illustrations?: HandoutIllustrations;
   lastUpdated: string;
 }

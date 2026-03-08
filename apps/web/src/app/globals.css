@@ -20,6 +20,30 @@
   src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
     format("woff");
 }
+
+@font-face {
+  font-family: "GmarketSansBold";
+  font-weight: 700;
+  font-style: normal;
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansBold.woff")
+    format("woff");
+}
+
+@font-face {
+  font-family: "GmarketSansMedium";
+  font-weight: 500;
+  font-style: normal;
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
+    format("woff");
+}
+
+@font-face {
+  font-family: "KoPub Dotum";
+  font-weight: 500;
+  font-style: normal;
+  src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/KoPubDotumMedium.woff")
+    format("woff");
+}
 :root {
   color-scheme: light;
   --color-primary: #4f46e5;
