@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { auth } from "@/auth";
 import PricingFaq from "@/components/pricing/PricingFaq";
 import PricingGrid from "@/components/pricing/PricingGrid";
 import type { PlanId } from "@gyoanmaker/shared/plans";
 import { getSubscription } from "@/lib/subscription";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/pricing",
+  },
+};
 
 export default async function PricingPage() {
   const session = await auth();

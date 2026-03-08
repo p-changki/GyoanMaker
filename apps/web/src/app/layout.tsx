@@ -27,7 +27,6 @@ export const metadata: Metadata = {
     "vocabulary analysis",
   ],
   metadataBase: new URL(SITE_URL),
-  alternates: { canonical: "/" },
   openGraph: {
     title: "GyoanMaker | AI-Powered English Handout Generator",
     description:
