@@ -172,6 +172,8 @@ export async function POST(req: NextRequest) {
     orderName,
     status: "pending",
     createdAt,
+    refundStatus: "none",
+    refundAmount: 0,
     ...(planId ? { planId } : {}),
     ...(packageId ? { packageId } : {}),
   };

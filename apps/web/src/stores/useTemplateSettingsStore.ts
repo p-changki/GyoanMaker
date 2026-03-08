@@ -361,9 +361,17 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
   };
 }
 
+function shallowEqualSettings(a: TemplateSettings, b: TemplateSettings): boolean {
+  const keys = Object.keys(a) as (keyof TemplateSettings)[];
+  for (const key of keys) {
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
 export function useIsDirty(): boolean {
   return useTemplateSettingsStore((s) => {
     if (!s.lastSavedSnapshot) return false;
-    return JSON.stringify(extractSettings(s)) !== JSON.stringify(s.lastSavedSnapshot);
+    return !shallowEqualSettings(extractSettings(s), s.lastSavedSnapshot);
   });
 }
