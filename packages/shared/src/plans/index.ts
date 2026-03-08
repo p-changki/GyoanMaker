@@ -30,6 +30,7 @@ export interface PlanDefinition {
 export interface TopUpPackageDefinition {
   id: TopUpPackageId;
   type: QuotaModel;
+  label: string;
   amount: number;
   price: number;
 }
@@ -61,11 +62,16 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   },
 };
 
+export const MODEL_DISPLAY_NAMES: Record<QuotaModel, string> = {
+  flash: "Speed",
+  pro: "Precision",
+};
+
 export const TOP_UP_PACKAGES: TopUpPackageDefinition[] = [
-  { id: "flash_50", type: "flash", amount: 50, price: 3_000 },
-  { id: "flash_100", type: "flash", amount: 100, price: 5_500 },
-  { id: "pro_20", type: "pro", amount: 20, price: 5_500 },
-  { id: "pro_50", type: "pro", amount: 50, price: 12_000 },
+  { id: "flash_50", type: "flash", label: "Speed 50", amount: 50, price: 3_000 },
+  { id: "flash_100", type: "flash", label: "Speed 100", amount: 100, price: 5_500 },
+  { id: "pro_20", type: "pro", label: "Precision 20", amount: 20, price: 5_500 },
+  { id: "pro_50", type: "pro", label: "Precision 50", amount: 50, price: 12_000 },
 ];
 
 const KST_TIME_ZONE = "Asia/Seoul";
