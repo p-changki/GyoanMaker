@@ -278,7 +278,7 @@ export default function TermsPage() {
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              환불 요청은 계정 설정 또는 관리자 이메일
+              환불 요청은 관리자 이메일
               (dnsxj12345aa@gmail.com)을 통해 접수할 수 있습니다.
             </li>
             <li>환불은 요청일로부터 영업일 기준 7일 이내에 처리됩니다.</li>

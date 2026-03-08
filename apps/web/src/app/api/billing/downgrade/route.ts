@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   const subscription = await changePlan(email, body.planId, {
-    forceImmediate: true,
+    forceImmediate: false,
     paymentMethod: body.planId === "free" ? null : current.paymentMethod,
   });
 

@@ -188,6 +188,11 @@ export async function addTopUpCredits(
     const data = (snap.data() ?? {}) as UserDocLike;
     const credits = normalizeCredits(data);
 
+    // Dedup: skip if orderId already exists in credits
+    if (orderId && credits[type].some((c) => c.orderId === orderId)) {
+      return credits;
+    }
+
     credits[type] = [...credits[type], entry].sort((a, b) => {
       return (
         new Date(a.purchasedAt).getTime() - new Date(b.purchasedAt).getTime()

@@ -112,7 +112,7 @@ async function processAutoRenewals(now: Date): Promise<RenewalResult[]> {
 
     // Skip: free, canceled, has pending tier (already handled by applyPendingPlans)
     if (!isPlanId(tier) || tier === "free") continue;
-    if (status === "canceled") continue;
+    if (status === "canceled" || status === "past_due") continue;
     if (hasPending) continue;
     if (!periodEnd) continue;
     if (new Date(periodEnd) > now) continue;
@@ -134,9 +134,7 @@ async function processAutoRenewals(now: Date): Promise<RenewalResult[]> {
         orderName
       );
 
-      await renewSubscription(doc.id);
-
-      // Record in billing_orders
+      // Record billing_orders immediately after charge success (before renewSubscription)
       const confirmedAt = new Date().toISOString();
       await db.collection("billing_orders").doc(orderId).set({
         orderId,
@@ -154,6 +152,8 @@ async function processAutoRenewals(now: Date): Promise<RenewalResult[]> {
         approvedAt: chargeResult.approvedAt,
         autoRenewal: true,
       });
+
+      await renewSubscription(doc.id);
 
       results.push({ email: doc.id, tier, success: true });
     } catch (err) {
