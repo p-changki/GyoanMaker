@@ -1,6 +1,7 @@
 "use client";
 
-import type React from "react";
+import React, { useState } from "react";
+import { removeBackground } from "@/lib/removeBackground";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
 import { useTemplateSettingsPanel } from "./useTemplateSettingsPanel";
 import BrandingSection from "./BrandingSection";
@@ -47,6 +48,20 @@ function AvatarSlot({
 }) {
   const avatarBase64 = useTemplateSettingsStore((s) => s.avatarBase64);
   const setAvatarBase64 = useTemplateSettingsStore((s) => s.setAvatarBase64);
+  const [removingBg, setRemovingBg] = useState(false);
+
+  async function handleRemoveBg() {
+    if (!avatarBase64 || removingBg) return;
+    setRemovingBg(true);
+    try {
+      const result = await removeBackground(avatarBase64);
+      setAvatarBase64(result);
+    } catch {
+      // silently fail
+    } finally {
+      setRemovingBg(false);
+    }
+  }
 
   return (
     <>
@@ -61,6 +76,14 @@ function AvatarSlot({
           >
             x
           </button>
+          {removingBg && (
+            <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+              <svg className="w-5 h-5 animate-spin text-[#5E35B1]" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          )}
         </div>
       ) : (
         <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center shrink-0 overflow-hidden">
@@ -73,6 +96,26 @@ function AvatarSlot({
         <button type="button" onClick={() => avatarInputRef.current?.click()} className="text-xs font-bold text-[#5E35B1] hover:underline">
           {avatarBase64 ? "변경" : "이미지 업로드"}
         </button>
+        {avatarBase64 && (
+          <button
+            type="button"
+            onClick={handleRemoveBg}
+            disabled={removingBg}
+            className="text-[10px] text-gray-400 hover:text-[#5E35B1] transition-colors disabled:opacity-50 flex items-center gap-0.5"
+          >
+            {removingBg ? (
+              <>
+                <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                처리중...
+              </>
+            ) : (
+              "배경 제거"
+            )}
+          </button>
+        )}
         <p className="text-[9px] text-gray-400 mt-0.5">90x90px, 200KB 이하 (미설정 시 기본)</p>
       </div>
     </>
@@ -89,6 +132,20 @@ function LogoOnlySection({
 }) {
   const logoBase64 = useTemplateSettingsStore((s) => s.logoBase64);
   const setLogoBase64 = useTemplateSettingsStore((s) => s.setLogoBase64);
+  const [removingBg, setRemovingBg] = useState(false);
+
+  async function handleRemoveBg() {
+    if (!logoBase64 || removingBg) return;
+    setRemovingBg(true);
+    try {
+      const result = await removeBackground(logoBase64);
+      setLogoBase64(result);
+    } catch {
+      // silently fail
+    } finally {
+      setRemovingBg(false);
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -107,6 +164,14 @@ function LogoOnlySection({
             >
               x
             </button>
+            {removingBg && (
+              <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                <svg className="w-5 h-5 animate-spin text-[#5E35B1]" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              </div>
+            )}
           </div>
         ) : (
           <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs shrink-0">
@@ -118,6 +183,26 @@ function LogoOnlySection({
           <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs font-bold text-[#5E35B1] hover:underline">
             {logoBase64 ? "변경" : "로고 업로드"}
           </button>
+          {logoBase64 && (
+            <button
+              type="button"
+              onClick={handleRemoveBg}
+              disabled={removingBg}
+              className="text-[10px] text-gray-400 hover:text-[#5E35B1] transition-colors disabled:opacity-50 flex items-center gap-0.5"
+            >
+              {removingBg ? (
+                <>
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  처리중...
+                </>
+              ) : (
+                "배경 제거"
+              )}
+            </button>
+          )}
           <p className="text-[9px] text-gray-400 mt-0.5">120x120px, 200KB 이하</p>
         </div>
       </div>

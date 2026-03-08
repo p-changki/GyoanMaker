@@ -1,8 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import type { Page2SectionKey, TemplateSettings, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig, Page1LayoutConfig, SectionStyleConfig, VocabColumnLayout, CustomThemeColors, CustomSectionContent, CustomSectionKey, VocabDisplayConfig, SummaryLanguage } from "@gyoanmaker/shared/types";
-import { DEFAULT_TEMPLATE_SETTINGS, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, FONT_SIZE_PRESETS, FONT_SIZE_SLOT_META, MAX_CUSTOM_SECTIONS, isCustomSectionKey, isBuiltInSectionKey } from "@gyoanmaker/shared/types";
+import type { Page2SectionKey, TemplateSettings, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig, Page1LayoutConfig, SectionStyleConfig, VocabColumnLayout, CustomThemeColors, CustomSectionContent, CustomSectionKey, VocabDisplayConfig, SummaryLanguage, ImageDisplayConfig } from "@gyoanmaker/shared/types";
+import { DEFAULT_TEMPLATE_SETTINGS, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, DEFAULT_IMAGE_DISPLAY, FONT_SIZE_PRESETS, FONT_SIZE_SLOT_META, MAX_CUSTOM_SECTIONS, isCustomSectionKey, isBuiltInSectionKey } from "@gyoanmaker/shared/types";
 
 interface TemplateSettingsState extends TemplateSettings {
   hydrated: boolean;
@@ -49,6 +49,9 @@ interface TemplateSettingsActions {
   // Phase 2 display options
   setVocabDisplay: (partial: Partial<VocabDisplayConfig>) => void;
   setSummaryLanguage: (lang: SummaryLanguage) => void;
+  // Image display config
+  setLogoDisplay: (partial: Partial<ImageDisplayConfig>) => void;
+  setAvatarDisplay: (partial: Partial<ImageDisplayConfig>) => void;
 }
 
 type TemplateSettingsStore = TemplateSettingsState & TemplateSettingsActions;
@@ -167,6 +170,8 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         customSections: undefined,
         vocabDisplay: undefined,
         summaryLanguage: undefined,
+        logoDisplay: undefined,
+        avatarDisplay: undefined,
       }),
 
     // Phase 1 actions
@@ -286,6 +291,17 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
 
     setSummaryLanguage: (summaryLanguage) => set({ summaryLanguage }),
 
+    // Image display config
+    setLogoDisplay: (partial) =>
+      set((state) => ({
+        logoDisplay: { ...(state.logoDisplay ?? DEFAULT_IMAGE_DISPLAY), ...partial },
+      })),
+
+    setAvatarDisplay: (partial) =>
+      set((state) => ({
+        avatarDisplay: { ...(state.avatarDisplay ?? DEFAULT_IMAGE_DISPLAY), ...partial },
+      })),
+
     setLastSavedSnapshot: (snapshot) => set({ lastSavedSnapshot: snapshot }),
   })
 );
@@ -316,6 +332,8 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     customSections: state.customSections,
     vocabDisplay: state.vocabDisplay,
     summaryLanguage: state.summaryLanguage,
+    logoDisplay: state.logoDisplay,
+    avatarDisplay: state.avatarDisplay,
   };
 }
 

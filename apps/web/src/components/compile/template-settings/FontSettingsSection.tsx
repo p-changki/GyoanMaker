@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import {
   FONT_FAMILY_MAP,
@@ -10,6 +11,76 @@ import {
 import type { FontFamily } from "@gyoanmaker/shared/types";
 import { FONT_SCALE_OPTIONS, TITLE_WEIGHT_KEYS } from "./constants";
 
+const FONT_KEYS = Object.keys(FONT_FAMILY_MAP) as FontFamily[];
+
+function FontFamilyDropdown() {
+  const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
+  const setFontFamily = useTemplateSettingsStore((s) => s.setFontFamily);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between py-2 px-3 rounded-lg border-2 bg-white text-xs text-gray-700 transition-colors cursor-pointer ${
+          open ? "border-[#5E35B1] ring-1 ring-[#5E35B1]/20" : "border-gray-200 hover:border-gray-300"
+        }`}
+        style={{ fontFamily: FONT_FAMILY_MAP[fontFamily].css }}
+      >
+        <span className="font-medium">{FONT_FAMILY_MAP[fontFamily].label}</span>
+        <svg
+          className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg py-1 max-h-[240px] overflow-y-auto">
+          {FONT_KEYS.map((key) => {
+            const isSelected = fontFamily === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => { setFontFamily(key); setOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${
+                  isSelected
+                    ? "bg-[#5E35B1]/5 text-[#5E35B1] font-bold"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+                style={{ fontFamily: FONT_FAMILY_MAP[key].css }}
+              >
+                {isSelected && (
+                  <svg className="w-3.5 h-3.5 text-[#5E35B1] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {!isSelected && <span className="w-3.5 shrink-0" />}
+                <span>{FONT_FAMILY_MAP[key].label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface FontSettingsSectionProps {
   onOpenDetail: () => void;
 }
@@ -17,8 +88,6 @@ interface FontSettingsSectionProps {
 export default function FontSettingsSection({ onOpenDetail }: FontSettingsSectionProps) {
   const fontScale = useTemplateSettingsStore((s) => s.fontScale);
   const setFontScale = useTemplateSettingsStore((s) => s.setFontScale);
-  const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
-  const setFontFamily = useTemplateSettingsStore((s) => s.setFontFamily);
   const titleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const setTitleWeight = useTemplateSettingsStore((s) => s.setTitleWeight);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
@@ -76,18 +145,7 @@ export default function FontSettingsSection({ onOpenDetail }: FontSettingsSectio
       {/* Font Family */}
       <div>
         <label className="text-[10px] text-gray-500 mb-1 block">폰트</label>
-        <select
-          value={fontFamily}
-          onChange={(e) => setFontFamily(e.target.value as FontFamily)}
-          className="w-full py-2 px-3 rounded-lg border-2 border-gray-200 bg-white text-xs text-gray-700 focus:border-gray-800 focus:outline-none transition-colors appearance-none cursor-pointer"
-          style={{ fontFamily: FONT_FAMILY_MAP[fontFamily].css }}
-        >
-          {(Object.keys(FONT_FAMILY_MAP) as FontFamily[]).map((key) => (
-            <option key={key} value={key} style={{ fontFamily: FONT_FAMILY_MAP[key].css }}>
-              {FONT_FAMILY_MAP[key].label}
-            </option>
-          ))}
-        </select>
+        <FontFamilyDropdown />
       </div>
 
       {/* Title Weight */}

@@ -270,6 +270,18 @@ export interface VocabDisplayConfig {
 
 export type SummaryLanguage = "both" | "en" | "ko";
 
+export interface ImageDisplayConfig {
+  scale: number;     // 0.5 ~ 2.0, default 1.0
+  offsetX: number;   // px offset, default 0
+  offsetY: number;   // px offset, default 0
+}
+
+export const DEFAULT_IMAGE_DISPLAY: ImageDisplayConfig = {
+  scale: 1.0,
+  offsetX: 0,
+  offsetY: 0,
+};
+
 export interface CustomThemeColors {
   primary: string;
   primaryDark: string;
@@ -315,6 +327,9 @@ export interface TemplateSettings {
   // Phase 2: display options
   vocabDisplay?: VocabDisplayConfig;
   summaryLanguage?: SummaryLanguage;
+  // Image display config
+  logoDisplay?: ImageDisplayConfig;
+  avatarDisplay?: ImageDisplayConfig;
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {

@@ -36,6 +36,7 @@ export {
   getSectionFontSizeKeys,
   MAX_CUSTOM_SECTIONS,
   CUSTOM_SECTION_FONT_SIZE_KEYS,
+  DEFAULT_IMAGE_DISPLAY,
 } from "./templateSettings";
 
 export type ResultStatus = "generating" | "completed" | "failed";
