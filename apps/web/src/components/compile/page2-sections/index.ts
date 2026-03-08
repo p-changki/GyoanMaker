@@ -4,14 +4,22 @@ import { TopicSection } from "./TopicSection";
 import { SummarySection } from "./SummarySection";
 import { FlowSection } from "./FlowSection";
 import { VocabularySection } from "./VocabularySection";
+import { VisualSummarySection } from "./VisualSummarySection";
 
-export { TopicSection, SummarySection, FlowSection, VocabularySection };
+export {
+  VisualSummarySection,
+  TopicSection,
+  SummarySection,
+  FlowSection,
+  VocabularySection,
+};
 export { CustomSection } from "./CustomSection";
 
 export const BUILTIN_SECTION_COMPONENTS: Record<
   BuiltInSectionKey,
   React.ComponentType<{ section: HandoutSection }>
 > = {
+  visual_summary: VisualSummarySection,
   topic: TopicSection,
   summary: SummarySection,
   flow: FlowSection,

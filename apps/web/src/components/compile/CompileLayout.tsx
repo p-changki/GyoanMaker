@@ -1,18 +1,46 @@
 "use client";
 
 import { useState } from "react";
+import type { IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import SectionNav from "./SectionNav";
 import PreviewCanvas from "./PreviewCanvas";
 import ControlPanel from "./ControlPanel";
 
+interface ActiveConceptSample {
+  imageUrl: string;
+  prompt: string;
+}
+
 interface CompileLayoutProps {
   onApplyTemplate: () => void;
+  activeSample?: ActiveConceptSample | null;
+  onApplyIllustrations: (options: {
+    scope: "all" | "stale" | "passages";
+    quality: "draft" | "standard" | "hq";
+    overwritePolicy: "skip_completed" | "overwrite_all" | "stale_only";
+    passageIds?: string[];
+    conceptMode?: IllustrationConceptMode;
+    conceptText?: string;
+  }) => void;
+  onRetryIllustrations: () => void;
+  onCancelIllustrations: () => void;
   onCopyAll: () => void;
   onDownloadTxt: () => void;
   onExportPdf: (customFileName?: string) => void;
   onSave?: () => void;
   isSaving?: boolean;
   saveSuccess?: boolean;
+  canApplyIllustrations: boolean;
+  isApplyingIllustrations: boolean;
+  illustrationProgress: {
+    status: string;
+    completed: number;
+    failed: number;
+    total: number;
+  };
+  illustrationMessage: string | null;
+  hasRetryableIllustrations: boolean;
+  canCancelIllustrations: boolean;
   isExportingPdf: boolean;
   exportCurrent: number;
   exportTotal: number;
@@ -20,12 +48,22 @@ interface CompileLayoutProps {
 
 export default function CompileLayout({
   onApplyTemplate,
+  activeSample,
+  onApplyIllustrations,
+  onRetryIllustrations,
+  onCancelIllustrations,
   onCopyAll,
   onDownloadTxt,
   onExportPdf,
   onSave,
   isSaving,
   saveSuccess,
+  canApplyIllustrations,
+  isApplyingIllustrations,
+  illustrationProgress,
+  illustrationMessage,
+  hasRetryableIllustrations,
+  canCancelIllustrations,
   isExportingPdf,
   exportCurrent,
   exportTotal,
@@ -80,12 +118,22 @@ export default function CompileLayout({
         <div className="w-[320px] shrink-0">
           <ControlPanel
             onApplyTemplate={onApplyTemplate}
+            activeSample={activeSample}
+            onApplyIllustrations={onApplyIllustrations}
+            onRetryIllustrations={onRetryIllustrations}
+            onCancelIllustrations={onCancelIllustrations}
             onCopyAll={onCopyAll}
             onDownloadTxt={onDownloadTxt}
             onExportPdf={onExportPdf}
             onSave={onSave}
             isSaving={isSaving}
             saveSuccess={saveSuccess}
+            canApplyIllustrations={canApplyIllustrations}
+            isApplyingIllustrations={isApplyingIllustrations}
+            illustrationProgress={illustrationProgress}
+            illustrationMessage={illustrationMessage}
+            hasRetryableIllustrations={hasRetryableIllustrations}
+            canCancelIllustrations={canCancelIllustrations}
             isExportingPdf={isExportingPdf}
             exportCurrent={exportCurrent}
             exportTotal={exportTotal}

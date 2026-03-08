@@ -145,6 +145,7 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
   const showSynonyms = vocabDisplay?.showSynonyms ?? true;
   const showAntonyms = vocabDisplay?.showAntonyms ?? true;
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
+  const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.vocabulary || "핵심 어휘";
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
   const filteredVocab = section.vocabulary.filter((vocab) => vocab.word !== "핵심 어휘 및 확장");
@@ -159,7 +160,7 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
           className="text-white leading-none"
           style={{ fontFamily: "GmarketSans, sans-serif", fontSize: `${fontSizes.sectionTitle}px`, fontWeight: titleFontWeight }}
         >
-          핵심 어휘
+          {sectionTitle}
         </h3>
       </div>
 

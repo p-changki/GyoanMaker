@@ -57,6 +57,7 @@ export function useCompileActions({
 
       const compiledData: CompiledHandout = {
         sections: useHandoutStore.getState().sections,
+        illustrations: useHandoutStore.getState().illustrations,
         lastUpdated: new Date().toISOString(),
       };
 
@@ -181,13 +182,27 @@ export function useCompileActions({
             styles.maxWidth = "794px";
             styles.flexShrink = "0";
 
+            // Auto-fit: scale down content that exceeds A4 height (1123px)
+            const a4HeightPx = 1123;
+            const naturalHeight = element.scrollHeight;
+            const oTransform = styles.transform;
+            const oTransformOrigin = styles.transformOrigin;
+            const oHeight = styles.height;
+            let fitScale = 1;
+            if (naturalHeight > a4HeightPx) {
+              fitScale = a4HeightPx / naturalHeight;
+              styles.transform = `scale(${fitScale})`;
+              styles.transformOrigin = "top left";
+              styles.height = `${a4HeightPx}px`;
+            }
+
             const canvas = await html2canvas(element, {
               scale,
               useCORS: true,
               allowTaint: true,
               backgroundColor: "#ffffff",
               windowWidth: 794,
-              windowHeight: element.scrollHeight,
+              windowHeight: fitScale < 1 ? a4HeightPx : naturalHeight,
             });
 
             const imageData = canvas.toDataURL("image/png");
@@ -195,6 +210,9 @@ export function useCompileActions({
             styles.minWidth = oMinWidth;
             styles.maxWidth = oMaxWidth;
             styles.flexShrink = oFlexShrink;
+            styles.transform = oTransform;
+            styles.transformOrigin = oTransformOrigin;
+            styles.height = oHeight;
 
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;

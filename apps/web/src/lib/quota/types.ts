@@ -33,6 +33,7 @@ export interface QuotaStatus {
     used: number;
     remaining: number | null;
   };
+  illustration: QuotaModelStatus;
   canGenerate: boolean;
   canGenerateByModel: Record<QuotaModel, boolean>;
 }
@@ -66,6 +67,11 @@ export interface UserDocLike {
       used?: number;
       monthKeyKst?: string;
     };
+    illustration?: {
+      monthlyLimit?: number;
+      used?: number;
+      monthKeyKst?: string;
+    };
   };
   usage?: {
     daily?: { count?: number; key?: string };
@@ -74,6 +80,7 @@ export interface UserDocLike {
   credits?: {
     flash?: CreditEntry[];
     pro?: CreditEntry[];
+    illustration?: CreditEntry[];
   };
 }
 

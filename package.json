@@ -15,6 +15,7 @@
     "type-check": "turbo type-check",
     "lint": "turbo lint",
     "lint:fix": "turbo lint -- --fix",
+    "verify:illustration-topup": "node scripts/verify-illustration-topup-contract.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

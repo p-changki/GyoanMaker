@@ -1,4 +1,9 @@
-export type BuiltInSectionKey = "topic" | "summary" | "flow" | "vocabulary";
+export type BuiltInSectionKey =
+  | "visual_summary"
+  | "topic"
+  | "summary"
+  | "flow"
+  | "vocabulary";
 export type CustomSectionKey = `custom_${number}`;
 export type Page2SectionKey = BuiltInSectionKey | CustomSectionKey;
 
@@ -14,7 +19,13 @@ export function isCustomSectionKey(key: string): key is CustomSectionKey {
 }
 
 export function isBuiltInSectionKey(key: string): key is BuiltInSectionKey {
-  return key === "topic" || key === "summary" || key === "flow" || key === "vocabulary";
+  return (
+    key === "visual_summary" ||
+    key === "topic" ||
+    key === "summary" ||
+    key === "flow" ||
+    key === "vocabulary"
+  );
 }
 
 export type ThemePreset = "purple" | "blue" | "green" | "black" | "white";
@@ -74,11 +85,11 @@ export const VALID_THEME_PRESETS: ReadonlySet<ThemePreset> = new Set([
 ]);
 
 export type FontScale = "small" | "medium" | "large";
-export type FontFamily = "pretendard" | "gmarket" | "noto" | "nanumSquare" | "spoqa" | "suit" | "nanumGothic";
+export type FontFamily = "pretendard" | "gmarket" | "gmarketBold" | "gmarketMedium" | "noto" | "nanumSquare" | "spoqa" | "suit" | "nanumGothic" | "kopubDotum" | "timesNewRoman";
 export type TitleWeight = "bold" | "extrabold" | "black";
 
 export const VALID_FONT_SCALES: ReadonlySet<FontScale> = new Set(["small", "medium", "large"]);
-export const VALID_FONT_FAMILIES: ReadonlySet<FontFamily> = new Set(["pretendard", "gmarket", "noto", "nanumSquare", "spoqa", "suit", "nanumGothic"]);
+export const VALID_FONT_FAMILIES: ReadonlySet<FontFamily> = new Set(["pretendard", "gmarket", "gmarketBold", "gmarketMedium", "noto", "nanumSquare", "spoqa", "suit", "nanumGothic", "kopubDotum", "timesNewRoman"]);
 export const VALID_TITLE_WEIGHTS: ReadonlySet<TitleWeight> = new Set(["bold", "extrabold", "black"]);
 
 export interface FontScaleValues {
@@ -102,6 +113,10 @@ export const FONT_FAMILY_MAP: Record<FontFamily, { label: string; css: string }>
   gmarket:     { label: "지마켓산스",       css: '"GmarketSans", sans-serif' },
   spoqa:       { label: "스포카한산스네오", css: '"Spoqa Han Sans Neo", sans-serif' },
   suit:        { label: "SUIT",             css: '"SUIT", sans-serif' },
+  gmarketBold: { label: "지마켓산스 Bold",  css: '"GmarketSansBold", "GmarketSans", sans-serif' },
+  gmarketMedium:{ label: "지마켓산스 Medium",css: '"GmarketSansMedium", "GmarketSans", sans-serif' },
+  kopubDotum:  { label: "KoPub돋움체",     css: '"KoPub Dotum", "KoPubDotumMedium", sans-serif' },
+  timesNewRoman:{ label: "Times New Roman", css: '"Times New Roman", Times, serif' },
 };
 
 export const TITLE_WEIGHT_MAP: Record<TitleWeight, { label: string; value: number }> = {
@@ -118,6 +133,8 @@ export interface FontSizeConfig {
   topicKo: number;
   summaryEn: number;
   summaryKo: number;
+  visualEn: number;
+  visualKo: number;
   flowText: number;
   vocabText: number;
   // global UI elements
@@ -141,19 +158,19 @@ export interface FontSizeSlotMeta {
 export const FONT_SIZE_PRESETS: Record<FontScale, FontSizeConfig> = {
   small: {
     analysisEn: 9, analysisKo: 7, topicEn: 9, topicKo: 7,
-    summaryEn: 9, summaryKo: 7, flowText: 10.5, vocabText: 10.5,
+    summaryEn: 9, summaryKo: 7, visualEn: 9, visualKo: 7, flowText: 10.5, vocabText: 10.5,
     sectionTitle: 12, headerLogo: 32, headerBadge: 11, passageNumber: 32,
     sentenceNumber: 12, summaryBarTitle: 13, pageFooter: 10,
   },
   medium: {
     analysisEn: 10, analysisKo: 8, topicEn: 10, topicKo: 8,
-    summaryEn: 10, summaryKo: 8, flowText: 11.5, vocabText: 11.5,
+    summaryEn: 10, summaryKo: 8, visualEn: 10, visualKo: 8, flowText: 11.5, vocabText: 11.5,
     sectionTitle: 13, headerLogo: 36, headerBadge: 13, passageNumber: 36,
     sentenceNumber: 14, summaryBarTitle: 15, pageFooter: 12,
   },
   large: {
     analysisEn: 11, analysisKo: 9, topicEn: 11, topicKo: 9,
-    summaryEn: 11, summaryKo: 9, flowText: 12.5, vocabText: 12.5,
+    summaryEn: 11, summaryKo: 9, visualEn: 11, visualKo: 9, flowText: 12.5, vocabText: 12.5,
     sectionTitle: 14, headerLogo: 40, headerBadge: 15, passageNumber: 40,
     sentenceNumber: 16, summaryBarTitle: 17, pageFooter: 14,
   },
@@ -166,6 +183,8 @@ export const FONT_SIZE_SLOT_META: Record<keyof FontSizeConfig, FontSizeSlotMeta>
   topicKo:        { label: "한국어",         unit: "pt", step: 0.5, min: 5,  max: 12 },
   summaryEn:      { label: "영어",           unit: "pt", step: 0.5, min: 7,  max: 14 },
   summaryKo:      { label: "한국어",         unit: "pt", step: 0.5, min: 5,  max: 12 },
+  visualEn:       { label: "영어",           unit: "pt", step: 0.5, min: 7,  max: 14 },
+  visualKo:       { label: "한국어",         unit: "pt", step: 0.5, min: 5,  max: 12 },
   flowText:       { label: "텍스트",         unit: "px", step: 0.5, min: 8,  max: 16 },
   vocabText:      { label: "텍스트",         unit: "px", step: 0.5, min: 8,  max: 16 },
   sectionTitle:   { label: "섹션 타이틀",    unit: "px", step: 0.5, min: 10, max: 18 },
@@ -216,6 +235,7 @@ export interface SectionStyleConfig {
   textColor: string;    // "" = #111827
   fontFamily: FontFamily | "";   // "" = use global setting
   titleWeight: TitleWeight | ""; // "" = use global setting
+  textAlign: "left" | "center" | "right" | ""; // "" = default (left)
 }
 
 export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
@@ -228,6 +248,7 @@ export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
   textColor: "",
   fontFamily: "",
   titleWeight: "",
+  textAlign: "",
 };
 
 export type BuiltInEditableKey = BuiltInSectionKey | "page1Body" | "page2Header" | "header" | "headerBadge";
@@ -238,6 +259,7 @@ export const SECTION_FONT_SIZE_KEYS: Record<BuiltInEditableKey, (keyof FontSizeC
   headerBadge: ["headerBadge"],
   page1Body:   ["analysisEn", "analysisKo", "sentenceNumber"],
   page2Header: ["summaryBarTitle"],
+  visual_summary: ["visualEn", "visualKo", "flowText", "sectionTitle"],
   topic:      ["topicEn", "topicKo", "sectionTitle"],
   summary:    ["summaryEn", "summaryKo", "sectionTitle"],
   flow:       ["flowText", "sectionTitle"],
@@ -256,6 +278,7 @@ export const EDITABLE_SECTION_LABELS: Record<BuiltInEditableKey, string> = {
   headerBadge: "헤더 배지",
   page1Body: "문장 테이블",
   page2Header: "요약바",
+  visual_summary: "삽화 요약",
   topic: "주제문",
   summary: "요약",
   flow: "내용 정리",
@@ -274,12 +297,14 @@ export interface ImageDisplayConfig {
   scale: number;     // 0.5 ~ 2.0, default 1.0
   offsetX: number;   // px offset, default 0
   offsetY: number;   // px offset, default 0
+  layer: "front" | "back";  // front = above bar, back = behind bar
 }
 
 export const DEFAULT_IMAGE_DISPLAY: ImageDisplayConfig = {
   scale: 1.0,
   offsetX: 0,
   offsetY: 0,
+  layer: "front",
 };
 
 export interface CustomThemeColors {
@@ -330,13 +355,19 @@ export interface TemplateSettings {
   // Image display config
   logoDisplay?: ImageDisplayConfig;
   avatarDisplay?: ImageDisplayConfig;
+  // Per-section custom title overrides
+  sectionTitles?: Partial<Record<Page2SectionKey, string>>;
+  // Sub-section title overrides (e.g. "BACKGROUND KNOWLEDGE" inside visual_summary)
+  subSectionTitles?: Partial<Record<string, string>>;
+  // Sub-section color overrides (e.g. background knowledge header/body bg)
+  subSectionColors?: Partial<Record<string, string>>;
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   academyName: null,
   logoBase64: null,
   avatarBase64: null,
-  page2Sections: ["topic", "summary", "flow", "vocabulary"],
+  page2Sections: ["visual_summary", "topic", "summary", "flow", "vocabulary"],
   themePreset: "purple",
   defaultHeaderText: null,
   defaultAnalysisTitle: null,
@@ -347,7 +378,16 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   fontSizes: FONT_SIZE_PRESETS.medium,
 };
 
+export const DEFAULT_SECTION_TITLES: Record<BuiltInSectionKey, string> = {
+  visual_summary: "VISUAL SUMMARY",
+  topic: "주제",
+  summary: "요약",
+  flow: "내용 정리",
+  vocabulary: "핵심 어휘",
+};
+
 export const VALID_PAGE2_SECTIONS: ReadonlySet<BuiltInSectionKey> = new Set([
+  "visual_summary",
   "topic",
   "summary",
   "flow",
@@ -355,6 +395,7 @@ export const VALID_PAGE2_SECTIONS: ReadonlySet<BuiltInSectionKey> = new Set([
 ]);
 
 export const PAGE2_SECTION_LABELS: Record<BuiltInSectionKey, string> = {
+  visual_summary: "삽화 요약",
   topic: "주제문",
   summary: "요약",
   flow: "내용 정리",

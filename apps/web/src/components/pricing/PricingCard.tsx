@@ -23,7 +23,8 @@ const PLAN_META: Record<
     description: "Perfect for trying out the service",
     features: [
       "10 Speed gen / mo",
-      "2 Precision gen / mo",
+      "5 Precision gen / mo",
+      "5 Illustration credits / mo",
       "Up to 3 handouts",
       "Basic PDF export",
     ],
@@ -34,6 +35,7 @@ const PLAN_META: Record<
     features: [
       "250 Speed gen / mo",
       "30 Precision gen / mo",
+      "10 Illustration credits / mo",
       "Unlimited storage",
       "PDF export",
       "Credit top-up",
@@ -45,6 +47,7 @@ const PLAN_META: Record<
     features: [
       "500 Speed gen / mo",
       "120 Precision gen / mo",
+      "30 Illustration credits / mo",
       "Unlimited storage",
       "PDF export",
       "Credit top-up",
@@ -57,6 +60,7 @@ const PLAN_META: Record<
     features: [
       "1,000 Speed gen / mo",
       "400 Precision gen / mo",
+      "60 Illustration credits / mo",
       "Unlimited storage",
       "PDF export",
       "Credit top-up",

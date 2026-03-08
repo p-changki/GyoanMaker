@@ -173,6 +173,7 @@ function resolveMonthlyLimits(
 ) {
   const flashLimitFallback = getFallbackModelLimit(data, planTier, "flash");
   const proLimitFallback = getFallbackModelLimit(data, planTier, "pro");
+  const illustrationLimitFallback = PLANS[planTier].illustrationMonthlyLimit;
 
   return {
     flash: normalizeModelQuota(
@@ -186,6 +187,12 @@ function resolveMonthlyLimits(
       proLimitFallback,
       periodKey,
       legacyMonthlyCount
+    ),
+    illustration: normalizeModelQuota(
+      data.quota?.illustration,
+      illustrationLimitFallback,
+      periodKey,
+      0
     ),
   };
 }
@@ -236,6 +243,7 @@ export function normalizeUserState(
 
   const flashCredits = normalizeCreditArray(data.credits?.flash, now);
   const proCredits = normalizeCreditArray(data.credits?.pro, now);
+  const illustrationCredits = normalizeCreditArray(data.credits?.illustration, now);
 
   const legacyDailyKey =
     typeof data.usage?.daily?.key === "string"
@@ -256,11 +264,13 @@ export function normalizeUserState(
     !data.quota ||
     normalizedMonthly.flash.changed ||
     normalizedMonthly.pro.changed ||
+    normalizedMonthly.illustration.changed ||
     rawStorageLimit !== normalizedStorageLimit ||
     data.quota?.storageUsed !== storageUsed ||
     !data.credits ||
     flashCredits.changed ||
     proCredits.changed ||
+    illustrationCredits.changed ||
     data.usage?.daily?.key !== legacyDailyKey ||
     data.usage?.daily?.count !== legacyDailyCount ||
     data.usage?.monthly?.key !== legacyMonthlyKey ||
@@ -271,12 +281,14 @@ export function normalizeUserState(
     quota: {
       flash: normalizedMonthly.flash.quota,
       pro: normalizedMonthly.pro.quota,
+      illustration: normalizedMonthly.illustration.quota,
       storageLimit: normalizedStorageLimit,
       storageUsed,
     },
     credits: {
       flash: flashCredits.list,
       pro: proCredits.list,
+      illustration: illustrationCredits.list,
     },
     legacyUsageDaily: {
       key: legacyDailyKey,
@@ -306,6 +318,11 @@ export function buildQuotaStatus(state: NormalizedUserState): QuotaStatus {
       ? null
       : Math.max(0, state.quota.storageLimit - state.quota.storageUsed);
 
+  const illustrationCredits = sumCredits(state.credits.illustration);
+  const illustrationRemaining =
+    Math.max(0, state.quota.illustration.monthlyLimit - state.quota.illustration.used) +
+    illustrationCredits;
+
   return {
     plan: state.plan.tier,
     monthKeyKst: state.quota.flash.monthKeyKst,
@@ -325,6 +342,12 @@ export function buildQuotaStatus(state: NormalizedUserState): QuotaStatus {
       limit: state.quota.storageLimit,
       used: state.quota.storageUsed,
       remaining: storageRemaining,
+    },
+    illustration: {
+      limit: state.quota.illustration.monthlyLimit,
+      used: state.quota.illustration.used,
+      remaining: illustrationRemaining,
+      credits: illustrationCredits,
     },
     canGenerate: flashRemaining > 0 || proRemaining > 0,
     canGenerateByModel: {
@@ -403,6 +426,7 @@ export function buildPersistPayload(state: NormalizedUserState) {
       ),
     },
     credits: state.credits,
+
     usage: {
       daily: state.legacyUsageDaily,
       monthly: state.legacyUsageMonthly,

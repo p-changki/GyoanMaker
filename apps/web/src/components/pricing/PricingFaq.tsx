@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "What are the Free plan limitations?",
-    a: "Free plan includes 10 Speed generations, 2 Precision generations, and up to 3 saved handouts per month. Basic and above plans offer unlimited storage.",
+    a: "Free plan includes 10 Speed generations, 5 Precision generations, 5 illustration credits, and up to 3 saved handouts per month. Basic and above plans offer unlimited storage.",
   },
 ];
 

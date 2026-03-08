@@ -113,14 +113,25 @@ function normalizeSectionStyle(raw: unknown): SectionStyleConfig {
       ? (obj.titleWeight as TitleWeight | "")
       : DEFAULT_SECTION_STYLE.titleWeight;
 
-  return { paddingTop, paddingBottom, borderStyle, borderColor, titleColor, bgColor, textColor, fontFamily, titleWeight };
+  const textAlign =
+    typeof obj.textAlign === "string" && ["", "left", "center", "right"].includes(obj.textAlign)
+      ? (obj.textAlign as "left" | "center" | "right" | "")
+      : DEFAULT_SECTION_STYLE.textAlign;
+
+  return { paddingTop, paddingBottom, borderStyle, borderColor, titleColor, bgColor, textColor, fontFamily, titleWeight, textAlign };
 }
 
 function normalizeSectionStyles(raw: unknown): Partial<Record<Page2SectionKey, SectionStyleConfig>> | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const obj = raw as Record<string, unknown>;
   const result: Partial<Record<Page2SectionKey, SectionStyleConfig>> = {};
-  const validKeys: Page2SectionKey[] = ["topic", "summary", "flow", "vocabulary"];
+  const validKeys: Page2SectionKey[] = [
+    "visual_summary",
+    "topic",
+    "summary",
+    "flow",
+    "vocabulary",
+  ];
   for (const key of validKeys) {
     if (obj[key]) {
       result[key] = normalizeSectionStyle(obj[key]);

@@ -232,8 +232,7 @@ export default function BrandingSection({ fileInputRef, avatarInputRef, onLogoUp
             <p className="text-[9px] text-gray-400 mt-0.5">90x90px, 200KB 이하 (미설정 시 기본)</p>
           </div>
         </div>
-        {avatarBase64 && (
-          <ImageAdjustSliders
+        <ImageAdjustSliders
             label="캐릭터"
             scale={avatarDisplay.scale}
             offsetX={avatarDisplay.offsetX}
@@ -242,7 +241,25 @@ export default function BrandingSection({ fileInputRef, avatarInputRef, onLogoUp
             onChangeOffsetX={(v) => setAvatarDisplay({ offsetX: v })}
             onChangeOffsetY={(v) => setAvatarDisplay({ offsetY: v })}
           />
-        )}
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-[10px] text-gray-500">레이어</span>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                className={`px-2 py-0.5 text-[10px] rounded ${avatarDisplay.layer === "front" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}
+                onClick={() => setAvatarDisplay({ layer: "front" })}
+              >
+                앞
+              </button>
+              <button
+                type="button"
+                className={`px-2 py-0.5 text-[10px] rounded ${avatarDisplay.layer === "back" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}
+                onClick={() => setAvatarDisplay({ layer: "back" })}
+              >
+                뒤
+              </button>
+            </div>
+          </div>
       </div>
     </>
   );

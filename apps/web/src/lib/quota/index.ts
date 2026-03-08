@@ -161,10 +161,16 @@ export async function purgeExpiredCredits(email: string): Promise<number> {
     const beforePro = Array.isArray(original.credits?.pro)
       ? original.credits?.pro.length
       : 0;
+    const beforeIllustration = Array.isArray(original.credits?.illustration)
+      ? original.credits?.illustration.length
+      : 0;
     const removed =
       beforeFlash +
-      beforePro -
-      (state.credits.flash.length + state.credits.pro.length);
+      beforePro +
+      beforeIllustration -
+      (state.credits.flash.length +
+        state.credits.pro.length +
+        state.credits.illustration.length);
 
     if (removed > 0 || state.needsPersist) {
       tx.set(docRef, buildPersistPayload(state), { merge: true });
@@ -188,12 +194,14 @@ export async function initializeQuota(email: string): Promise<void> {
           ...DEFAULT_QUOTA,
           flash: { monthlyLimit: free.flashLimit, used: 0, monthKeyKst },
           pro: { monthlyLimit: free.proLimit, used: 0, monthKeyKst },
+          illustration: { monthlyLimit: free.illustrationMonthlyLimit, used: 0, monthKeyKst },
           storageLimit: free.storageLimit,
           storageUsed: 0,
         },
         credits: {
           flash: [],
           pro: [],
+          illustration: [],
         },
         usage: {
           daily: { count: 0, key: new Date().toISOString().slice(0, 10) },
@@ -205,6 +213,53 @@ export async function initializeQuota(email: string): Promise<void> {
     );
 }
 
+
+export async function incrementIllustrationUsage(
+  email: string,
+  amount = 1
+): Promise<QuotaStatus> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  const result = await getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const state = normalizeUserState((snap.data() ?? {}) as UserDocLike, new Date());
+
+    if (amount > 0) {
+      const illuQuota = state.quota.illustration;
+      const subRemaining = Math.max(0, illuQuota.monthlyLimit - illuQuota.used);
+      const fromSub = Math.min(subRemaining, amount);
+      // Create new quota object (immutable)
+      state.quota = {
+        ...state.quota,
+        illustration: {
+          ...illuQuota,
+          used: illuQuota.used + fromSub,
+        },
+      };
+
+      const needCredits = amount - fromSub;
+      if (needCredits > 0) {
+        const consumed = consumeCredits(state.credits.illustration, needCredits);
+        state.credits = {
+          ...state.credits,
+          illustration: consumed.updated,
+        };
+        if (consumed.consumed < needCredits) {
+          const totalAvailable = fromSub + consumed.consumed;
+          throw new Error(
+            `Illustration quota exceeded: need ${amount}, have ${totalAvailable}`
+          );
+        }
+      }
+    }
+
+    tx.set(docRef, buildPersistPayload(state), { merge: true });
+    return buildQuotaStatus(state);
+  });
+
+  return result;
+}
 export { DEFAULT_QUOTA, QuotaExceededError };
 export type {
   LegacyQuotaLimits,

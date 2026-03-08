@@ -1,16 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { TOP_UP_PACKAGES, MODEL_DISPLAY_NAMES } from "@gyoanmaker/shared/plans";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  TOP_UP_PACKAGES,
+  MODEL_DISPLAY_NAMES,
+  type TopUpCreditType,
+} from "@gyoanmaker/shared/plans";
 import TossPaymentButton from "@/components/billing/TossPaymentButton";
 
 interface TopUpModalProps {
   open: boolean;
   onClose: () => void;
+  defaultType?: TopUpCreditType;
 }
 
-export default function TopUpModal({ open, onClose }: TopUpModalProps) {
+export default function TopUpModal({
+  open,
+  onClose,
+  defaultType = "flash",
+}: TopUpModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [activeType, setActiveType] = useState<TopUpCreditType>(defaultType);
 
   useEffect(() => {
     const el = dialogRef.current;
@@ -38,6 +48,11 @@ export default function TopUpModal({ open, onClose }: TopUpModalProps) {
     }
   };
 
+  const filteredPackages = useMemo(
+    () => TOP_UP_PACKAGES.filter((pkg) => pkg.type === activeType),
+    [activeType]
+  );
+
   return (
     <dialog
       ref={dialogRef}
@@ -59,7 +74,24 @@ export default function TopUpModal({ open, onClose }: TopUpModalProps) {
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {TOP_UP_PACKAGES.map((pkg) => (
+          <div className="sm:col-span-2 flex gap-2 rounded-xl border border-gray-100 bg-gray-50 p-1">
+            {(["flash", "pro", "illustration"] as TopUpCreditType[]).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setActiveType(type)}
+                className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
+                  activeType === type
+                    ? "bg-white text-[#5E35B1] shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {MODEL_DISPLAY_NAMES[type]}
+              </button>
+            ))}
+          </div>
+
+          {filteredPackages.map((pkg) => (
             <div
               key={pkg.id}
               className="rounded-xl border border-gray-100 bg-gray-50 p-4"

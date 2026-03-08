@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type PlanId } from "@gyoanmaker/shared/plans";
+import { type PlanId, type TopUpCreditType } from "@gyoanmaker/shared/plans";
 import type { CreditEntry } from "@gyoanmaker/shared/types";
 import UsageBar from "./UsageBar";
 import DeleteAccountModal from "./DeleteAccountModal";
@@ -35,11 +35,15 @@ interface BillingStatusResponse {
   };
   planPendingTier: PlanId | null;
   account: { createdAt: string | null };
-  credits: { flash: CreditEntry[]; pro: CreditEntry[] };
+  credits: { flash: CreditEntry[]; pro: CreditEntry[]; illustration: CreditEntry[] };
 }
 
 function isPlanId(value: string | null): value is PlanId {
   return value === "free" || value === "basic" || value === "standard" || value === "pro";
+}
+
+function isTopUpCreditType(value: string | null): value is TopUpCreditType {
+  return value === "flash" || value === "pro" || value === "illustration";
 }
 
 function formatDate(iso: string | null): string {
@@ -84,6 +88,12 @@ export default function AccountDashboard() {
   }, [searchParams]);
   const autoOpenPlanModal = targetPlan !== null && targetPlan !== currentPlan;
   const isPlanModalOpen = showPlanModal || autoOpenPlanModal;
+  const topUpTypeParam = searchParams.get("topup");
+  const autoOpenTopUpModal = isTopUpCreditType(topUpTypeParam);
+  const isTopUpModalOpen = showTopUpModal || autoOpenTopUpModal;
+  const defaultTopUpType: TopUpCreditType = isTopUpCreditType(topUpTypeParam)
+    ? topUpTypeParam
+    : "flash";
 
   const clearTargetPlanQuery = () => {
     if (!searchParams.get("targetPlan")) {
@@ -92,6 +102,17 @@ export default function AccountDashboard() {
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete("targetPlan");
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+  };
+
+  const clearTopUpQuery = () => {
+    if (!searchParams.get("topup")) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("topup");
     const next = params.toString();
     router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
   };
@@ -213,6 +234,7 @@ export default function AccountDashboard() {
       <CreditDetailsSection
         flash={data.credits.flash}
         pro={data.credits.pro}
+        illustration={data.credits.illustration}
       />
 
       {/* Payment History */}
@@ -249,8 +271,12 @@ export default function AccountDashboard() {
 
       {/* Modals */}
       <TopUpModal
-        open={showTopUpModal}
-        onClose={() => setShowTopUpModal(false)}
+        open={isTopUpModalOpen}
+        defaultType={defaultTopUpType}
+        onClose={() => {
+          setShowTopUpModal(false);
+          clearTopUpQuery();
+        }}
       />
 
       <PlanChangeModal

@@ -52,6 +52,9 @@ interface TemplateSettingsActions {
   // Image display config
   setLogoDisplay: (partial: Partial<ImageDisplayConfig>) => void;
   setAvatarDisplay: (partial: Partial<ImageDisplayConfig>) => void;
+  setSectionTitle: (key: Page2SectionKey, title: string) => void;
+  setSubSectionTitle: (key: string, title: string) => void;
+  setSubSectionColor: (key: string, color: string) => void;
 }
 
 type TemplateSettingsStore = TemplateSettingsState & TemplateSettingsActions;
@@ -172,6 +175,9 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         summaryLanguage: undefined,
         logoDisplay: undefined,
         avatarDisplay: undefined,
+        sectionTitles: undefined,
+        subSectionTitles: undefined,
+        subSectionColors: undefined,
       }),
 
     // Phase 1 actions
@@ -303,6 +309,21 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
       })),
 
     setLastSavedSnapshot: (snapshot) => set({ lastSavedSnapshot: snapshot }),
+
+    setSectionTitle: (key, title) =>
+      set((state) => ({
+        sectionTitles: { ...state.sectionTitles, [key]: title },
+      })),
+
+    setSubSectionTitle: (key, title) =>
+      set((state) => ({
+        subSectionTitles: { ...state.subSectionTitles, [key]: title },
+      })),
+
+    setSubSectionColor: (key, color) =>
+      set((state) => ({
+        subSectionColors: { ...state.subSectionColors, [key]: color },
+      })),
   })
 );
 
@@ -334,6 +355,9 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     summaryLanguage: state.summaryLanguage,
     logoDisplay: state.logoDisplay,
     avatarDisplay: state.avatarDisplay,
+    sectionTitles: state.sectionTitles,
+    subSectionTitles: state.subSectionTitles,
+    subSectionColors: state.subSectionColors,
   };
 }
 

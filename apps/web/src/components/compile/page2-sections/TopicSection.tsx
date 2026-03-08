@@ -1,10 +1,13 @@
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
+import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useSectionStyle } from "./useSectionStyle";
 
 export function TopicSection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("topic");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
+  const customTitle = useTemplateSettingsStore((s) => s.sectionTitles);
+  const sectionTitle = customTitle?.topic || "주제";
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
   return (
@@ -17,7 +20,7 @@ export function TopicSection({ section }: { section: HandoutSection }) {
           className="text-white leading-none"
           style={{ fontFamily: "GmarketSans, sans-serif", fontSize: `${fontSizes.sectionTitle}px`, fontWeight: titleFontWeight }}
         >
-          주제
+          {sectionTitle}
         </h3>
       </div>
       <div className="pl-1">

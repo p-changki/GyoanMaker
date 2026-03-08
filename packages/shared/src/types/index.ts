@@ -7,10 +7,13 @@ export type {
   PlanStatus,
   PaymentMethod,
   QuotaModel,
+  TopUpCreditType,
   TopUpPackageDefinition,
   TopUpPackageId,
 } from "../plans";
 export type * from "./handout";
+export type * from "./illustration";
+export type * from "./illustrationSample";
 export type * from "./templateSettings";
 export {
   DEFAULT_TEMPLATE_SETTINGS,
@@ -37,6 +40,7 @@ export {
   MAX_CUSTOM_SECTIONS,
   CUSTOM_SECTION_FONT_SIZE_KEYS,
   DEFAULT_IMAGE_DISPLAY,
+  DEFAULT_SECTION_TITLES,
 } from "./templateSettings";
 
 export type ResultStatus = "generating" | "completed" | "failed";
@@ -117,6 +121,7 @@ export interface CreditEntry {
 export interface UserQuota {
   flash: ModelQuota;
   pro: ModelQuota;
+  illustration: ModelQuota;
   storageLimit: number | null;
   storageUsed: number;
 }
@@ -124,4 +129,5 @@ export interface UserQuota {
 export interface UserCredits {
   flash: CreditEntry[];
   pro: CreditEntry[];
+  illustration: CreditEntry[];
 }

@@ -32,12 +32,20 @@ export default function CompileOrchestrator() {
     setSaveTitle,
     setShowSaveModal,
     isSaving,
+    isApplyingIllustrations,
+    illustrationJobId,
+    illustrationProgress,
+    illustrationMessage,
     handleApplyTemplate,
+    handleApplyIllustrations,
+    handleRetryIllustrations,
+    handleCancelIllustrations,
     handleCopyAll,
     handleDownloadTxt,
     handleExportPDF,
     handleSave,
     handleSaveConfirm,
+    activeSample,
   } = useCompileData();
 
   if (isLoading) {
@@ -87,12 +95,28 @@ export default function CompileOrchestrator() {
     <>
       <CompileLayout
         onApplyTemplate={handleApplyTemplate}
+        activeSample={activeSample}
+        onApplyIllustrations={handleApplyIllustrations}
+        onRetryIllustrations={handleRetryIllustrations}
+        onCancelIllustrations={handleCancelIllustrations}
         onCopyAll={handleCopyAll}
         onDownloadTxt={handleDownloadTxt}
         onExportPdf={handleExportPDF}
         onSave={handleSave}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
+        canApplyIllustrations={Boolean(handoutId)}
+        isApplyingIllustrations={isApplyingIllustrations}
+        illustrationProgress={illustrationProgress}
+        illustrationMessage={illustrationMessage}
+        hasRetryableIllustrations={
+          Boolean(illustrationJobId) && illustrationProgress.failed > 0
+        }
+        canCancelIllustrations={
+          Boolean(illustrationJobId) &&
+          (illustrationProgress.status === "queued" ||
+            illustrationProgress.status === "running")
+        }
         isExportingPdf={isExportingPdf}
         exportCurrent={exportProgress.current}
         exportTotal={exportProgress.total}

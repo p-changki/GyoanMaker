@@ -19,6 +19,7 @@ interface UserDocLike {
   quota?: {
     flash?: { monthlyLimit?: number; used?: number; monthKeyKst?: string };
     pro?: { monthlyLimit?: number; used?: number; monthKeyKst?: string };
+    illustration?: { monthlyLimit?: number; used?: number; monthKeyKst?: string };
     storageLimit?: number | null;
     storageUsed?: number;
   };
@@ -52,6 +53,7 @@ function normalizeCredits(doc: UserDocLike): UserCredits {
   return {
     flash: Array.isArray(doc.credits?.flash) ? doc.credits.flash : [],
     pro: Array.isArray(doc.credits?.pro) ? doc.credits.pro : [],
+    illustration: Array.isArray(doc.credits?.illustration) ? doc.credits.illustration : [],
   };
 }
 
@@ -73,6 +75,11 @@ function upsertPlanLimits(
     },
     pro: {
       monthlyLimit: target.proLimit,
+      used: 0,
+      monthKeyKst: periodKey,
+    },
+    illustration: {
+      monthlyLimit: target.illustrationMonthlyLimit,
       used: 0,
       monthKeyKst: periodKey,
     },
@@ -161,7 +168,7 @@ export async function changePlan(
 
 export async function addTopUpCredits(
   email: string,
-  type: QuotaModel,
+  type: QuotaModel | "illustration",
   amount: number,
   orderId?: string
 ): Promise<UserCredits> {
@@ -314,7 +321,7 @@ export interface SubscriptionExtended {
   subscription: UserPlan;
   planPendingTier: PlanId | null;
   createdAt: string | null;
-  credits: { flash: CreditEntry[]; pro: CreditEntry[] };
+  credits: { flash: CreditEntry[]; pro: CreditEntry[]; illustration: CreditEntry[] };
 }
 
 export async function getSubscriptionExtended(

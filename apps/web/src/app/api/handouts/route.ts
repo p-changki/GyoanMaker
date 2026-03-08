@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createHandout, listHandouts } from "@/lib/handouts";
 import { getQuotaStatus, setStorageUsed } from "@/lib/quota";
+import type { HandoutIllustrations } from "@gyoanmaker/shared/types";
 
 /**
  * GET /api/handouts — Get my handout list
@@ -48,12 +49,13 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { title, sections, level, model, customTexts, inputHash } = body as {
+    const { title, sections, level, model, customTexts, inputHash, illustrations } = body as {
       title?: string;
       sections?: Record<string, string>;
       level?: string;
       model?: string;
       inputHash?: string;
+      illustrations?: HandoutIllustrations;
       customTexts?: {
         headerText?: string;
         analysisTitleText?: string;
@@ -102,6 +104,8 @@ export async function POST(req: NextRequest) {
       level: level || "advanced",
       model: model || "pro",
       inputHash: typeof inputHash === "string" ? inputHash : undefined,
+      illustrations:
+        illustrations && typeof illustrations === "object" ? illustrations : undefined,
       customTexts,
     });
 
