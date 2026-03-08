@@ -9,6 +9,7 @@ export type IllustrationStatus =
 export type IllustrationQuality = "draft" | "standard" | "hq";
 export type IllustrationAspectRatio = "4:3" | "1:1" | "16:9";
 export type IllustrationConceptMode = "off" | "soft" | "hard";
+export type IllustrationBubbleStyle = "round" | "square" | "cloud";
 
 export interface IllustrationReferenceImage {
   imageUrl: string;
@@ -33,6 +34,10 @@ export interface IllustrationProfile {
   referenceImage?: IllustrationReferenceImage;
   defaultQuality: IllustrationQuality;
   aspectRatio: IllustrationAspectRatio;
+  includeKoreanText?: boolean;
+  bubbleCount?: number;
+  bubbleStyle?: IllustrationBubbleStyle;
+  customBubbleTexts?: string[];
   updatedAt: string;
 }
 
@@ -98,6 +103,10 @@ export interface IllustrationJob {
   overwritePolicy: "skip_completed" | "overwrite_all" | "stale_only";
   conceptMode?: IllustrationConceptMode;
   conceptText?: string;
+  includeKoreanText?: boolean;
+  bubbleCount?: number;
+  bubbleStyle?: IllustrationBubbleStyle;
+  customBubbleTexts?: string[];
   items: Record<string, IllustrationJobItem>;
   createdAt: string;
   updatedAt: string;

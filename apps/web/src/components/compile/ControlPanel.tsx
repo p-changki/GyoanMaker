@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { IllustrationConceptMode } from "@gyoanmaker/shared/types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { TemplateSettingsPanel } from "./template-settings";
 import TemplateGuideModal, { GUIDE_DISMISSED_KEY } from "./template-settings/TemplateGuideModal";
@@ -23,6 +23,10 @@ interface ControlPanelProps {
     passageIds?: string[];
     conceptMode?: IllustrationConceptMode;
     conceptText?: string;
+    includeKoreanText?: boolean;
+    bubbleCount?: number;
+    bubbleStyle?: IllustrationBubbleStyle;
+    customBubbleTexts?: string[];
   }) => void;
   onRetryIllustrations: () => void;
   onCancelIllustrations: () => void;
@@ -41,6 +45,8 @@ interface ControlPanelProps {
     total: number;
   };
   illustrationMessage: string | null;
+  illustrationCreditError: { needed: number; available: number } | null;
+  onDismissCreditError: () => void;
   hasRetryableIllustrations: boolean;
   canCancelIllustrations: boolean;
   isExportingPdf: boolean;
@@ -74,6 +80,8 @@ export default function ControlPanel({
   isApplyingIllustrations,
   illustrationProgress,
   illustrationMessage,
+  illustrationCreditError,
+  onDismissCreditError,
   hasRetryableIllustrations,
   canCancelIllustrations,
   isExportingPdf,
@@ -95,7 +103,7 @@ export default function ControlPanel({
   const [illustrationScope, setIllustrationScope] = useState<
     "all" | "stale" | "passages"
   >("all");
-  const derivedConceptDefault: IllustrationConceptMode = activeSample ? "hard" : "off";
+  const derivedConceptDefault: IllustrationConceptMode = activeSample ? "soft" : "off";
   const [conceptMode, setConceptMode] = useState<IllustrationConceptMode>(derivedConceptDefault);
   const [lastSampleId, setLastSampleId] = useState<string | null>(activeSample?.prompt ?? null);
 
@@ -104,7 +112,7 @@ export default function ControlPanel({
   if (currentSampleId !== lastSampleId) {
     setLastSampleId(currentSampleId);
     if (currentSampleId && !lastSampleId) {
-      setConceptMode("hard");
+      setConceptMode("soft");
     }
   }
   const [illustrationQuality, setIllustrationQuality] = useState<
@@ -114,6 +122,24 @@ export default function ControlPanel({
     "skip_completed" | "overwrite_all" | "stale_only"
   >("skip_completed");
   const [selectedPassageIds, setSelectedPassageIds] = useState<string[]>([]);
+  const [includeKoreanText, setIncludeKoreanText] = useState(false);
+  const [bubbleCount, setBubbleCount] = useState(3);
+  const [bubbleStyle, setBubbleStyle] = useState<IllustrationBubbleStyle>("round");
+  const [customBubbleTexts, setCustomBubbleTexts] = useState<string[]>([]);
+  const [openDropdown, setOpenDropdown] = useState<"scope" | "quality" | "overwrite" | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [openDropdown]);
 
   const passageIds = useMemo(
     () =>
@@ -178,7 +204,7 @@ export default function ControlPanel({
                     </div>
                     <div className="h-2 w-full bg-white rounded-full overflow-hidden border border-purple-100">
                       <div
-                        className="h-full bg-[#5E35B1] transition-all duration-300 ease-out"
+                        className="h-full bg-[#5E35B1] transition-[width] duration-300 ease-out"
                         style={{ width: `${(progress / total) * 100}%` }}
                       />
                     </div>
@@ -187,7 +213,7 @@ export default function ControlPanel({
                   <button
                     type="button"
                     onClick={onApplyTemplate}
-                    className="w-full py-4 bg-[#5E35B1] text-white rounded-xl font-black text-sm shadow-xl shadow-purple-200 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    className="w-full py-4 bg-[#5E35B1] text-white rounded-xl font-black text-sm shadow-md shadow-purple-200 hover:scale-[1.02] active:scale-[0.98] transition-[transform,background-color]"
                   >
                     Apply Handout Template
                   </button>
@@ -212,13 +238,19 @@ export default function ControlPanel({
                     setShowIllustrationOptions(true);
                   }}
                   disabled={!canApplyIllustrations || isApplyingIllustrations}
-                  className="w-full py-4 bg-[#F59E0B] text-white rounded-xl font-black text-sm disabled:opacity-50 hover:bg-[#D97706] active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-[#F59E0B] text-white rounded-xl font-black text-sm disabled:opacity-50 hover:bg-[#D97706] active:scale-[0.98] transition-[transform,background-color,opacity]"
                 >
                   {isApplyingIllustrations ? "삽화 생성 중..." : "현재 스타일로 삽화 적용"}
                 </button>
-                <p className="mt-2 text-[11px] text-gray-500 font-medium text-center">
-                  저장된 교안에서만 실행할 수 있습니다
+{!canApplyIllustrations && (
+                <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-amber-600 font-semibold">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <title>Info</title>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  먼저 교안을 저장해주세요
                 </p>
+                )}
 
                 {illustrationProgress.total > 0 && (
                   <div className="mt-3 space-y-2">
@@ -237,7 +269,7 @@ export default function ControlPanel({
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-white border border-amber-100">
                       <div
-                        className="h-full bg-[#F59E0B] transition-all duration-300"
+                        className="h-full bg-[#F59E0B] transition-[width] duration-300"
                         style={{
                           width: `${Math.min(
                             100,
@@ -295,7 +327,7 @@ export default function ControlPanel({
                   type="button"
                   onClick={onSave}
                   disabled={!isReady || isSaving}
-                  className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm ${
+                  className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm transition-[color,border-color,background-color,opacity] shadow-sm ${
                     saveSuccess
                       ? "bg-emerald-50 border border-emerald-300 text-emerald-600"
                       : "bg-white border border-gray-200 text-gray-700 hover:border-[#5E35B1] hover:text-[#5E35B1]"
@@ -312,7 +344,7 @@ export default function ControlPanel({
                 type="button"
                 onClick={onCopyAll}
                 disabled={!isReady}
-                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-all shadow-sm"
+                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
               >
                 Copy All Text
               </button>
@@ -320,7 +352,7 @@ export default function ControlPanel({
                 type="button"
                 onClick={onDownloadTxt}
                 disabled={!isReady}
-                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-all shadow-sm"
+                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
               >
                 Download TXT
               </button>
@@ -337,7 +369,7 @@ export default function ControlPanel({
                 value={pdfFileName}
                 onChange={(e) => setPdfFileName(e.target.value)}
                 disabled={!isReady || isExportingPdf}
-                className="w-full px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-medium placeholder-gray-400 focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] transition-all disabled:bg-gray-50 disabled:text-gray-400 shadow-sm"
+                className="w-full px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-xs font-medium placeholder-gray-400 focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] transition-[border-color,box-shadow,background-color,color] disabled:bg-gray-50 disabled:text-gray-400 shadow-sm"
               />
               <button
                 type="button"
@@ -412,19 +444,47 @@ export default function ControlPanel({
               {/* Scope */}
               <label className="block space-y-1.5">
                 <span className="text-sm font-bold text-gray-700">생성 범위</span>
-                <select
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-[#F59E0B] focus:ring-1 focus:ring-[#F59E0B] transition-colors"
-                  value={illustrationScope}
-                  onChange={(e) =>
-                    setIllustrationScope(
-                      e.target.value as "all" | "stale" | "passages"
-                    )
-                  }
-                >
-                  <option value="all">모든 지문</option>
-                  <option value="stale">미완성 지문만 (미생성 · 실패 · 변경됨)</option>
-                  <option value="passages">직접 선택</option>
-                </select>
+                <div className="relative" ref={openDropdown === "scope" ? dropdownRef : undefined}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenDropdown(openDropdown === "scope" ? null : "scope")}
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                      openDropdown === "scope"
+                        ? "border-[#F59E0B] ring-1 ring-[#F59E0B]"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-gray-700">
+                      {{ all: "모든 지문", stale: "미완성 지문만 (미생성 · 실패 · 변경됨)", passages: "직접 선택" }[illustrationScope]}
+                    </span>
+                    <svg className={`h-4 w-4 text-gray-400 transition-transform ${openDropdown === "scope" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {openDropdown === "scope" && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {([
+                        { value: "all" as const, label: "모든 지문" },
+                        { value: "stale" as const, label: "미완성 지문만 (미생성 · 실패 · 변경됨)" },
+                        { value: "passages" as const, label: "직접 선택" },
+                      ]).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => { setIllustrationScope(opt.value); setOpenDropdown(null); }}
+                          className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors ${
+                            illustrationScope === opt.value
+                              ? "bg-amber-50 font-semibold text-amber-700"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {illustrationScope === opt.value && (
+                            <svg className="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                          )}
+                          <span className={illustrationScope === opt.value ? "" : "pl-6"}>{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <p className="text-[11px] text-gray-400">
                   {illustrationScope === "all" && "전체 지문에 삽화를 생성합니다"}
                   {illustrationScope === "stale" && "아직 삽화가 없거나, 실패·변경된 지문만 생성합니다"}
@@ -495,40 +555,96 @@ export default function ControlPanel({
               {/* Quality */}
               <label className="block space-y-1.5">
                 <span className="text-sm font-bold text-gray-700">이미지 품질</span>
-                <select
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-[#F59E0B] focus:ring-1 focus:ring-[#F59E0B] transition-colors"
-                  value={illustrationQuality}
-                  onChange={(e) =>
-                    setIllustrationQuality(
-                      e.target.value as "draft" | "standard" | "hq"
-                    )
-                  }
-                >
-                  <option value="draft">빠른 생성 (1 크레딧)</option>
-                  <option value="standard">표준 품질 (1 크레딧)</option>
-                  <option value="hq">고품질 (2 크레딧)</option>
-                </select>
+                <div className="relative" ref={openDropdown === "quality" ? dropdownRef : undefined}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenDropdown(openDropdown === "quality" ? null : "quality")}
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                      openDropdown === "quality"
+                        ? "border-[#F59E0B] ring-1 ring-[#F59E0B]"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-gray-700">
+                      {{ draft: "빠른 생성 (1 크레딧)", standard: "표준 품질 (1 크레딧)", hq: "고품질 (2 크레딧)" }[illustrationQuality]}
+                    </span>
+                    <svg className={`h-4 w-4 text-gray-400 transition-transform ${openDropdown === "quality" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {openDropdown === "quality" && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {([
+                        { value: "draft" as const, label: "빠른 생성", sub: "1 크레딧" },
+                        { value: "standard" as const, label: "표준 품질", sub: "1 크레딧" },
+                        { value: "hq" as const, label: "고품질", sub: "2 크레딧" },
+                      ]).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => { setIllustrationQuality(opt.value); setOpenDropdown(null); }}
+                          className={`flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors ${
+                            illustrationQuality === opt.value
+                              ? "bg-amber-50 font-semibold text-amber-700"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {illustrationQuality === opt.value && (
+                              <svg className="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                            )}
+                            <span className={illustrationQuality === opt.value ? "" : "pl-6"}>{opt.label}</span>
+                          </div>
+                          <span className="text-xs text-gray-400">{opt.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </label>
 
               {/* Overwrite policy */}
               <label className="block space-y-1.5">
                 <span className="text-sm font-bold text-gray-700">기존 삽화 처리</span>
-                <select
-                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-[#F59E0B] focus:ring-1 focus:ring-[#F59E0B] transition-colors"
-                  value={illustrationOverwritePolicy}
-                  onChange={(e) =>
-                    setIllustrationOverwritePolicy(
-                      e.target.value as
-                        | "skip_completed"
-                        | "overwrite_all"
-                        | "stale_only"
-                    )
-                  }
-                >
-                  <option value="skip_completed">이미 완성된 삽화는 건너뛰기</option>
-                  <option value="overwrite_all">전부 새로 생성</option>
-                  <option value="stale_only">변경된 지문만 새로 생성</option>
-                </select>
+                <div className="relative" ref={openDropdown === "overwrite" ? dropdownRef : undefined}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenDropdown(openDropdown === "overwrite" ? null : "overwrite")}
+                    className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition-colors ${
+                      openDropdown === "overwrite"
+                        ? "border-[#F59E0B] ring-1 ring-[#F59E0B]"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="text-gray-700">
+                      {{ skip_completed: "이미 완성된 삽화는 건너뛰기", overwrite_all: "전부 새로 생성", stale_only: "변경된 지문만 새로 생성" }[illustrationOverwritePolicy]}
+                    </span>
+                    <svg className={`h-4 w-4 text-gray-400 transition-transform ${openDropdown === "overwrite" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  {openDropdown === "overwrite" && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                      {([
+                        { value: "skip_completed" as const, label: "이미 완성된 삽화는 건너뛰기" },
+                        { value: "overwrite_all" as const, label: "전부 새로 생성" },
+                        { value: "stale_only" as const, label: "변경된 지문만 새로 생성" },
+                      ]).map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => { setIllustrationOverwritePolicy(opt.value); setOpenDropdown(null); }}
+                          className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors ${
+                            illustrationOverwritePolicy === opt.value
+                              ? "bg-amber-50 font-semibold text-amber-700"
+                              : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          {illustrationOverwritePolicy === opt.value && (
+                            <svg className="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                          )}
+                          <span className={illustrationOverwritePolicy === opt.value ? "" : "pl-6"}>{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </label>
             </div>
 
@@ -547,7 +663,7 @@ export default function ControlPanel({
                   )}
                 </div>
                 <div className="flex rounded-xl border border-gray-200 overflow-hidden text-xs font-bold">
-                  {(["off", "soft", "hard"] as IllustrationConceptMode[]).map((mode) => (
+                  {(["soft", "hard"] as IllustrationConceptMode[]).map((mode) => (
                     <button
                       key={mode}
                       type="button"
@@ -559,7 +675,7 @@ export default function ControlPanel({
                           : "bg-white text-gray-500 hover:bg-gray-50"
                       }`}
                     >
-                      {mode === "off" ? "미적용" : mode === "soft" ? "참고" : "강제"}
+                      {mode === "soft" ? "참고" : "강제"}
                     </button>
                   ))}
                 </div>
@@ -570,6 +686,98 @@ export default function ControlPanel({
                   <p className="text-[11px] text-amber-600 font-semibold">지문 내용보다 컨셉 우선 · 동물 컨셉이면 사람 배제</p>
                 )}
               </div>
+
+              {/* 한글 말풍선 포함 */}
+              <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={includeKoreanText}
+                  onChange={(e) => setIncludeKoreanText(e.target.checked)}
+                  className="h-5 w-5 rounded accent-orange-500"
+                />
+                <div>
+                  <span className="text-sm font-bold text-gray-800">한글 말풍선 포함</span>
+                  <p className="text-[11px] text-gray-500">삽화에 지문 내용 기반 한글 말풍선·캡션을 넣습니다</p>
+                </div>
+              </label>
+
+              {/* 말풍선 세부 옵션 (includeKoreanText 활성 시만) */}
+              {includeKoreanText && (
+                <div className="ml-8 mt-3 space-y-3 rounded-xl border border-orange-100 bg-orange-50/40 p-4">
+                  {/* 말풍선 개수 */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-gray-700">말풍선 개수</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        value={bubbleCount}
+                        onChange={(e) => setBubbleCount(Number(e.target.value))}
+                        className="h-2 flex-1 cursor-pointer accent-orange-500"
+                      />
+                      <span className="w-6 text-center text-sm font-bold text-gray-800">{bubbleCount}</span>
+                    </div>
+                  </div>
+
+                  {/* 말풍선 스타일 */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-gray-700">말풍선 스타일</label>
+                    <div className="flex gap-2">
+                      {(["round", "square", "cloud"] as const).map((style) => (
+                        <button
+                          key={style}
+                          type="button"
+                          onClick={() => setBubbleStyle(style)}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-colors ${bubbleStyle === style ? "border-orange-400 bg-orange-100 text-orange-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"}`}
+                        >
+                          {style === "round" ? "둥근형" : style === "square" ? "네모형" : "구름형"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 사용자 지정 문장 */}
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-gray-700">
+                      사용자 지정 문장 <span className="font-normal text-gray-400">(선택)</span>
+                    </label>
+                    <p className="mb-2 text-[11px] text-gray-400">직접 입력하면 AI가 해당 문장을 말풍선에 넣습니다 (최대 5개)</p>
+                    {customBubbleTexts.map((text, i) => (
+                      <div key={i} className="mb-1.5 flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={text}
+                          maxLength={100}
+                          placeholder={`말풍선 ${i + 1}`}
+                          onChange={(e) => {
+                            const next = [...customBubbleTexts];
+                            next[i] = e.target.value;
+                            setCustomBubbleTexts(next);
+                          }}
+                          className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setCustomBubbleTexts(customBubbleTexts.filter((_, j) => j !== i))}
+                          className="text-xs text-gray-400 hover:text-red-500"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    {customBubbleTexts.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomBubbleTexts([...customBubbleTexts, ""])}
+                        className="text-xs font-bold text-orange-500 hover:text-orange-600"
+                      >
+                        + 문장 추가
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -591,6 +799,10 @@ export default function ControlPanel({
                       illustrationScope === "passages" ? selectedPassageIds : undefined,
                     conceptMode: activeSample ? conceptMode : "off",
                     conceptText: activeSample?.prompt,
+                    includeKoreanText,
+                    bubbleCount: includeKoreanText ? bubbleCount : undefined,
+                    bubbleStyle: includeKoreanText ? bubbleStyle : undefined,
+                    customBubbleTexts: includeKoreanText && customBubbleTexts.length > 0 ? customBubbleTexts : undefined,
                   });
                   setShowIllustrationOptions(false);
                 }}
@@ -598,6 +810,48 @@ export default function ControlPanel({
               >
                 삽화 생성 시작
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Credit Error Modal */}
+      {illustrationCreditError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <title>Error</title>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-bold text-gray-900">크레딧 부족</h3>
+            </div>
+            <div className="mt-4 space-y-2 text-sm text-gray-600">
+              <p>
+                삽화 생성에 <strong className="text-gray-900">{illustrationCreditError.needed}건</strong>의
+                크레딧이 필요하지만, 현재
+                <strong className="text-red-600"> {illustrationCreditError.available}건</strong>만
+                남아있습니다.
+              </p>
+              <p className="text-xs text-gray-400">
+                크레딧을 충전하거나 적용할 지문 수를 줄여주세요.
+              </p>
+            </div>
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={onDismissCreditError}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                닫기
+              </button>
+              <a
+                href="/account?topup=illustration"
+                className="flex-1 rounded-xl bg-blue-600 py-2.5 text-center text-sm font-bold text-white transition-colors hover:bg-blue-700"
+              >
+                크레딧 충전
+              </a>
             </div>
           </div>
         </div>

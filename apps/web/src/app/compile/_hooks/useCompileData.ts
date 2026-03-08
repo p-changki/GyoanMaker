@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { generatePassages } from "@/services/api";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
-import type { HandoutIllustrations, IllustrationConceptMode } from "@gyoanmaker/shared/types";
+import type { HandoutIllustrations, IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import { getCachedResult, hashPassages, setCachedResult } from "@/services/cache";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
@@ -27,6 +27,10 @@ type IllustrationApplyOptions = {
   passageIds?: string[];
   conceptMode?: IllustrationConceptMode;
   conceptText?: string;
+  includeKoreanText?: boolean;
+  bubbleCount?: number;
+  bubbleStyle?: IllustrationBubbleStyle;
+  customBubbleTexts?: string[];
 };
 
 type IllustrationJobProgress = {
@@ -48,6 +52,7 @@ function toIllustrationProgress(job: IllustrationJobProgress | undefined) {
 
 export function useCompileData() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const handoutId = searchParams.get("handoutId");
   const queryClient = useQueryClient();
 
@@ -74,6 +79,7 @@ export function useCompileData() {
     total: 0,
   });
   const [illustrationMessage, setIllustrationMessage] = useState<string | null>(null);
+  const [illustrationCreditError, setIllustrationCreditError] = useState<{ needed: number; available: number } | null>(null);
   const didResumeIllustrationByHandoutRef = useRef<string | null>(null);
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
@@ -215,9 +221,15 @@ export function useCompileData() {
       if (!res.ok) throw new Error("Failed to save handout.");
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: { id?: string }) => {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
+      // Add handoutId to URL so illustration apply becomes active
+      if (data?.id && !searchParams.get("handoutId")) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("handoutId", data.id);
+        router.replace(`/compile?${params.toString()}`, { scroll: false });
+      }
     },
   });
 
@@ -279,11 +291,23 @@ export function useCompileData() {
 
       if (cachedCompiled) {
         const parsed = JSON.parse(cachedCompiled) as CompiledHandout;
-        setCompiledData(parsed.sections, parsed.illustrations ?? {});
-        return { hash: input.hash };
+        const sectionCount = Object.keys(parsed.sections).length;
+
+        // Discard stale compiled cache if section count does not match input
+        if (sectionCount === input.passages.length) {
+          setCompiledData(parsed.sections, parsed.illustrations ?? {});
+          return { hash: input.hash };
+        }
+        sessionStorage.removeItem(compiledKey);
       }
 
       let cachedResult = getCachedResult(input.hash);
+
+      // Discard partial result cache if it has fewer results than input passages
+      if (cachedResult && cachedResult.results.length < input.passages.length) {
+        cachedResult = null;
+      }
+
       if (!cachedResult) {
         const response = await generatePassages(input.passages);
         setCachedResult(input.hash, response.results);
@@ -400,6 +424,10 @@ export function useCompileData() {
         overwritePolicy: options?.overwritePolicy ?? "skip_completed",
         conceptMode: options?.conceptMode ?? "off",
         conceptText: options?.conceptText,
+        includeKoreanText: options?.includeKoreanText ?? false,
+        bubbleCount: options?.bubbleCount,
+        bubbleStyle: options?.bubbleStyle,
+        customBubbleTexts: options?.customBubbleTexts,
         passageIds: Array.isArray(options?.passageIds)
           ? options?.passageIds.filter(
               (id): id is string => typeof id === "string" && id.trim().length > 0
@@ -428,6 +456,10 @@ export function useCompileData() {
             overwritePolicy: payload.overwritePolicy,
             conceptMode: payload.conceptMode,
             conceptText: payload.conceptText,
+            includeKoreanText: payload.includeKoreanText,
+            bubbleCount: payload.bubbleCount,
+            bubbleStyle: payload.bubbleStyle,
+            customBubbleTexts: payload.customBubbleTexts,
           }),
         });
         const createData = await createRes.json().catch(() => ({}));
@@ -449,6 +481,14 @@ export function useCompileData() {
             }
             return;
           }
+        }
+
+        if (createRes.status === 402) {
+          const needed = typeof createData?.error?.needed === "number" ? createData.error.needed : 0;
+          const available = typeof createData?.error?.available === "number" ? createData.error.available : 0;
+          setIllustrationCreditError({ needed, available });
+          setIsApplyingIllustrations(false);
+          return;
         }
 
         if (!createRes.ok) {
@@ -637,6 +677,8 @@ export function useCompileData() {
     illustrationJobId,
     illustrationProgress,
     illustrationMessage,
+    illustrationCreditError,
+    setIllustrationCreditError,
     handleApplyTemplate,
     handleApplyIllustrations,
     handleRetryIllustrations,

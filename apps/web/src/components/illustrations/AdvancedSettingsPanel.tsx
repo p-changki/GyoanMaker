@@ -253,6 +253,16 @@ export default function AdvancedSettingsPanel({
 
       {isOpen && (
         <div className="border-t border-gray-100 px-6 pb-6 pt-4 space-y-4">
+          {/* Info banner */}
+          <div className="rounded-lg bg-violet-50 px-4 py-3">
+            <p className="text-xs font-medium text-violet-700">
+              여기서 설정한 스타일이 지문 일러스트 생성에 직접 적용됩니다.
+            </p>
+            <p className="mt-0.5 text-[11px] text-violet-500">
+              레퍼런스 이미지에서 스타일을 추출하거나 직접 입력하세요. 지문 내용은 AI가 자동 분석합니다.
+            </p>
+          </div>
+
           {/* 스타일 설정 적용 토글 */}
           <label className="flex items-center gap-3">
             <input
@@ -435,20 +445,23 @@ export default function AdvancedSettingsPanel({
             </label>
           </div>
 
-          {/* 캐릭터 가이드 — 접힘 처리 */}
-          <CollapseSection label="캐릭터 가이드" hint="선택 옵션 · 주제와 충돌 주의">
-            <p className="mb-2 text-xs text-amber-600">
-              주의: 메인 입력창의 주제와 충돌하면 생성 결과가 의도와 달라질 수 있습니다.
-              장면/인물을 직접 지정하지 말고, 그림체 특징만 입력하세요.
+          {/* 캐릭터/그림체 가이드 — 메인 영역 */}
+          <label className="space-y-1 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-gray-700">캐릭터/그림체 가이드</span>
+              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600">핵심 설정</span>
+            </div>
+            <p className="text-xs text-gray-500">
+              그림체 특징을 입력하세요. 장면/인물을 직접 지정하지 말고 스타일만 기술합니다.
             </p>
             <textarea
               className="min-h-[80px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
               value={merged.characterGuide}
               maxLength={300}
-              placeholder="예: simple 2D flat illustration, minimal shading"
+              placeholder="예: cute chibi characters, big expressive eyes, soft rounded lines, pastel color fills"
               onChange={(e) => update("characterGuide", e.target.value)}
             />
-          </CollapseSection>
+          </label>
 
           {/* 네거티브 프롬프트 — 접힘 처리 */}
           <CollapseSection label="네거티브 프롬프트" hint="전문가 옵션">
@@ -460,6 +473,7 @@ export default function AdvancedSettingsPanel({
               onChange={(e) => update("negativePrompt", e.target.value)}
             />
           </CollapseSection>
+
 
           </div>
 

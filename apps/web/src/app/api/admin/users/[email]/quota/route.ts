@@ -52,23 +52,25 @@ export async function PATCH(
   const targetEmail = decodeURIComponent(email);
   const body = await req.json();
 
-  const { flashMonthlyLimit, proMonthlyLimit, storageLimit } = body as {
+  const { flashMonthlyLimit, proMonthlyLimit, storageLimit, illustrationMonthlyLimit } = body as {
     flashMonthlyLimit?: number;
     proMonthlyLimit?: number;
     storageLimit?: number | null;
+    illustrationMonthlyLimit?: number;
   };
 
   if (
     flashMonthlyLimit === undefined &&
     proMonthlyLimit === undefined &&
-    storageLimit === undefined
+    storageLimit === undefined &&
+    illustrationMonthlyLimit === undefined
   ) {
     return NextResponse.json(
       {
         error: {
           code: "INVALID_BODY",
           message:
-            "At least one of flashMonthlyLimit, proMonthlyLimit, storageLimit is required.",
+            "At least one of flashMonthlyLimit, proMonthlyLimit, storageLimit, illustrationMonthlyLimit is required.",
         },
       },
       { status: 400 }
@@ -80,6 +82,7 @@ export async function PATCH(
       flashMonthlyLimit,
       proMonthlyLimit,
       storageLimit,
+      illustrationMonthlyLimit,
     });
     const updated = await getQuotaStatus(targetEmail);
     return NextResponse.json({ ok: true, email: targetEmail, ...updated });

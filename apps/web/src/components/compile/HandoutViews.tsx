@@ -9,8 +9,10 @@ import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
 import { BUILTIN_SECTION_COMPONENTS, CustomSection } from "./page2-sections";
 import { isCustomSectionKey } from "@gyoanmaker/shared/types";
+import { useTemplateFontLoader } from "./useTemplateFontLoader";
 
 function useTheme() {
+  useTemplateFontLoader();
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
   const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);

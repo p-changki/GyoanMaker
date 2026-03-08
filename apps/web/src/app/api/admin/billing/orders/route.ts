@@ -53,7 +53,6 @@ export async function GET(req: NextRequest) {
         confirmedAt: d.confirmedAt ?? null,
         failedAt: d.failedAt ?? null,
         paidNotAppliedAt: d.paidNotAppliedAt ?? null,
-        paymentKey: d.paymentKey ?? null,
         errorMessage: d.errorMessage ?? null,
       };
     });
@@ -63,7 +62,12 @@ export async function GET(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`[admin/billing/orders] ${message}`);
     return NextResponse.json(
-      { error: { code: "BILLING_ORDERS_ERROR", message } },
+      {
+        error: {
+          code: "BILLING_ORDERS_ERROR",
+          message: "Failed to fetch billing orders.",
+        },
+      },
       { status: 500 }
     );
   }

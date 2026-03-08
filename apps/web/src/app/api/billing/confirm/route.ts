@@ -32,6 +32,14 @@ function getErrorMessage(error: unknown): string {
   return "Unknown error";
 }
 
+function toClientPaymentErrorMessage(): string {
+  return "Payment confirmation failed. Please try again.";
+}
+
+function toClientApplyErrorMessage(): string {
+  return "Payment succeeded, but post-processing failed. Please retry or contact support.";
+}
+
 function hasRecentConfirmingLock(value: unknown): boolean {
   if (typeof value !== "string") {
     return false;
@@ -295,13 +303,14 @@ export async function POST(req: NextRequest) {
     // Toss confirm itself failed — payment not charged, mark as failed
     const message = getErrorMessage(error);
     await markOrderFailed(orderId, message, paymentKey).catch(() => undefined);
+    console.error("[billing/confirm] payment confirmation failed:", message);
 
     if (error instanceof TossPaymentError) {
       return NextResponse.json(
         {
           error: {
             code: error.code ?? "TOSS_CONFIRM_ERROR",
-            message,
+            message: toClientPaymentErrorMessage(),
           },
         },
         { status: error.statusCode ?? 502 }
@@ -312,7 +321,7 @@ export async function POST(req: NextRequest) {
       {
         error: {
           code: "BILLING_CONFIRM_ERROR",
-          message,
+          message: toClientPaymentErrorMessage(),
         },
       },
       { status: 500 }
@@ -416,12 +425,13 @@ export async function POST(req: NextRequest) {
     // Mark as paid_not_applied so user can retry
     const message = getErrorMessage(error);
     await markOrderPaidNotApplied(orderId, message, paymentKey, confirmed.totalAmount).catch(() => undefined);
+    console.error("[billing/confirm] apply-after-payment failed:", message);
 
     return NextResponse.json(
       {
         error: {
           code: "APPLY_AFTER_PAYMENT_ERROR",
-          message: `Payment succeeded but failed to apply: ${message}. Please retry or contact support.`,
+          message: toClientApplyErrorMessage(),
         },
       },
       { status: 500 }

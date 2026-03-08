@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { IllustrationConceptMode } from "@gyoanmaker/shared/types";
+import type { IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import SectionNav from "./SectionNav";
 import PreviewCanvas from "./PreviewCanvas";
 import ControlPanel from "./ControlPanel";
@@ -21,6 +21,10 @@ interface CompileLayoutProps {
     passageIds?: string[];
     conceptMode?: IllustrationConceptMode;
     conceptText?: string;
+    includeKoreanText?: boolean;
+    bubbleCount?: number;
+    bubbleStyle?: IllustrationBubbleStyle;
+    customBubbleTexts?: string[];
   }) => void;
   onRetryIllustrations: () => void;
   onCancelIllustrations: () => void;
@@ -39,6 +43,8 @@ interface CompileLayoutProps {
     total: number;
   };
   illustrationMessage: string | null;
+  illustrationCreditError: { needed: number; available: number } | null;
+  onDismissCreditError: () => void;
   hasRetryableIllustrations: boolean;
   canCancelIllustrations: boolean;
   isExportingPdf: boolean;
@@ -62,6 +68,8 @@ export default function CompileLayout({
   isApplyingIllustrations,
   illustrationProgress,
   illustrationMessage,
+  illustrationCreditError,
+  onDismissCreditError,
   hasRetryableIllustrations,
   canCancelIllustrations,
   isExportingPdf,
@@ -132,6 +140,8 @@ export default function CompileLayout({
             isApplyingIllustrations={isApplyingIllustrations}
             illustrationProgress={illustrationProgress}
             illustrationMessage={illustrationMessage}
+            illustrationCreditError={illustrationCreditError}
+            onDismissCreditError={onDismissCreditError}
             hasRetryableIllustrations={hasRetryableIllustrations}
             canCancelIllustrations={canCancelIllustrations}
             isExportingPdf={isExportingPdf}

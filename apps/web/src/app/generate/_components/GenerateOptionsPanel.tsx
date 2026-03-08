@@ -112,7 +112,7 @@ export default function GenerateOptionsPanel({
               />
               <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">Precision Mode</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">High accuracy, 30~60s per passage</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Best quality & accuracy · Slower (30~60s/passage)</span>
               </div>
             </label>
             <label
@@ -131,7 +131,7 @@ export default function GenerateOptionsPanel({
               />
               <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">Speed Mode</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Fast generation, 5~10s per passage</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Quick results · Faster (5~10s/passage)</span>
               </div>
             </label>
           </div>

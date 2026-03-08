@@ -54,9 +54,9 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
       style={bgColor ? { backgroundColor: bgColor } : undefined}
     >
       {/* Two-column layout with equal height */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[2fr_1fr] items-stretch">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-[2fr_1fr] items-stretch overflow-hidden">
         {/* Left: Illustration + Caption */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           {/* Section Title */}
           <div
             className="mb-2 inline-flex items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg text-white self-start"
@@ -69,7 +69,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
               {mainTitle}
             </h3>
           </div>
-          <div className="flex-1 overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F9FAFB]">
+          <div className="flex-1 overflow-hidden rounded-xl">
             {illustration?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -77,10 +77,10 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
                 alt={`${section.passageId} visual summary`}
                 crossOrigin="anonymous"
                 loading="lazy"
-                className="w-full object-contain max-h-[260px]"
+                className="block w-full max-h-[280px] rounded-xl object-contain"
               />
             ) : (
-              <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-2 px-4 text-center text-xs text-gray-500">
+              <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-center text-xs text-gray-500">
                 <span>{statusLabel(illustration?.status)}: 삽화 생성 후 여기에 표시됩니다.</span>
                 {(illustration?.status === "failed" || illustration?.status === "stale") && (
                   <span className="text-amber-600 font-semibold">

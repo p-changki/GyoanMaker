@@ -68,7 +68,13 @@ export function createGenerateRouter(options: GenerateRouterOptions): Router {
       ai = createGeminiClient();
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Unknown error";
-      sendError(res, 500, "SERVER_MISCONFIGURED", detail);
+      console.error("[api/generate] Gemini client init failed:", detail);
+      sendError(
+        res,
+        500,
+        "SERVER_MISCONFIGURED",
+        "Server configuration is invalid."
+      );
       return;
     }
 
@@ -97,7 +103,13 @@ export function createGenerateRouter(options: GenerateRouterOptions): Router {
       res.json({ results, totalUsage });
     } catch (error) {
       const detail = error instanceof Error ? error.message : "Unknown error";
-      sendError(res, 502, "GENERATION_FAILED", `Gemini generation failed: ${detail}`);
+      console.error("[api/generate] generation failed:", detail);
+      sendError(
+        res,
+        502,
+        "GENERATION_FAILED",
+        "Gemini generation failed."
+      );
     }
   });
 

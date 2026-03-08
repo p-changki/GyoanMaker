@@ -32,6 +32,8 @@ export interface PlanDefinition {
   flashLimit: number;
   proLimit: number;
   illustrationMonthlyLimit: number;
+  maxSamples: number;
+  dailySampleLimit: number;
   price: number;
   storageLimit: number | null;
 }
@@ -49,6 +51,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     flashLimit: 10,
     proLimit: 5,
     illustrationMonthlyLimit: 5,
+    maxSamples: 10,
+    dailySampleLimit: 3,
     price: 0,
     storageLimit: 3,
   },
@@ -56,6 +60,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     flashLimit: 250,
     proLimit: 30,
     illustrationMonthlyLimit: 10,
+    maxSamples: 20,
+    dailySampleLimit: 5,
     price: 14_900,
     storageLimit: null,
   },
@@ -63,6 +69,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     flashLimit: 500,
     proLimit: 120,
     illustrationMonthlyLimit: 30,
+    maxSamples: 30,
+    dailySampleLimit: 10,
     price: 34_900,
     storageLimit: null,
   },
@@ -70,7 +78,9 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     flashLimit: 1_000,
     proLimit: 400,
     illustrationMonthlyLimit: 60,
-    price: 79_000,
+    maxSamples: 30,
+    dailySampleLimit: 10,
+    price: 89_000,
     storageLimit: null,
   },
 };
@@ -84,11 +94,11 @@ export const MODEL_DISPLAY_NAMES: Record<TopUpCreditType, string> = {
 export const TOP_UP_PACKAGES: TopUpPackageDefinition[] = [
   { id: "flash_50", type: "flash", label: "Speed 50", amount: 50, price: 3_000 },
   { id: "flash_100", type: "flash", label: "Speed 100", amount: 100, price: 5_500 },
-  { id: "pro_20", type: "pro", label: "Precision 20", amount: 20, price: 5_500 },
-  { id: "pro_50", type: "pro", label: "Precision 50", amount: 50, price: 12_000 },
-  { id: "illu_30", type: "illustration", label: "Illustration 30", amount: 30, price: 6_900 },
-  { id: "illu_60", type: "illustration", label: "Illustration 60", amount: 60, price: 12_900 },
-  { id: "illu_120", type: "illustration", label: "Illustration 120", amount: 120, price: 23_900 },
+  { id: "pro_20", type: "pro", label: "Precision 20", amount: 20, price: 6_900 },
+  { id: "pro_50", type: "pro", label: "Precision 50", amount: 50, price: 14_900 },
+  { id: "illu_30", type: "illustration", label: "Illustration 30", amount: 30, price: 7_900 },
+  { id: "illu_60", type: "illustration", label: "Illustration 60", amount: 60, price: 14_900 },
+  { id: "illu_120", type: "illustration", label: "Illustration 120", amount: 120, price: 27_900 },
 ];
 
 const KST_TIME_ZONE = "Asia/Seoul";

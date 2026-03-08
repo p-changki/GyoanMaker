@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { cn } from "@/lib/cn";
 import type { PlanDefinition, PlanId } from "@gyoanmaker/shared/plans";
 
@@ -25,6 +24,8 @@ const PLAN_META: Record<
       "10 Speed gen / mo",
       "5 Precision gen / mo",
       "5 Illustration credits / mo",
+      "10 Illustration samples",
+      "3 Style tests / day",
       "Up to 3 handouts",
       "Basic PDF export",
     ],
@@ -36,6 +37,8 @@ const PLAN_META: Record<
       "250 Speed gen / mo",
       "30 Precision gen / mo",
       "10 Illustration credits / mo",
+      "20 Illustration samples",
+      "5 Style tests / day",
       "Unlimited storage",
       "PDF export",
       "Credit top-up",
@@ -48,6 +51,8 @@ const PLAN_META: Record<
       "500 Speed gen / mo",
       "120 Precision gen / mo",
       "30 Illustration credits / mo",
+      "30 Illustration samples",
+      "10 Style tests / day",
       "Unlimited storage",
       "PDF export",
       "Credit top-up",
@@ -61,6 +66,8 @@ const PLAN_META: Record<
       "1,000 Speed gen / mo",
       "400 Precision gen / mo",
       "60 Illustration credits / mo",
+      "30 Illustration samples",
+      "10 Style tests / day",
       "Unlimited storage",
       "PDF export",
       "Credit top-up",
@@ -104,24 +111,11 @@ export default function PricingCard({
   const isEdge = index === 0 || index === totalPlans - 1;
 
   return (
-    <motion.div
-      initial={{ y: 50, opacity: 0 }}
-      whileInView={{
-        y: recommended ? -8 : 0,
-        opacity: 1,
-        scale: isEdge ? 0.97 : 1.0,
-      }}
-      viewport={{ once: true }}
-      transition={{
-        duration: 1.2,
-        type: "spring",
-        stiffness: 100,
-        damping: 30,
-        delay: index * 0.1,
-      }}
+    <div
       className={cn(
-        "relative flex flex-col rounded-2xl border bg-white p-5 text-center shadow-sm transition-shadow hover:shadow-lg",
+        "relative flex flex-col rounded-2xl border bg-white p-5 text-center shadow-sm transition-shadow duration-200 hover:shadow-md",
         recommended ? "border-blue-600 border-2 z-10" : "border-gray-200",
+        isEdge && "lg:scale-[0.98]",
         !recommended && "mt-0 md:mt-4"
       )}
     >
@@ -193,7 +187,7 @@ export default function PricingCard({
           onClick={() => onSelect(planId)}
           disabled={isCurrent}
           className={cn(
-            "mt-auto w-full rounded-xl py-2.5 text-sm font-bold transition-all",
+            "mt-auto w-full rounded-xl py-2.5 text-sm font-bold transition-[background-color,color,box-shadow,border-color]",
             isCurrent
               ? "cursor-default border border-gray-200 bg-gray-50 text-gray-400"
               : recommended
@@ -208,6 +202,6 @@ export default function PricingCard({
           {meta.description}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }

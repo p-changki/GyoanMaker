@@ -19,6 +19,13 @@ const STEPS = [
   },
   {
     number: 3,
+    title: "Add Illustrations",
+    description:
+      "Apply AI-generated illustrations using preset concepts or your own custom styles.",
+    color: { bg: "bg-pink-100", text: "text-pink-700" },
+  },
+  {
+    number: 4,
     title: "Customize & Export",
     description:
       "Fine-tune with the Template Studio, edit inline, then download as a print-ready PDF.",
@@ -64,7 +71,7 @@ export default function HowItWorksSection() {
             How It Works
           </h2>
           <p className="mt-4 text-lg text-gray-500">
-            Create a complete handout in 3 simple steps
+            Create a complete handout in 4 simple steps
           </p>
         </motion.div>
 
@@ -73,7 +80,7 @@ export default function HowItWorksSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 gap-8 md:grid-cols-3"
+          className="grid grid-cols-1 gap-8 md:grid-cols-4"
         >
           {STEPS.map((step) => (
             <motion.div

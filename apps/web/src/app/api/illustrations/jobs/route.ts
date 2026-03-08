@@ -10,6 +10,7 @@ import {
 } from "@/lib/illustrations";
 import type {
   IllustrationAspectRatio,
+  IllustrationBubbleStyle,
   IllustrationConceptMode,
   IllustrationQuality,
   IllustrationReferenceImage,
@@ -25,6 +26,10 @@ interface CreateJobBody {
   referenceImage?: IllustrationReferenceImage;
   conceptMode?: IllustrationConceptMode;
   conceptText?: string;
+  includeKoreanText?: boolean;
+  bubbleCount?: number;
+  bubbleStyle?: IllustrationBubbleStyle;
+  customBubbleTexts?: string[];
 }
 
 function isQuality(value: unknown): value is IllustrationQuality {
@@ -237,6 +242,10 @@ export async function POST(req: NextRequest) {
       referenceImage,
       conceptMode,
       conceptText,
+      includeKoreanText: typeof body.includeKoreanText === "boolean" ? body.includeKoreanText : undefined,
+      bubbleCount: typeof body.bubbleCount === "number" && body.bubbleCount >= 1 && body.bubbleCount <= 5 ? Math.floor(body.bubbleCount) : undefined,
+      bubbleStyle: body.bubbleStyle === "round" || body.bubbleStyle === "square" || body.bubbleStyle === "cloud" ? body.bubbleStyle : undefined,
+      customBubbleTexts: Array.isArray(body.customBubbleTexts) ? body.customBubbleTexts.filter((t): t is string => typeof t === "string" && t.trim().length > 0).map(t => t.trim().slice(0, 100)).slice(0, 5) : undefined,
     });
     const credits = await getIllustrationCredits(email);
 

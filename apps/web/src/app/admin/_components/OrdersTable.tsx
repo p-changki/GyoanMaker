@@ -16,7 +16,6 @@ interface OrderRow {
   confirmedAt: string | null;
   failedAt: string | null;
   paidNotAppliedAt: string | null;
-  paymentKey: string | null;
   errorMessage: string | null;
 }
 
@@ -230,16 +229,6 @@ export default function OrdersTable() {
                         <span className="font-medium text-gray-600">Type:</span>{" "}
                         {order.type === "subscription" ? "구독" : "크레딧 충전"}
                       </div>
-                      {order.paymentKey && (
-                        <div>
-                          <span className="font-medium text-gray-600">
-                            Payment Key:
-                          </span>{" "}
-                          <code className="font-mono">
-                            {order.paymentKey.slice(0, 12)}...
-                          </code>
-                        </div>
-                      )}
                       <div>
                         <span className="font-medium text-gray-600">Created:</span>{" "}
                         {new Date(order.createdAt).toLocaleString("ko-KR")}

@@ -68,12 +68,7 @@ export default function UserMenu({ user }: UserMenuProps) {
     );
   }
 
-  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const isAdmin =
-    !!user.email && adminEmails.includes(user.email.toLowerCase());
+  const isAdmin = user.isAdmin;
   const initials = (user.name ?? user.email ?? "U")
     .split(" ")
     .map((w) => w[0])

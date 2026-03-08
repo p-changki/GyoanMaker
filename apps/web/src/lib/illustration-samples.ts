@@ -1,9 +1,9 @@
 import type { IllustrationSample, IllustrationReferenceImage } from "@gyoanmaker/shared/types";
+import { type PlanId, PLANS } from "@gyoanmaker/shared/plans";
 import { getDb } from "./firebase-admin";
 import { deleteIllustrationImage } from "./firebase-storage";
 
 const SAMPLES_COLLECTION = "illustrationSamples";
-const MAX_SAMPLES = 30;
 
 function userDocRef(email: string) {
   return getDb().collection("users").doc(email.toLowerCase());
@@ -41,10 +41,19 @@ export async function listIllustrationSamples(
 ): Promise<IllustrationSample[]> {
   const snap = await samplesCol(email)
     .orderBy("createdAt", "desc")
-    .limit(MAX_SAMPLES)
+    .limit(30)
     .get();
 
   return snap.docs.map(toSample);
+}
+
+// ---------------------------------------------------------------------------
+// Count (lightweight — no data transfer)
+// ---------------------------------------------------------------------------
+
+export async function countIllustrationSamples(email: string): Promise<number> {
+  const snap = await samplesCol(email).count().get();
+  return snap.data().count;
 }
 
 // ---------------------------------------------------------------------------
@@ -53,13 +62,15 @@ export async function listIllustrationSamples(
 
 export async function saveIllustrationSample(
   email: string,
-  input: Omit<IllustrationSample, "sampleId" | "createdAt" | "isActive">
+  input: Omit<IllustrationSample, "sampleId" | "createdAt" | "isActive">,
+  planTier: PlanId = "free"
 ): Promise<IllustrationSample> {
+  const maxSamples = PLANS[planTier].maxSamples;
   const col = samplesCol(email);
 
   // Check count and auto-prune oldest inactive if over limit
   const existing = await col.orderBy("createdAt", "asc").get();
-  if (existing.size >= MAX_SAMPLES) {
+  if (existing.size >= maxSamples) {
     const inactiveDocs = existing.docs.filter(
       (d) => !(d.data() as IllustrationSample).isActive
     );
@@ -120,9 +131,10 @@ export async function activateIllustrationSample(
       ...sampleData,
       sampleId,
     });
+    const { FieldValue } = await import("firebase-admin/firestore");
     tx.set(
       userDocRef(email),
-      { illustrationProfile: { referenceImage: refImage } },
+      { illustrationProfile: { referenceImage: refImage, activePresetId: FieldValue.delete() } },
       { merge: true }
     );
   });
@@ -136,16 +148,87 @@ export async function deactivateIllustrationSample(
   const col = samplesCol(email);
   const { FieldValue } = await import("firebase-admin/firestore");
 
+  // Check if this is a preset being deactivated
+  const userDoc = await userDocRef(email).get();
+  const profile = (userDoc.data() as Record<string, unknown> | undefined)
+    ?.illustrationProfile as { activePresetId?: string } | undefined;
+
+  if (profile?.activePresetId === sampleId) {
+    // Deactivate preset — only clear profile fields
+    await userDocRef(email).set(
+      {
+        illustrationProfile: {
+          referenceImage: FieldValue.delete(),
+          activePresetId: FieldValue.delete(),
+        },
+      },
+      { merge: true }
+    );
+    return;
+  }
+
   await db.runTransaction(async (tx) => {
     tx.update(col.doc(sampleId), { isActive: false });
 
     // Clear profile referenceImage when no sample is active
     tx.set(
       userDocRef(email),
-      { illustrationProfile: { referenceImage: FieldValue.delete() } },
+      {
+        illustrationProfile: {
+          referenceImage: FieldValue.delete(),
+          activePresetId: FieldValue.delete(),
+        },
+      },
       { merge: true }
     );
   });
+}
+
+// ---------------------------------------------------------------------------
+// Activate Preset (global preset, not in user collection)
+// ---------------------------------------------------------------------------
+
+export async function activatePresetSample(
+  email: string,
+  preset: { presetId: string; imageUrl: string; storagePath: string; prompt: string }
+): Promise<void> {
+  const col = samplesCol(email);
+  const db = getDb();
+
+  await db.runTransaction(async (tx) => {
+    // Deactivate all currently active user samples
+    const activeSnap = await tx.get(
+      col.where("isActive", "==", true)
+    );
+    for (const doc of activeSnap.docs) {
+      tx.update(doc.ref, { isActive: false });
+    }
+
+    // Sync profile referenceImage with the preset's image
+    const refImage: IllustrationReferenceImage = {
+      imageUrl: preset.imageUrl,
+      storagePath: preset.storagePath,
+      mimeType: "image/png",
+      source: "sample",
+      updatedAt: new Date().toISOString(),
+    };
+    tx.set(
+      userDocRef(email),
+      { illustrationProfile: { referenceImage: refImage, activePresetId: preset.presetId } },
+      { merge: true }
+    );
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Get active preset ID for a user
+// ---------------------------------------------------------------------------
+
+export async function getActivePresetId(email: string): Promise<string | null> {
+  const doc = await userDocRef(email).get();
+  const profile = (doc.data() as Record<string, unknown> | undefined)
+    ?.illustrationProfile as { activePresetId?: string } | undefined;
+  return profile?.activePresetId ?? null;
 }
 
 // ---------------------------------------------------------------------------

@@ -27,6 +27,34 @@ const FAQS = [
     q: "What are the Free plan limitations?",
     a: "Free plan includes 10 Speed generations, 5 Precision generations, 5 illustration credits, and up to 3 saved handouts per month. Basic and above plans offer unlimited storage.",
   },
+  {
+    q: "What are illustration credits and how are they used?",
+    a: "Illustration credits are consumed when generating AI illustrations for your handouts. Each standard-quality illustration costs 1 credit, while high-quality costs 2 credits. Credits are separate from Speed/Precision quotas.",
+  },
+  {
+    q: "What are style tests and illustration samples?",
+    a: "Style tests let you preview how an illustration concept looks before applying it to your handouts. Each plan has a daily style test limit (e.g., 3/day for Free, 10/day for Standard). Illustration samples are saved styles you can reuse — Free plan allows up to 10, Standard allows 30.",
+  },
+  {
+    q: "Can I upgrade or downgrade my plan mid-month?",
+    a: "Yes. When you upgrade, the new plan takes effect immediately and quota is adjusted. When you downgrade, the change takes effect at the start of your next billing cycle. Unused credits carry over regardless of plan changes.",
+  },
+  {
+    q: "What happens if generation fails mid-way?",
+    a: "If a generation fails due to a server error, your quota is not consumed for that attempt. You can safely retry. For illustration jobs, only successfully generated images deduct credits — failed ones do not.",
+  },
+  {
+    q: "Can multiple passages be generated at once?",
+    a: "Yes. You can input multiple passages and generate them in a single batch. Each passage counts as one generation toward your quota. For Precision mode with many passages, expect longer processing times (30-60 seconds per passage).",
+  },
+  {
+    q: "Is there a limit on passage length?",
+    a: "Yes. Each passage is limited to 400 words, and the total input per batch is capped at 5,000 words. These limits ensure consistent quality and prevent timeout errors during generation.",
+  },
+  {
+    q: "What does 'Priority processing' mean on paid plans?",
+    a: "Standard and Pro plans receive priority in the processing queue during peak hours, resulting in faster generation times. Free and Basic plans use standard queue priority.",
+  },
 ];
 
 const DEFAULT_VISIBLE = 3;

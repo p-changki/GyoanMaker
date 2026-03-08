@@ -60,7 +60,7 @@ async function fetchOrders(): Promise<OrderRow[]> {
   return data.orders ?? [];
 }
 
-export default function PaymentHistorySection() {
+export default function PaymentHistorySection({ embedded }: { embedded?: boolean } = {}) {
   const { data: orders, isLoading } = useQuery({
     queryKey: ["billing-orders"],
     queryFn: fetchOrders,
@@ -102,16 +102,18 @@ export default function PaymentHistorySection() {
   };
 
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className={embedded ? undefined : "rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
-          Payment History
-        </h3>
+        {!embedded && (
+          <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
+            Payment History
+          </h3>
+        )}
         {orders && orders.length > 0 && (
           <select
             value={selectedMonth}
             onChange={(e) => handleMonthChange(e.target.value)}
-            className="text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-[#5E35B1]/30"
+            className="ml-auto text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-[#5E35B1]/30"
           >
             <option value="all">전체</option>
             {months.map((m) => (

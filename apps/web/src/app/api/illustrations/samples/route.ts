@@ -3,11 +3,15 @@ import { auth } from "@/auth";
 import {
   listIllustrationSamples,
   saveIllustrationSample,
+  getActivePresetId,
 } from "@/lib/illustration-samples";
+import { listIllustrationPresets } from "@/lib/illustration-presets";
 import type {
   IllustrationAspectRatio,
   IllustrationQuality,
 } from "@gyoanmaker/shared/types";
+import type { PlanId } from "@gyoanmaker/shared/plans";
+import { getUser } from "@/lib/users";
 
 interface SaveBody {
   prompt: string;
@@ -30,7 +34,17 @@ export async function GET() {
   }
 
   try {
-    const samples = await listIllustrationSamples(email);
+    const [userSamples, presets, activePresetId] = await Promise.all([
+      listIllustrationSamples(email),
+      listIllustrationPresets(),
+      getActivePresetId(email),
+    ]);
+    // Mark active preset for this user
+    const markedPresets = presets.map((p) => ({
+      ...p,
+      isActive: p.sampleId === activePresetId,
+    }));
+    const samples = [...markedPresets, ...userSamples];
     return NextResponse.json({ samples });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -61,6 +75,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const user = await getUser(email);
+    const planTier: PlanId = (user?.plan?.tier as PlanId) || "free";
+
     const sample = await saveIllustrationSample(email, {
       prompt: body.prompt,
       revisedPrompt: body.revisedPrompt || body.prompt,
@@ -69,7 +86,7 @@ export async function POST(req: NextRequest) {
       model: body.model,
       quality: body.quality || "standard",
       aspectRatio: body.aspectRatio || "4:3",
-    });
+    }, planTier);
 
     return NextResponse.json({ sample }, { status: 201 });
   } catch (error) {
