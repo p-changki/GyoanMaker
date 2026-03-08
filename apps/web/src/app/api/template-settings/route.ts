@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getTemplateSettings, updateTemplateSettings } from "@/lib/templateSettings";
-import { VALID_PAGE2_SECTIONS, VALID_THEME_PRESETS, VALID_FONT_SCALES, VALID_FONT_FAMILIES, VALID_TITLE_WEIGHTS, FONT_SIZE_SLOT_META } from "@gyoanmaker/shared/types";
-import type { Page2SectionKey, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig } from "@gyoanmaker/shared/types";
+import { VALID_PAGE2_SECTIONS, VALID_THEME_PRESETS, VALID_FONT_SCALES, VALID_FONT_FAMILIES, VALID_TITLE_WEIGHTS, FONT_SIZE_SLOT_META, isCustomSectionKey } from "@gyoanmaker/shared/types";
+import type { BuiltInSectionKey, ThemePreset, FontScale, FontFamily, TitleWeight, FontSizeConfig } from "@gyoanmaker/shared/types";
 
 const MAX_LOGO_BASE64_LENGTH = 680_000;
 const MAX_AVATAR_BASE64_LENGTH = 680_000;
@@ -168,7 +168,7 @@ export async function PATCH(req: Request) {
         body.page2Sections.length === 0 ||
         !body.page2Sections.every(
           (k: unknown) =>
-            typeof k === "string" && VALID_PAGE2_SECTIONS.has(k as Page2SectionKey)
+            typeof k === "string" && (VALID_PAGE2_SECTIONS.has(k as BuiltInSectionKey) || isCustomSectionKey(k))
         )
       ) {
         return NextResponse.json(

@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE } from "@gyoanmaker/shared/types";
-import type { Page2SectionKey } from "@gyoanmaker/shared/types";
 import { EditableAnalysisTitle, EditableSummaryTitleText } from "./EditableFields";
 import { HandoutFooter, HandoutHeader } from "./HandoutHeader";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
-import { SECTION_COMPONENTS } from "./page2-sections";
+import { BUILTIN_SECTION_COMPONENTS, CustomSection } from "./page2-sections";
+import { isCustomSectionKey } from "@gyoanmaker/shared/types";
 
 function useTheme() {
   const preset = useTemplateSettingsStore((s) => s.themePreset);
@@ -98,6 +98,8 @@ export function ParsedHandoutViewPage1({
   const enRatio = page1Layout.sentenceColumnRatio;
   const koRatio = 1 - enRatio;
   const borderWidth = page1Layout.tableOuterBorderWidth;
+  const showSentenceNumbers = page1Layout.showSentenceNumbers ?? true;
+  const showKoreanColumn = page1Layout.showKoreanColumn ?? true;
 
   return (
     <div
@@ -129,20 +131,24 @@ export function ParsedHandoutViewPage1({
             }}
           >
             <div className="flex relative w-full">
-              <div
-                className="absolute top-0 right-0 h-full"
-                style={{ width: `${koRatio * 100}%`, backgroundColor: `${theme.sentenceBg}80` }}
-              />
+              {showKoreanColumn && (
+                <div
+                  className="absolute top-0 right-0 h-full"
+                  style={{ width: `${koRatio * 100}%`, backgroundColor: `${theme.sentenceBg}80` }}
+                />
+              )}
               <div className="flex flex-col w-full relative z-10 divide-y divide-[#E5E7EB]">
                 {sentencesChunk.map((pair, i) => (
                   <div key={`${pair.en}-${pair.ko}-${i}`} className="flex min-h-[60px] w-full">
                     <div className="flex py-4 pr-6" style={{ width: `${enRatio * 100}%` }}>
-                      <div
-                        className="w-8 shrink-0 font-black pt-0.5"
-                        style={{ color: p1TitleColor, fontSize: `${theme.fontSizes.sentenceNumber}px` }}
-                      >
-                        {renderSentenceNumber(i, pageNum, page1Layout.numberStyle)}
-                      </div>
+                      {showSentenceNumbers && (
+                        <div
+                          className="w-8 shrink-0 font-black pt-0.5"
+                          style={{ color: p1TitleColor, fontSize: `${theme.fontSizes.sentenceNumber}px` }}
+                        >
+                          {renderSentenceNumber(i, pageNum, page1Layout.numberStyle)}
+                        </div>
+                      )}
                       <div
                         className="flex-1 font-normal leading-[2.1]"
                         style={{ fontSize: `${theme.fontSizes.analysisEn}pt`, fontFamily: p1FontFamily, color: p1TextColor }}
@@ -150,14 +156,16 @@ export function ParsedHandoutViewPage1({
                         {pair.en.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
                       </div>
                     </div>
-                    <div className="py-4 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
-                      <div
-                        className="font-normal leading-[2.1]"
-                        style={{ fontSize: `${theme.fontSizes.analysisKo}pt`, fontFamily: p1FontFamily, color: p1TextColor }}
-                      >
-                        {pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
+                    {showKoreanColumn && (
+                      <div className="py-4 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
+                        <div
+                          className="font-normal leading-[2.1]"
+                          style={{ fontSize: `${theme.fontSizes.analysisKo}pt`, fontFamily: p1FontFamily, color: p1TextColor }}
+                        >
+                          {pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -261,19 +269,27 @@ export function ParsedHandoutViewPage2({
 
         <div className="space-y-8 pl-2">
           {page2Sections.map((key) => {
-            const Component = SECTION_COMPONENTS[key];
             const style = sectionStyles?.[key];
+            const wrapStyle = {
+              paddingTop: style?.paddingTop ?? 0,
+              paddingBottom: style?.paddingBottom ?? 0,
+              borderTop: style?.borderStyle && style.borderStyle !== "none"
+                ? `1px ${style.borderStyle} ${style.borderColor || theme.primary}`
+                : undefined,
+            };
+            if (isCustomSectionKey(key)) {
+              return (
+                <ClickZone key={key} focusKey={key} label="커스텀 섹션">
+                  <div style={wrapStyle}>
+                    <CustomSection sectionKey={key} />
+                  </div>
+                </ClickZone>
+              );
+            }
+            const Component = BUILTIN_SECTION_COMPONENTS[key];
             return (
-              <ClickZone key={key} focusKey={key as Page2SectionKey} label="섹션 편집">
-                <div
-                  style={{
-                    paddingTop: style?.paddingTop ?? 0,
-                    paddingBottom: style?.paddingBottom ?? 0,
-                    borderTop: style?.borderStyle && style.borderStyle !== "none"
-                      ? `1px ${style.borderStyle} ${style.borderColor || theme.primary}`
-                      : undefined,
-                  }}
-                >
+              <ClickZone key={key} focusKey={key} label="섹션 편집">
+                <div style={wrapStyle}>
                   <Component section={section} />
                 </div>
               </ClickZone>

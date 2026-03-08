@@ -10,12 +10,14 @@ import FontSizeDetailView from "./FontSizeDetailView";
 import SectionConfigPanel from "./SectionConfigPanel";
 import Page1LayoutSection from "./Page1LayoutSection";
 import VocabLayoutSection from "./VocabLayoutSection";
+import SummaryLanguageSection from "./SummaryLanguageSection";
 import UnifiedSectionEditor from "./UnifiedSectionEditor";
 import TemplateGallery from "./TemplateGallery";
 import SaveControls from "./SaveControls";
-import { PAGE2_SECTION_LABELS } from "@gyoanmaker/shared/types";
+import { PAGE2_SECTION_LABELS, isBuiltInSectionKey, isCustomSectionKey } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
-import type { Page2SectionKey } from "@gyoanmaker/shared/types";
+import type { Page2SectionKey, CustomSectionKey } from "@gyoanmaker/shared/types";
+import CustomSectionPanel from "./CustomSectionPanel";
 
 function BackButton({ label }: { label: string }) {
   const setFocus = useEditorFocusStore((s) => s.setFocus);
@@ -127,9 +129,10 @@ function Page2SectionPanel({ sectionKey }: { sectionKey: Page2SectionKey }) {
   const { isSaving, saveMessage, saveMessageType, handleSave, handleResetToDefaults } = useTemplateSettingsPanel();
   return (
     <div className="space-y-5">
-      <BackButton label={PAGE2_SECTION_LABELS[sectionKey]} />
+      <BackButton label={isBuiltInSectionKey(sectionKey) ? PAGE2_SECTION_LABELS[sectionKey] : "커스텀"} />
       <UnifiedSectionEditor sectionKey={sectionKey} />
       {sectionKey === "vocabulary" && <VocabLayoutSection />}
+      {sectionKey === "summary" && <SummaryLanguageSection />}
       <SaveControls
         isSaving={isSaving}
         saveMessage={saveMessage}
@@ -269,6 +272,7 @@ export default function TemplateSettingsPanel() {
   if (focus === "header-badge") return <HeaderBadgePanel />;
   if (focus === "page1-body") return <Page1BodyPanel />;
   if (focus === "page2-header") return <Page2HeaderPanel />;
+  if (isCustomSectionKey(focus)) return <CustomSectionPanel sectionKey={focus as CustomSectionKey} />;
   if (PAGE2_KEYS.has(focus as Page2SectionKey)) return <Page2SectionPanel sectionKey={focus as Page2SectionKey} />;
   return <GlobalPanel />;
 }

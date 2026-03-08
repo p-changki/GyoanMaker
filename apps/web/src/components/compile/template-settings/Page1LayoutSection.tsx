@@ -30,6 +30,26 @@ export default function Page1LayoutSection() {
         <span className="text-xs font-medium text-gray-700">헤더 표시</span>
       </label>
 
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={page1Layout.showSentenceNumbers ?? true}
+          onChange={(e) => setPage1Layout({ showSentenceNumbers: e.target.checked })}
+          className="rounded border-gray-300 text-[#5E35B1] focus:ring-[#5E35B1] w-3.5 h-3.5"
+        />
+        <span className="text-xs font-medium text-gray-700">문장 번호 표시</span>
+      </label>
+
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={page1Layout.showKoreanColumn ?? true}
+          onChange={(e) => setPage1Layout({ showKoreanColumn: e.target.checked })}
+          className="rounded border-gray-300 text-[#5E35B1] focus:ring-[#5E35B1] w-3.5 h-3.5"
+        />
+        <span className="text-xs font-medium text-gray-700">한국어 열 표시</span>
+      </label>
+
       <div className="space-y-1">
         <div className="flex justify-between items-center">
           <span className="text-xs text-gray-600">영어 컬럼 비율</span>
