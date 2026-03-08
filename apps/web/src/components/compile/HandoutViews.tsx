@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
-import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE } from "@gyoanmaker/shared/types";
+import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, DEFAULT_IMAGE_DISPLAY } from "@gyoanmaker/shared/types";
 import { EditableAnalysisTitle, EditableSummaryTitleText } from "./EditableFields";
 import { HandoutFooter, HandoutHeader } from "./HandoutHeader";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
@@ -220,6 +220,7 @@ export function ParsedHandoutViewPage2({
   const theme = useTheme();
   const page2Sections = useTemplateSettingsStore((s) => s.page2Sections);
   const avatarBase64 = useTemplateSettingsStore((s) => s.avatarBase64);
+  const avatarDisplay = useTemplateSettingsStore((s) => s.avatarDisplay) ?? DEFAULT_IMAGE_DISPLAY;
   const sectionStyles = useTemplateSettingsStore((s) => s.sectionStyles);
   const page2HeaderStyle = useTemplateSettingsStore((s) => s.page2HeaderStyle);
   const setFocus = useEditorFocusStore((s) => s.setFocus);
@@ -244,7 +245,15 @@ export function ParsedHandoutViewPage2({
                 : undefined,
             }}
           >
-            <div className="absolute -top-[40px] left-6 w-[90px] h-[90px] z-20">
+            <div
+              className="absolute z-20"
+              style={{
+                top: `${-40 + avatarDisplay.offsetY}px`,
+                left: `${24 + avatarDisplay.offsetX}px`,
+                width: `${90 * avatarDisplay.scale}px`,
+                height: `${90 * avatarDisplay.scale}px`,
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={avatarBase64 ?? "/images/avatar.png"}

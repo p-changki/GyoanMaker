@@ -68,6 +68,25 @@ export default function PrivacyPage() {
                     회원 탈퇴 시까지
                   </td>
                 </tr>
+                <tr>
+                  <td className="border border-gray-200 px-3 py-2">
+                    개인정보보호법 제15조제1항제4호
+                    <br />
+                    (계약 이행)
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    유료 서비스 결제 및 환불 처리
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    결제 수단 정보(카드사명, 승인번호 등),
+                    결제 일시, 결제 금액
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    회원 탈퇴 시까지
+                    <br />
+                    (관련 법령 보존 의무 별도)
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -112,6 +131,67 @@ export default function PrivacyPage() {
                   <td className="border border-gray-200 px-3 py-2">
                     교안 생성 횟수, 모델 사용 이력
                   </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3 className="font-semibold text-gray-800 mt-4 mb-2">
+            다. 관련 법령에 따른 개인정보 보존
+          </h3>
+          <p className="mb-2 text-sm">
+            회원 탈퇴 후에도 다음 법령에 따라 일정 기간 개인정보를 보존합니다.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-200 text-sm">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    보존 항목
+                  </th>
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    보존 근거
+                  </th>
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    보존 기간
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="border border-gray-200 px-3 py-2">
+                    계약 또는 청약철회 등에 관한 기록
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    전자상거래 등에서의 소비자보호에 관한 법률 제6조
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">5년</td>
+                </tr>
+                <tr>
+                  <td className="border border-gray-200 px-3 py-2">
+                    대금결제 및 재화 등의 공급에 관한 기록
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    전자상거래 등에서의 소비자보호에 관한 법률 제6조
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">5년</td>
+                </tr>
+                <tr>
+                  <td className="border border-gray-200 px-3 py-2">
+                    소비자의 불만 또는 분쟁처리에 관한 기록
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    전자상거래 등에서의 소비자보호에 관한 법률 제6조
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">3년</td>
+                </tr>
+                <tr>
+                  <td className="border border-gray-200 px-3 py-2">
+                    웹사이트 방문 기록 (로그인 기록, 접속 로그)
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">
+                    통신비밀보호법 제15조의2
+                  </td>
+                  <td className="border border-gray-200 px-3 py-2">3개월</td>
                 </tr>
               </tbody>
             </table>
@@ -295,6 +375,12 @@ export default function PrivacyPage() {
             서비스 운영 목적의 통계 데이터는 익명화 처리되어 보존될 수
             있습니다.
           </p>
+          <p className="mt-2">
+            다만, 위 제1조 &quot;다. 관련 법령에 따른 개인정보 보존&quot;에
+            해당하는 정보는 해당 법령이 정한 기간 동안 별도 분리하여
+            보관한 후 기간 경과 시 지체 없이 파기합니다. 탈퇴 후 보존되는
+            개인정보는 보존 목적 외의 용도로 이용하지 않습니다.
+          </p>
         </section>
 
         {/* 7. 쿠키 */}
@@ -441,7 +527,7 @@ export default function PrivacyPage() {
             본 방침의 변경 사항은 시행일 최소 7일 전에 서비스 내에서
             공지합니다.
           </p>
-          <p className="mt-4 text-sm text-gray-500">시행일: 2026년 3월 7일</p>
+          <p className="mt-4 text-sm text-gray-500">시행일: 2026년 3월 8일</p>
         </section>
       </div>
     </div>

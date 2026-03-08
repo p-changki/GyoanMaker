@@ -70,6 +70,8 @@ export function useTemplateSettingsPanel() {
           vocabColumnLayout: s.vocabColumnLayout ?? null,
           customThemeColors: s.customThemeColors ?? null,
           useCustomTheme: s.useCustomTheme ?? null,
+          logoDisplay: s.logoDisplay ?? null,
+          avatarDisplay: s.avatarDisplay ?? null,
         }),
       });
       if (!res.ok) {
@@ -101,6 +103,8 @@ export function useTemplateSettingsPanel() {
         vocabColumnLayout: saved.vocabColumnLayout,
         customThemeColors: saved.customThemeColors,
         useCustomTheme: saved.useCustomTheme,
+        logoDisplay: saved.logoDisplay,
+        avatarDisplay: saved.avatarDisplay,
       });
     } catch (err) {
       setSaveMessage(err instanceof Error ? err.message : "저장 실패");

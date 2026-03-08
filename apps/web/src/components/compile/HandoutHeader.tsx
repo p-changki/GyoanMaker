@@ -4,7 +4,7 @@ import type React from "react";
 import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
-import { THEME_PRESETS, FONT_FAMILY_MAP, DEFAULT_SECTION_STYLE, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
+import { THEME_PRESETS, FONT_FAMILY_MAP, DEFAULT_SECTION_STYLE, TITLE_WEIGHT_MAP, DEFAULT_IMAGE_DISPLAY } from "@gyoanmaker/shared/types";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
 import type { EditorFocus } from "@/stores/useEditorFocusStore";
 import { EditableHeaderText } from "./EditableFields";
@@ -75,6 +75,7 @@ export function HandoutHeader({
   const globalFontFamily = useTemplateSettingsStore((s) => s.fontFamily);
   const academyName = useTemplateSettingsStore((s) => s.academyName);
   const logoBase64 = useTemplateSettingsStore((s) => s.logoBase64);
+  const logoDisplay = useTemplateSettingsStore((s) => s.logoDisplay) ?? DEFAULT_IMAGE_DISPLAY;
   const setAcademyName = useTemplateSettingsStore((s) => s.setAcademyName);
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
 
@@ -229,12 +230,16 @@ export function HandoutHeader({
 
       {/* Custom logo — right side */}
       {logoBase64 && (
-        <div className="absolute top-2 right-8 md:right-12 xl:right-16 z-0">
+        <div
+          className="absolute top-2 right-8 md:right-12 xl:right-16 z-0"
+          style={{ transform: `translate(${logoDisplay.offsetX}px, ${logoDisplay.offsetY}px)` }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoBase64}
             alt="학원 로고"
-            className="w-[140px] h-[140px] object-contain"
+            className="object-contain"
+            style={{ width: `${140 * logoDisplay.scale}px`, height: `${140 * logoDisplay.scale}px` }}
           />
         </div>
       )}
