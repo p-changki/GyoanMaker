@@ -52,7 +52,7 @@ export default function SaveControls({
         disabled={isSaving}
         className="relative w-full py-2.5 bg-[#5E35B1] text-white rounded-xl text-xs font-bold hover:bg-[#4527A0] disabled:opacity-50 transition-colors"
       >
-        {isSaving ? "저장 중..." : "설정 저장"}
+        {isSaving ? "저장 중..." : "기본 설정으로 저장"}
         {isDirty && !isSaving && (
           <span className="absolute top-1.5 right-3 w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
         )}

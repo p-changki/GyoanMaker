@@ -265,6 +265,12 @@ export async function updateTemplateSettings(
     ...settings,
   });
 
-  await docRef.set({ templateSettings: merged }, { merge: true });
+  // Use update (not set+merge) to fully replace templateSettings,
+  // ensuring removed optional fields don't persist from old data.
+  if (snap.exists) {
+    await docRef.update({ templateSettings: merged });
+  } else {
+    await docRef.set({ templateSettings: merged });
+  }
   return merged;
 }

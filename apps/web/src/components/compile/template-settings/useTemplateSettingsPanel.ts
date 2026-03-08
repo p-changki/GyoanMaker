@@ -59,11 +59,17 @@ export function useTemplateSettingsPanel() {
           defaultHeaderText: s.defaultHeaderText, defaultAnalysisTitle: s.defaultAnalysisTitle,
           defaultSummaryTitle: s.defaultSummaryTitle, fontScale: s.fontScale,
           fontFamily: s.fontFamily, titleWeight: s.titleWeight, fontSizes: s.fontSizes,
-          page1Layout: s.page1Layout, headerStyle: s.headerStyle, headerBadgeStyle: s.headerBadgeStyle,
-          page1BodyStyle: s.page1BodyStyle, page2HeaderStyle: s.page2HeaderStyle,
-          sectionStyles: s.sectionStyles,
-          vocabColumnLayout: s.vocabColumnLayout, customThemeColors: s.customThemeColors,
-          useCustomTheme: s.useCustomTheme,
+          // Send null explicitly for optional fields so server doesn't
+          // preserve old values when user resets to defaults.
+          page1Layout: s.page1Layout ?? null,
+          headerStyle: s.headerStyle ?? null,
+          headerBadgeStyle: s.headerBadgeStyle ?? null,
+          page1BodyStyle: s.page1BodyStyle ?? null,
+          page2HeaderStyle: s.page2HeaderStyle ?? null,
+          sectionStyles: s.sectionStyles ?? null,
+          vocabColumnLayout: s.vocabColumnLayout ?? null,
+          customThemeColors: s.customThemeColors ?? null,
+          useCustomTheme: s.useCustomTheme ?? null,
         }),
       });
       if (!res.ok) {
