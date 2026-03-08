@@ -24,8 +24,8 @@ export function sendBrowserNotification(
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
 
-  // Only notify when tab is not focused
-  if (document.hasFocus()) return;
+  // Only notify when tab is not visible (hidden = user on different tab/app)
+  if (document.visibilityState === "visible") return;
 
   const notification = new Notification(title, {
     icon: "/logo-icon.svg",

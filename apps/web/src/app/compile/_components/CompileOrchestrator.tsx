@@ -36,6 +36,8 @@ export default function CompileOrchestrator() {
     illustrationJobId,
     illustrationProgress,
     illustrationMessage,
+    illustrationCreditError,
+    setIllustrationCreditError,
     handleApplyTemplate,
     handleApplyIllustrations,
     handleRetryIllustrations,
@@ -109,6 +111,8 @@ export default function CompileOrchestrator() {
         isApplyingIllustrations={isApplyingIllustrations}
         illustrationProgress={illustrationProgress}
         illustrationMessage={illustrationMessage}
+        illustrationCreditError={illustrationCreditError}
+        onDismissCreditError={() => setIllustrationCreditError(null)}
         hasRetryableIllustrations={
           Boolean(illustrationJobId) && illustrationProgress.failed > 0
         }

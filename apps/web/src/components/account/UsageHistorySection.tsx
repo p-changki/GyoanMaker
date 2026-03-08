@@ -48,7 +48,7 @@ async function fetchUsage(): Promise<UsageResponse> {
   return res.json();
 }
 
-export default function UsageHistorySection() {
+export default function UsageHistorySection({ embedded }: { embedded?: boolean } = {}) {
   const { data, isLoading } = useQuery({
     queryKey: ["billing-usage"],
     queryFn: fetchUsage,
@@ -68,13 +68,15 @@ export default function UsageHistorySection() {
   }, [data, page]);
 
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <section className={embedded ? undefined : "rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
-          Usage History
-        </h3>
+        {!embedded && (
+          <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
+            Usage History
+          </h3>
+        )}
         {data && data.summary.totalRequests > 0 && (
-          <span className="text-xs text-gray-400">
+          <span className="ml-auto text-xs text-gray-400">
             총 {data.summary.totalRequests}회 / {data.summary.totalPassages}지문
           </span>
         )}
@@ -94,7 +96,7 @@ export default function UsageHistorySection() {
                   <th className="pb-2 font-medium">모델</th>
                   <th className="pb-2 font-medium">레벨</th>
                   <th className="pb-2 text-right font-medium">지문</th>
-                  <th className="pb-2 text-right font-medium">토큰</th>
+
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -112,9 +114,7 @@ export default function UsageHistorySection() {
                     <td className="py-2.5 text-right font-medium text-gray-900">
                       {log.passageCount}
                     </td>
-                    <td className="py-2.5 text-right text-gray-500">
-                      {log.totalTokens.toLocaleString()}
-                    </td>
+
                   </tr>
                 ))}
               </tbody>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
+import { type PlanId, PLANS } from "@gyoanmaker/shared/plans";
 import {
   generateIllustrationSample,
   IllustrationPolicyBlockedError,
@@ -17,8 +18,6 @@ interface SampleBody {
   aspectRatio?: IllustrationAspectRatio;
   referenceImage?: IllustrationReferenceImage;
 }
-
-const DAILY_SAMPLE_LIMIT = 10;
 
 function isQuality(value: unknown): value is IllustrationQuality {
   return value === "draft" || value === "standard" || value === "hq";
@@ -71,7 +70,8 @@ function getTodayKeyKst(): string {
 }
 
 async function checkAndIncrementDailyLimit(
-  email: string
+  email: string,
+  dailyLimit: number
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
   const db = getDb();
   const todayKey = getTodayKeyKst();
@@ -89,8 +89,8 @@ async function checkAndIncrementDailyLimit(
       ? sampleUsage.count
       : 0;
 
-  if (currentCount >= DAILY_SAMPLE_LIMIT) {
-    return { allowed: false, used: currentCount, limit: DAILY_SAMPLE_LIMIT };
+  if (currentCount >= dailyLimit) {
+    return { allowed: false, used: currentCount, limit: dailyLimit };
   }
 
   await ref.set(
@@ -98,7 +98,7 @@ async function checkAndIncrementDailyLimit(
     { merge: true }
   );
 
-  return { allowed: true, used: currentCount + 1, limit: DAILY_SAMPLE_LIMIT };
+  return { allowed: true, used: currentCount + 1, limit: dailyLimit };
 }
 
 export async function POST(req: NextRequest) {
@@ -166,14 +166,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Resolve user plan for daily limit
+    const userDoc = await getDb().collection("users").doc(email.toLowerCase()).get();
+    const userData = userDoc.data() as { plan?: { tier?: string } } | undefined;
+    const planTier = (userData?.plan?.tier as PlanId) || "free";
+    const dailyLimit = PLANS[planTier].dailySampleLimit;
+
     // Daily rate limit check
-    const rateCheck = await checkAndIncrementDailyLimit(email);
+    const rateCheck = await checkAndIncrementDailyLimit(email, dailyLimit);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         {
           error: {
             code: "DAILY_SAMPLE_LIMIT_EXCEEDED",
-            message: `일일 테스트 생성 한도(${DAILY_SAMPLE_LIMIT}회)를 초과했습니다.`,
+            message: `일일 테스트 생성 한도(${rateCheck.limit}회)를 초과했습니다.`,
             used: rateCheck.used,
             limit: rateCheck.limit,
           },

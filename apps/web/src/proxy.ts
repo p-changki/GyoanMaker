@@ -1,6 +1,9 @@
 import NextAuth from "next-auth";
 import { authConfig } from "./auth.config";
-import { NextResponse } from "next/server";
+import {
+  NextResponse,
+  type NextRequest,
+} from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
@@ -8,7 +11,7 @@ const { auth } = NextAuth(authConfig);
  * CSRF: Origin 헤더 검증
  * POST/PUT/PATCH/DELETE 요청에 대해 허용된 Origin만 통과시킵니다.
  */
-function validateOrigin(req: import("next/server").NextRequest): boolean {
+function validateOrigin(req: NextRequest): boolean {
   const method = req.method.toUpperCase();
   if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
     return true;
@@ -53,10 +56,10 @@ function getAdminEmails(): Set<string> {
 }
 
 /**
- * 라우트 보호 미들웨어
- * Edge Runtime 환경이므로 가벼운 auth 설정을 사용합니다.
+ * 라우트 보호 Proxy
+ * Next.js Proxy 런타임에서 실행되므로 Node 전용 모듈을 직접 사용하지 않습니다.
  */
-export default auth((req) => {
+export const proxy = auth((req) => {
   // CSRF Origin 검증
   if (!validateOrigin(req)) {
     return new NextResponse(JSON.stringify({ error: "Forbidden" }), {
@@ -114,7 +117,7 @@ export default auth((req) => {
   }
 
   // 인증됐지만 미승인 → 승인 대기 페이지
-  // 주의: Edge Runtime이므로 DB를 직접 조회하지 않고 토큰에 담긴 'approved' 플래그를 확인합니다.
+  // Proxy에서는 DB를 직접 조회하지 않고 토큰의 'approved' 플래그를 사용합니다.
   if (!session.user.approved) {
     return NextResponse.redirect(new URL("/pending", req.url));
   }

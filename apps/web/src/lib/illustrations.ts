@@ -4,6 +4,7 @@ import type {
   HandoutIllustration,
   HandoutIllustrations,
   IllustrationAspectRatio,
+  IllustrationBubbleStyle,
   IllustrationConceptMode,
   IllustrationJob,
   IllustrationJobItem,
@@ -18,7 +19,9 @@ import {
   refundIllustrationCredits,
   reserveIllustrationCredits,
 } from "./illustration-credits";
+import type { SceneAnalysis } from "./illustration-provider";
 import {
+  analyzePassageScene,
   getQualityModel,
   logIllustrationUsage,
   requestProviderImage,
@@ -82,6 +85,10 @@ interface CreateJobInput {
   referenceImage?: IllustrationReferenceImage;
   conceptMode?: IllustrationConceptMode;
   conceptText?: string;
+  includeKoreanText?: boolean;
+  bubbleCount?: number;
+  bubbleStyle?: IllustrationBubbleStyle;
+  customBubbleTexts?: string[];
 }
 interface ListJobsOptions {
   handoutId?: string;
@@ -233,6 +240,26 @@ function stripNonLatinText(text: string): string {
     .trim();
 }
 
+function buildProfileStyleSection(profile: IllustrationProfile): string {
+  const parts: string[] = [];
+
+  if (profile.styleName) {
+    parts.push(`Art style: ${profile.styleName}.`);
+  }
+  if (profile.palette) {
+    parts.push(`Color palette: ${profile.palette}.`);
+  }
+  if (profile.lineStyle) {
+    parts.push(`Line style: ${profile.lineStyle}.`);
+  }
+
+  if (parts.length === 0) {
+    parts.push("Clean, appealing educational illustration style.");
+  }
+
+  return parts.join(" ");
+}
+
 function buildScenePrompt(
   passageId: string,
   rawText: string,
@@ -243,6 +270,7 @@ function buildScenePrompt(
 ): string {
   const concise = stripNonLatinText(rawText.replace(/\s+/g, " ").trim()).slice(0, 1200);
   const banned = (profile.bannedKeywords ?? []).join(", ");
+  const includeText = profile.includeKoreanText ?? false;
 
   // Concept enforcement lines based on mode
   const conceptLine = (() => {
@@ -250,7 +278,6 @@ function buildScenePrompt(
     if (conceptMode === "soft") {
       return `Visual concept reference (soft, treat as style inspiration): ${conceptText.slice(0, 200)}`;
     }
-    // hard mode: forcefully constrain
     return [
       `=== ABSOLUTE REQUIREMENT (HIGHEST PRIORITY) ===`,
       `ALL characters in this illustration MUST follow this concept: "${conceptText.slice(0, 200)}".`,
@@ -263,46 +290,72 @@ function buildScenePrompt(
     ].join(" ");
   })();
 
-  const characterGuideLine = (() => {
-    if (!profile.characterGuide) return "";
-    // In hard mode, skip characterGuide to avoid conflict with concept
-    if (conceptMode === "hard" && conceptText) return "";
-    return `Character guide: ${profile.characterGuide}.`;
+  const styleSection = buildProfileStyleSection(profile);
+
+  const characterGuideLine =
+    profile.characterGuide && !(conceptMode === "hard" && conceptText)
+      ? `Character guide: ${profile.characterGuide}.`
+      : "";
+
+  const bubbleCount = profile.bubbleCount ?? 3;
+  const bubbleStyleMap = { round: "round/oval speech bubbles", square: "rectangular/sharp-cornered speech bubbles", cloud: "cloud-shaped thought/speech bubbles" } as const;
+  const bubbleStyleDesc = bubbleStyleMap[profile.bubbleStyle ?? "round"];
+  const customTexts = profile.customBubbleTexts ?? [];
+  const customTextLine = customTexts.length > 0
+    ? `Use these EXACT Korean texts for the speech bubbles (in order): ${customTexts.map((t, i) => `${i + 1}. "${t}"`).join(", ")}.`
+    : "Generate contextually appropriate Korean speech bubble texts based on the passage content.";
+
+  const textInstructions = includeText
+    ? [
+        "**Structured Scene Layout:**",
+        "1. **Title banner (top):** A prominent banner at the top with a Korean sentence summarizing the passage theme.",
+        `2. **Character speech bubbles:** Draw exactly ${bubbleCount} ${bubbleStyleDesc} with Korean text. ${customTextLine}`,
+        "3. **Keyword labels:** Arrows or annotation labels pointing to key concepts, written in Korean.",
+        "4. **Summary caption (bottom):** A rectangular caption box at the bottom with a Korean wrap-up sentence.",
+        "5. **Background:** Setting should match the passage context.",
+        "All text MUST be in Korean (\ud55c\uad6d\uc5b4).",
+      ].join("\n")
+    : "Do NOT include any text, speech bubbles, labels, or letters inside the image. Express meaning through visuals only.";
+
+  const moodLine = profile.mood
+    ? `Mood: ${profile.mood}. Add small decorative elements relevant to the scene.`
+    : "Mood: Warm, friendly, educational. Add small decorative elements (hearts, sparkles, icons).";
+
+  const refLine = referenceImage
+    ? conceptMode === "hard"
+      ? "Reference style image is attached. The characters in this reference are the ONLY type of characters allowed. Copy their species/type exactly."
+      : "Reference style image is attached. Preserve visual style but generate new scene content."
+    : "";
+
+  const negativePromptLine = (() => {
+    const base = profile.negativePrompt ?? "";
+    const hardSuffix = conceptMode === "hard" ? ", realistic human figures" : "";
+    if (base) return `Negative prompt: ${base}${hardSuffix}`;
+    if (hardSuffix) return `Negative prompt: realistic human figures`;
+    return "";
   })();
 
-  const styleLines: string[] = profile.styleEnabled
-    ? [
-        profile.styleName ? `Style: ${profile.styleName}.` : "",
-        characterGuideLine,
-        profile.palette ? `Palette: ${profile.palette}.` : "",
-        profile.lineStyle ? `Line style: ${profile.lineStyle}.` : "",
-        profile.mood ? `Mood: ${profile.mood}.` : "",
-        profile.negativePrompt
-          ? `Negative prompt: ${profile.negativePrompt}${conceptMode === "hard" ? ", realistic human figures" : ""}`
-          : conceptMode === "hard"
-            ? "Negative prompt: realistic human figures"
-            : "",
-        banned ? `Avoid keywords: ${banned}` : "",
-      ]
-    : [];
-
   return [
-    `Create a classroom-friendly illustration for passage ${passageId}.`,
+    `Create a single-panel educational illustration for passage ${passageId}.`,
+    "",
+    `**Style:** ${styleSection}`,
     conceptLine,
-    ...styleLines,
-    referenceImage
-      ? conceptMode === "hard"
-        ? "Reference style image is attached. The characters in this reference are the ONLY type of characters allowed. Copy their species/type exactly. If reference shows animals, ALL characters MUST be the same kind of animals. Drawing humans when reference shows animals is FORBIDDEN."
-        : conceptMode === "soft"
-          ? "Reference style image is attached. Use the character/subject types from reference as inspiration. Keep line/palette/mood close to reference while adapting scene content."
-          : "Reference style image is attached. Keep line/palette/mood close to reference while changing scene content."
-      : "",
-    "No text labels or speech bubbles inside image.",
-    `Scene source text: ${concise}`,
+    characterGuideLine,
+    "",
+    `**Scene:** Depict the main theme as a concrete scene: ${concise}`,
+    "",
+    textInstructions,
+    "",
+    moodLine,
+    negativePromptLine,
+    banned ? `Avoid keywords: ${banned}` : "",
+    refLine,
+    "No watermark. No photorealistic elements.",
   ]
     .filter(Boolean)
     .join("\n");
 }
+
 function buildBackgroundKnowledge(rawText: string): string {
   const cleaned = rawText.replace(/\s+/g, " ").trim();
   if (!cleaned) return "";
@@ -360,6 +413,12 @@ function normalizeJob(input: Partial<IllustrationJob>): IllustrationJob {
     refundedCredits: input.refundedCredits || 0,
     failedRefundedAt: input.failedRefundedAt,
     overwritePolicy: input.overwritePolicy || "skip_completed",
+    conceptMode: input.conceptMode,
+    conceptText: input.conceptText,
+    includeKoreanText: input.includeKoreanText ?? false,
+    bubbleCount: input.bubbleCount,
+    bubbleStyle: input.bubbleStyle,
+    customBubbleTexts: input.customBubbleTexts,
     items,
     createdAt: input.createdAt || nowIso(),
     updatedAt: input.updatedAt || nowIso(),
@@ -499,6 +558,10 @@ export async function createIllustrationJob(
     overwritePolicy,
     conceptMode: conceptMode !== "off" ? conceptMode : undefined,
     conceptText,
+    includeKoreanText: input.includeKoreanText ?? false,
+    bubbleCount: input.bubbleCount,
+    bubbleStyle: input.bubbleStyle,
+    customBubbleTexts: input.customBubbleTexts,
     items,
     createdAt: now,
     updatedAt: now,
@@ -570,7 +633,14 @@ export async function runIllustrationJob(
   if (!handout) {
     throw new Error("Target handout was deleted.");
   }
-  const profile = await getIllustrationProfile(email);
+  const rawProfile = await getIllustrationProfile(email);
+  const profile: IllustrationProfile = {
+    ...rawProfile,
+    includeKoreanText: job.includeKoreanText ?? rawProfile.includeKoreanText ?? false,
+    bubbleCount: job.bubbleCount,
+    bubbleStyle: job.bubbleStyle,
+    customBubbleTexts: job.customBubbleTexts,
+  };
   const unitCost = ILLUSTRATION_CREDIT_COST[job.quality];
   const items = { ...job.items };
   let consumedCredits = job.consumedCredits;
@@ -599,6 +669,24 @@ export async function runIllustrationJob(
       profile,
       effectiveReferenceImage
     );
+
+    // Stage 1: Analyze passage with text model for structured scene description
+    let sceneAnalysis: SceneAnalysis | undefined;
+    try {
+      sceneAnalysis = await analyzePassageScene(
+        rawText,
+        profile,
+        job.conceptMode,
+        job.conceptText
+      );
+    } catch (analysisError) {
+      const analysisMessage =
+        analysisError instanceof Error ? analysisError.message : String(analysisError);
+      console.warn(
+        `[illustrations] Scene analysis failed for ${queued.passageId}, proceeding without: ${analysisMessage}`
+      );
+    }
+
     const blockedKeyword = findBlockedKeyword(rawText, profile.bannedKeywords ?? []);
     if (blockedKeyword) {
       items[queued.passageId] = {
@@ -621,9 +709,15 @@ export async function runIllustrationJob(
       });
       continue;
     }
+    const analysisDebugInfo = sceneAnalysis
+      ? `
+
+[Scene Analysis]
+${JSON.stringify(sceneAnalysis, null, 2)}`
+      : "";
     const current: IllustrationJobItem = {
       ...queued,
-      prompt,
+      prompt: prompt + analysisDebugInfo,
       attempts: Math.max(0, queued.attempts) + 1,
       status: "running",
       startedAt: nowIso(),
@@ -637,6 +731,7 @@ export async function runIllustrationJob(
         quality: job.quality,
         aspectRatio: job.aspectRatio,
         referenceImage: effectiveReferenceImage,
+        sceneAnalysis,
       });
       const uploaded = await uploadIllustrationBase64({
         email,

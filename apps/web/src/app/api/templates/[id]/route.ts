@@ -21,6 +21,10 @@ export async function DELETE(
     return NextResponse.json({ data: { deleted: true } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to delete template";
-    return NextResponse.json({ error: { message } }, { status: 500 });
+    console.error("[api/templates] delete failed:", message);
+    return NextResponse.json(
+      { error: { message: "Failed to delete template." } },
+      { status: 500 }
+    );
   }
 }

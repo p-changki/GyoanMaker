@@ -10,5 +10,6 @@ export interface IllustrationSample {
   quality: IllustrationQuality;
   aspectRatio: IllustrationAspectRatio;
   isActive: boolean;
+  isPreset?: boolean;
   createdAt: string;
 }

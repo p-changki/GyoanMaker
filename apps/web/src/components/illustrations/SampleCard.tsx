@@ -30,6 +30,11 @@ export default function SampleCard({
           현재 컨셉
         </div>
       )}
+      {sample.isPreset && !sample.isActive && (
+        <div className="absolute left-2 top-2 z-10 rounded-full bg-gray-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
+          기본 제공
+        </div>
+      )}
 
       <div className="aspect-[4/3] overflow-hidden bg-gray-50">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,14 +71,16 @@ export default function SampleCard({
               컨셉 설정
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => onDelete(sample.sampleId)}
-            disabled={isLoading}
-            className="rounded-lg border border-red-200 px-2 py-1.5 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
-          >
-            삭제
-          </button>
+          {!sample.isPreset && (
+            <button
+              type="button"
+              onClick={() => onDelete(sample.sampleId)}
+              disabled={isLoading}
+              className="rounded-lg border border-red-200 px-2 py-1.5 text-[11px] font-semibold text-red-500 transition-colors hover:bg-red-50 disabled:opacity-50"
+            >
+              삭제
+            </button>
+          )}
         </div>
       </div>
     </div>

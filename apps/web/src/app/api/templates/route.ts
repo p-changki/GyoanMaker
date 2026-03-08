@@ -14,7 +14,11 @@ export async function GET() {
     return NextResponse.json({ data: templates });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to list templates";
-    return NextResponse.json({ error: { message } }, { status: 500 });
+    console.error("[api/templates] list failed:", message);
+    return NextResponse.json(
+      { error: { message: "Failed to list templates." } },
+      { status: 500 }
+    );
   }
 }
 
@@ -42,6 +46,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ data: template }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create template";
-    return NextResponse.json({ error: { message } }, { status: 400 });
+    console.error("[api/templates] create failed:", message);
+    return NextResponse.json(
+      { error: { message: "Failed to create template." } },
+      { status: 400 }
+    );
   }
 }

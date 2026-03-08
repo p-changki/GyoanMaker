@@ -80,24 +80,53 @@ export default function SampleGallery() {
     );
   }
 
+  const presets = samples.filter((s) => s.isPreset);
+  const userSamples = samples.filter((s) => !s.isPreset);
+
   return (
-    <section className="space-y-3">
+    <section className="space-y-5">
       <h2 className="text-sm font-bold text-gray-900">
         샘플 갤러리{" "}
-        <span className="font-normal text-gray-400">({samples.length}/30)</span>
+        <span className="font-normal text-gray-400">({userSamples.length}/30)</span>
       </h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {samples.map((sample) => (
-          <SampleCard
-            key={sample.sampleId}
-            sample={sample}
-            onActivate={(id) => activateMutation.mutate(id)}
-            onDeactivate={(id) => deactivateMutation.mutate(id)}
-            onDelete={(id) => deleteMutation.mutate(id)}
-            isLoading={isMutating}
-          />
-        ))}
-      </div>
+
+      {presets.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">기본 제공 스타일</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {presets.map((sample) => (
+              <SampleCard
+                key={sample.sampleId}
+                sample={sample}
+                onActivate={(id) => activateMutation.mutate(id)}
+                onDeactivate={(id) => deactivateMutation.mutate(id)}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                isLoading={isMutating}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {userSamples.length > 0 && (
+        <div className="space-y-2">
+          {presets.length > 0 && (
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">내 스타일</p>
+          )}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {userSamples.map((sample) => (
+              <SampleCard
+                key={sample.sampleId}
+                sample={sample}
+                onActivate={(id) => activateMutation.mutate(id)}
+                onDeactivate={(id) => deactivateMutation.mutate(id)}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                isLoading={isMutating}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

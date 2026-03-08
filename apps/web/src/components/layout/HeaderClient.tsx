@@ -57,6 +57,7 @@ export interface HeaderUser {
   name: string | null;
   email: string | null;
   image: string | null;
+  isAdmin: boolean;
 }
 
 interface HeaderClientProps {
@@ -97,7 +98,7 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
             ) : (
               <Link
                 href="/login"
-                className="rounded-xl border border-gray-900 bg-transparent px-5 py-2.5 text-sm font-semibold text-gray-900 transition-all hover:bg-gray-900 hover:text-white"
+                className="rounded-xl border border-gray-900 bg-transparent px-5 py-2.5 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-900 hover:text-white"
               >
                 Get Started
               </Link>
@@ -114,7 +115,7 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
             "bottom-6 sm:bottom-auto sm:top-0 sm:pt-6"
           )}
         >
-          <div className="flex items-center gap-1 rounded-full border border-gray-200/50 bg-white/80 px-1 py-1 shadow-lg backdrop-blur-lg sm:gap-2">
+          <div className="flex items-center gap-1 rounded-full border border-gray-200/80 bg-white/95 px-1 py-1 shadow-md sm:gap-2">
             {navLinks.map((item) => {
               const isActive = activeTab === item.label;
 
@@ -156,11 +157,7 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
                         damping: 30,
                       }}
                     >
-                      <div className="absolute -top-2 left-1/2 h-1 w-8 -translate-x-1/2 rounded-t-full bg-blue-600">
-                        <div className="absolute -left-2 -top-2 h-6 w-12 rounded-full bg-blue-500/20 blur-md" />
-                        <div className="absolute -top-1 h-6 w-8 rounded-full bg-blue-500/20 blur-md" />
-                        <div className="absolute left-2 top-0 h-4 w-4 rounded-full bg-blue-500/20 blur-sm" />
-                      </div>
+                      <div className="absolute -top-2 left-1/2 h-1 w-8 -translate-x-1/2 rounded-t-full bg-blue-600" />
                     </motion.div>
                   )}
                 </Link>

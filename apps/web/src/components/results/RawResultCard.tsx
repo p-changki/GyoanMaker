@@ -44,6 +44,10 @@ export default function RawResultCard({
     if (enableCollapse && status === "generating") {
       setIsCollapsed(true);
     }
+    // Auto-collapse when generation completes
+    if (enableCollapse && prevStatus === "generating" && status === "completed") {
+      setIsCollapsed(true);
+    }
   }
 
   const isExpandable = useMemo(() => {
@@ -120,7 +124,10 @@ export default function RawResultCard({
 
   return (
     <div className="bg-white border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden card-hover-effect">
-      <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
+      <div
+        className={"px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/30" + (enableCollapse ? " cursor-pointer" : "")}
+        onClick={enableCollapse ? () => setIsCollapsed((prev) => !prev) : undefined}
+      >
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-100">
             {passageId}
@@ -135,11 +142,22 @@ export default function RawResultCard({
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          {enableCollapse && (
+            <svg
+              className={"w-4 h-4 text-gray-400 transition-transform " + (isCollapsed ? "" : "rotate-180")}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <title>Toggle</title>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
           <button
             type="button"
             onClick={handleRegenerateClick}
-            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
             title="Regenerate"
           >
             <svg
@@ -168,7 +186,7 @@ export default function RawResultCard({
         </div>
       </div>
 
-      <div className="p-6 sm:p-8">
+      <div className={enableCollapse && isCollapsed ? "hidden" : "p-6 sm:p-8"}>
         <div className="prose prose-sm max-w-none prose-gray prose-headings:text-gray-900 prose-h3:text-lg prose-h3:font-black prose-strong:text-gray-800 prose-p:text-gray-700 prose-p:leading-relaxed prose-li:text-gray-700">
           <div>
             <div className="relative">
@@ -240,9 +258,6 @@ function renderInlineText(text: string, keyPrefix: string): ReactNode[] {
 
 function renderFormattedBlocks(text: string): ReactNode[] {
   const lines = text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
     .replace(/\r\n/g, "\n")
     .split("\n");
 
@@ -264,8 +279,8 @@ function renderFormattedBlocks(text: string): ReactNode[] {
       inVocabSection = trimmed.includes("핵심 어휘") || trimmed.includes("Core Vocab");
       relatedMode = null;
       nodes.push(
-        <div key={key} className="inline-flex items-center py-1">
-          <span className="bg-[#5E35B1] text-white text-[11px] font-bold px-2.5 py-1 rounded-md tracking-wide">
+        <div key={key} className="mt-6 mb-3 first:mt-0">
+          <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#5E35B1] to-[#7E57C2] text-white text-[11px] font-bold px-3 py-1.5 rounded-lg tracking-wide shadow-sm">
             {trimmed.replace(/^\[|\]$/g, "")}
           </span>
         </div>
@@ -302,8 +317,8 @@ function renderFormattedBlocks(text: string): ReactNode[] {
     if (inVocabSection && (trimmed === "유의어" || trimmed === "Synonyms")) {
       relatedMode = "syn";
       nodes.push(
-        <div key={key} className="pt-2 pl-1">
-          <span className="text-[12px] font-bold text-[#374151]">Synonyms</span>
+        <div key={key} className="pt-2 pl-2">
+          <span className="inline-flex items-center text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Synonyms</span>
         </div>
       );
       continue;
@@ -312,8 +327,8 @@ function renderFormattedBlocks(text: string): ReactNode[] {
     if (inVocabSection && (trimmed === "반의어" || trimmed === "Antonyms")) {
       relatedMode = "ant";
       nodes.push(
-        <div key={key} className="pt-2 pl-1">
-          <span className="text-[12px] font-bold text-[#374151]">Antonyms</span>
+        <div key={key} className="pt-2 pl-2">
+          <span className="inline-flex items-center text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">Antonyms</span>
         </div>
       );
       continue;
@@ -339,15 +354,15 @@ function renderFormattedBlocks(text: string): ReactNode[] {
         inVocabSection && !trimmed.includes("핵심 어휘") && !trimmed.includes("Core Vocab") ? (
           <div
             key={key}
-            className="mt-2 px-3 py-2 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB]"
+            className="mt-3 px-4 py-3 rounded-xl bg-gradient-to-r from-[#F9FAFB] to-white border border-[#E5E7EB] shadow-sm"
           >
-            <span className="text-[#5E35B1] font-black mr-1">{number}.</span>
-            <span className="text-[#111827] font-bold">{content}</span>
+            <span className="text-[#5E35B1] font-black mr-1.5">{number}.</span>
+            <span className="text-[#111827] font-bold text-[15px]">{content}</span>
           </div>
         ) : (
-          <div key={key} className="py-1">
-            <span className="text-blue-600 font-bold mr-1">{number}.</span>
-            {renderInlineText(content, key)}
+          <div key={key} className="mt-5 mb-2 pb-2 border-b border-gray-100 first:mt-0">
+            <span className="text-blue-600 font-black mr-1.5">{number}.</span>
+            <span className="font-bold text-gray-900">{renderInlineText(content, key)}</span>
           </div>
         );
 
@@ -357,8 +372,19 @@ function renderFormattedBlocks(text: string): ReactNode[] {
 
     if (inVocabSection && relatedMode) {
       nodes.push(
-        <div key={key} className="pl-5 py-0.5 text-[12px] text-[#1F2937]">
+        <div key={key} className={"pl-4 py-0.5 text-[12px] " + (relatedMode === "syn" ? "text-emerald-800" : "text-rose-800")}>
+          <span className="text-gray-300 mr-1">&#8226;</span>
           {renderInlineText(line, key)}
+        </div>
+      );
+      continue;
+    }
+
+    // Style section labels
+    if (trimmed === "영어 섹션" || trimmed === "한글 섹션" || trimmed === "English Section" || trimmed === "Korean Section") {
+      nodes.push(
+        <div key={key} className="mt-4 mb-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{trimmed}</span>
         </div>
       );
       continue;

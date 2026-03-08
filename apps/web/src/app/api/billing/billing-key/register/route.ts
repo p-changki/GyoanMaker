@@ -68,8 +68,14 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Billing key registration failed.";
+    console.error("[billing/billing-key/register] issue failed:", message);
     return NextResponse.json(
-      { error: { code: "BILLING_KEY_ISSUE_ERROR", message } },
+      {
+        error: {
+          code: "BILLING_KEY_ISSUE_ERROR",
+          message: "Billing key registration failed.",
+        },
+      },
       { status: 500 }
     );
   }

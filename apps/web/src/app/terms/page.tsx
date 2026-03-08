@@ -131,10 +131,22 @@ export default function TermsPage() {
                     월 요금
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
-                    Flash 월 한도
+                    Speed 월 한도
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
-                    Pro 월 한도
+                    Precision 월 한도
+                  </th>
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    삽화 크레딧/월
+                  </th>
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    삽화 샘플
+                  </th>
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    스타일 테스트/일
+                  </th>
+                  <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
+                    저장 공간
                   </th>
                 </tr>
               </thead>
@@ -143,25 +155,41 @@ export default function TermsPage() {
                   <td className="border border-gray-200 px-3 py-2">Free</td>
                   <td className="border border-gray-200 px-3 py-2">무료</td>
                   <td className="border border-gray-200 px-3 py-2">10회</td>
-                  <td className="border border-gray-200 px-3 py-2">2회</td>
+                  <td className="border border-gray-200 px-3 py-2">5회</td>
+                  <td className="border border-gray-200 px-3 py-2">5건</td>
+                  <td className="border border-gray-200 px-3 py-2">10개</td>
+                  <td className="border border-gray-200 px-3 py-2">3회</td>
+                  <td className="border border-gray-200 px-3 py-2">최대 3개</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">Basic</td>
                   <td className="border border-gray-200 px-3 py-2">14,900원</td>
                   <td className="border border-gray-200 px-3 py-2">250회</td>
                   <td className="border border-gray-200 px-3 py-2">30회</td>
+                  <td className="border border-gray-200 px-3 py-2">10건</td>
+                  <td className="border border-gray-200 px-3 py-2">20개</td>
+                  <td className="border border-gray-200 px-3 py-2">5회</td>
+                  <td className="border border-gray-200 px-3 py-2">무제한</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">Standard</td>
                   <td className="border border-gray-200 px-3 py-2">34,900원</td>
                   <td className="border border-gray-200 px-3 py-2">500회</td>
                   <td className="border border-gray-200 px-3 py-2">120회</td>
+                  <td className="border border-gray-200 px-3 py-2">30건</td>
+                  <td className="border border-gray-200 px-3 py-2">30개</td>
+                  <td className="border border-gray-200 px-3 py-2">10회</td>
+                  <td className="border border-gray-200 px-3 py-2">무제한</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">Pro</td>
-                  <td className="border border-gray-200 px-3 py-2">79,000원</td>
+                  <td className="border border-gray-200 px-3 py-2">89,000원</td>
                   <td className="border border-gray-200 px-3 py-2">1,000회</td>
                   <td className="border border-gray-200 px-3 py-2">400회</td>
+                  <td className="border border-gray-200 px-3 py-2">60건</td>
+                  <td className="border border-gray-200 px-3 py-2">30개</td>
+                  <td className="border border-gray-200 px-3 py-2">10회</td>
+                  <td className="border border-gray-200 px-3 py-2">무제한</td>
                 </tr>
               </tbody>
             </table>

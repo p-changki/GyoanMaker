@@ -6,6 +6,7 @@ interface CreditDetailsSectionProps {
   flash: CreditEntry[];
   pro: CreditEntry[];
   illustration: CreditEntry[];
+  embedded?: boolean;
 }
 
 function formatDateKr(iso: string): string {
@@ -67,6 +68,7 @@ export default function CreditDetailsSection({
   flash,
   pro,
   illustration,
+  embedded,
 }: CreditDetailsSectionProps) {
   const entries = [
     ...flash.map((e) => ({ type: "flash" as const, entry: e })),
@@ -79,10 +81,12 @@ export default function CreditDetailsSection({
   );
 
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
-        Credit Details
-      </h3>
+    <section className={embedded ? undefined : "rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"}>
+      {!embedded && (
+        <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
+          Credit Details
+        </h3>
+      )}
       {entries.length === 0 ? (
         <p className="mt-3 text-sm text-gray-400">
           구매한 크레딧이 없습니다

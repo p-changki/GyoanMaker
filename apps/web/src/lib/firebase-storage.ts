@@ -1,9 +1,8 @@
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { getStorageBucket } from "./firebase-admin";
 
-function encodePath(path: string): string {
-  return encodeURIComponent(path).replace(/%2F/g, "%2F");
-}
+const DEFAULT_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
+const MAX_SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365; // 365 days
 
 function sanitizeSegment(value: string): string {
   return value
@@ -28,9 +27,33 @@ function stripDataUriPrefix(base64: string): { mimeType: string; payload: string
   };
 }
 
-function buildDownloadUrl(bucketName: string, objectPath: string, token: string): string {
-  const encodedPath = encodePath(objectPath);
-  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function hashOwnerKey(email: string): string {
+  return createHash("sha256").update(normalizeEmail(email)).digest("hex").slice(0, 24);
+}
+
+function getSignedUrlTtlSeconds(): number {
+  const raw = Number(process.env.ILLUSTRATION_SIGNED_URL_TTL_SECONDS || "");
+  if (!Number.isFinite(raw) || raw <= 0) {
+    return DEFAULT_SIGNED_URL_TTL_SECONDS;
+  }
+  return Math.min(Math.floor(raw), MAX_SIGNED_URL_TTL_SECONDS);
+}
+
+async function createSignedReadUrl(storagePath: string): Promise<string> {
+  const bucket = getStorageBucket();
+  const file = bucket.file(storagePath);
+  const expiresAt = Date.now() + getSignedUrlTtlSeconds() * 1000;
+  const [url] = await file.getSignedUrl({
+    action: "read",
+    // v2 supports longer expirations; v4 is capped at 7 days.
+    version: "v2",
+    expires: expiresAt,
+  });
+  return url;
 }
 
 function extensionFromContentType(contentType: string): string {
@@ -40,7 +63,11 @@ function extensionFromContentType(contentType: string): string {
 }
 
 export function buildIllustrationStoragePrefix(email: string, handoutId: string): string {
-  return `illustrations/${sanitizeSegment(email)}/${sanitizeSegment(handoutId)}`;
+  return `illustrations/${hashOwnerKey(email)}/${sanitizeSegment(handoutId)}`;
+}
+
+function buildLegacyIllustrationStoragePrefix(email: string, handoutId: string): string {
+  return `illustrations/${sanitizeSegment(normalizeEmail(email))}/${sanitizeSegment(handoutId)}`;
 }
 
 export function buildIllustrationStoragePath(
@@ -80,7 +107,6 @@ export async function uploadIllustrationBase64(params: {
     extension
   );
   const file = bucket.file(storagePath);
-  const token = randomUUID();
   const buffer = Buffer.from(parsed.payload, "base64");
 
   await file.save(buffer, {
@@ -90,16 +116,13 @@ export async function uploadIllustrationBase64(params: {
     metadata: {
       contentType,
       cacheControl: "public,max-age=31536000,immutable",
-      metadata: {
-        firebaseStorageDownloadTokens: token,
-      },
     },
   });
 
   return {
     storagePath,
     contentType,
-    imageUrl: buildDownloadUrl(bucket.name, storagePath, token),
+    imageUrl: await createSignedReadUrl(storagePath),
   };
 }
 
@@ -122,7 +145,6 @@ export async function uploadIllustrationReferenceImageBase64(params: {
   const extension = extensionFromContentType(contentType);
   const storagePath = buildIllustrationReferenceStoragePath(params.email, extension);
   const file = bucket.file(storagePath);
-  const token = randomUUID();
   const buffer = Buffer.from(parsed.payload, "base64");
 
   await file.save(buffer, {
@@ -132,17 +154,20 @@ export async function uploadIllustrationReferenceImageBase64(params: {
     metadata: {
       contentType,
       cacheControl: "public,max-age=31536000,immutable",
-      metadata: {
-        firebaseStorageDownloadTokens: token,
-      },
     },
   });
 
   return {
     storagePath,
     contentType,
-    imageUrl: buildDownloadUrl(bucket.name, storagePath, token),
+    imageUrl: await createSignedReadUrl(storagePath),
   };
+}
+
+export async function getIllustrationSignedReadUrl(
+  storagePath: string
+): Promise<string> {
+  return createSignedReadUrl(storagePath);
 }
 
 export async function readIllustrationImageBase64(storagePath: string): Promise<{
@@ -187,11 +212,19 @@ export async function deleteIllustrationFolder(
   handoutId: string
 ): Promise<void> {
   const bucket = getStorageBucket();
-  const prefix = `${buildIllustrationStoragePrefix(email, handoutId)}/`;
-  await bucket.deleteFiles({ prefix }).catch((error: unknown) => {
-    if (error instanceof Error && /No such object/i.test(error.message)) {
-      return;
-    }
-    throw error;
-  });
+  const prefixes = new Set<string>([
+    `${buildIllustrationStoragePrefix(email, handoutId)}/`,
+    `${buildLegacyIllustrationStoragePrefix(email, handoutId)}/`,
+  ]);
+
+  await Promise.all(
+    Array.from(prefixes).map((prefix) =>
+      bucket.deleteFiles({ prefix }).catch((error: unknown) => {
+        if (error instanceof Error && /No such object/i.test(error.message)) {
+          return;
+        }
+        throw error;
+      })
+    )
+  );
 }

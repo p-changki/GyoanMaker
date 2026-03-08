@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type PlanId, type TopUpCreditType } from "@gyoanmaker/shared/plans";
+import { type PlanId, type TopUpCreditType, PLANS } from "@gyoanmaker/shared/plans";
 import type { CreditEntry } from "@gyoanmaker/shared/types";
 import UsageBar from "./UsageBar";
 import DeleteAccountModal from "./DeleteAccountModal";
@@ -13,9 +13,7 @@ import CancelSubscriptionModal from "./CancelSubscriptionModal";
 import PlanChangeModal from "./PlanChangeModal";
 import TopUpModal from "./TopUpModal";
 import SubscriptionInfoSection from "./SubscriptionInfoSection";
-import CreditDetailsSection from "./CreditDetailsSection";
-import PaymentHistorySection from "./PaymentHistorySection";
-import UsageHistorySection from "./UsageHistorySection";
+import HistoryTabs from "./HistoryTabs";
 import BillingKeySection from "./BillingKeySection";
 
 interface BillingStatusResponse {
@@ -31,11 +29,14 @@ interface BillingStatusResponse {
     monthKeyKst: string;
     flash: { limit: number; used: number; remaining: number; credits: number };
     pro: { limit: number; used: number; remaining: number; credits: number };
+    illustration: { limit: number; used: number; remaining: number; credits: number };
     storage: { limit: number | null; used: number; remaining: number | null };
   };
   planPendingTier: PlanId | null;
   account: { createdAt: string | null };
   credits: { flash: CreditEntry[]; pro: CreditEntry[]; illustration: CreditEntry[] };
+  illustrationSamples: { count: number };
+  dailySampleUsage: { used: number; limit: number };
 }
 
 function isPlanId(value: string | null): value is PlanId {
@@ -127,59 +128,57 @@ export default function AccountDashboard() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
-      {/* Profile */}
+      {/* Profile + Plan */}
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          {session?.user?.image ? (
-            <Image
-              src={session.user.image}
-              alt="Profile"
-              width={56}
-              height={56}
-              className="h-14 w-14 rounded-full border border-gray-200"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-500">
-              {session?.user?.name?.[0] ?? "?"}
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: avatar + info */}
+          <div className="flex items-center gap-4">
+            {session?.user?.image ? (
+              <Image
+                src={session.user.image}
+                alt="Profile"
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full border border-gray-200"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-500">
+                {session?.user?.name?.[0] ?? "?"}
+              </div>
+            )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {session?.user?.name ?? "User"}
+                </h2>
+                <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-600">
+                  {currentPlan.toUpperCase()}
+                </span>
+                {isCanceled && (
+                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-800">
+                    {periodEndAt ? `해지 예정 (~${formatDate(periodEndAt)})` : "해지 예정"}
+                  </span>
+                )}
+                {planPendingTier && !isCanceled && (
+                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800">
+                    → {planPendingTier.toUpperCase()} 전환 예정
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">{session?.user?.email}</p>
+              <p className="mt-0.5 text-xs text-gray-400">
+                {data.account.createdAt
+                  ? `Joined ${new Date(data.account.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}`
+                  : ""}
+                {data.account.createdAt ? " · " : ""}
+                Speed {data.quota.flash.remaining} / Precision {data.quota.pro.remaining} remaining
+              </p>
             </div>
-          )}
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              {session?.user?.name ?? "User"}
-            </h2>
-            <p className="text-sm text-gray-500">{session?.user?.email}</p>
           </div>
-        </div>
-      </section>
 
-      {/* Current Plan + Action Buttons */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Current Plan
-            </p>
-            <div className="mt-1 flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-gray-900">
-                {currentPlan.toUpperCase()}
-              </h1>
-              {isCanceled && (
-                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-800">
-                  {periodEndAt ? `해지 예정 (~${formatDate(periodEndAt)})` : "해지 예정"}
-                </span>
-              )}
-              {planPendingTier && !isCanceled && (
-                <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
-                  → {planPendingTier.toUpperCase()} 전환 예정
-                </span>
-              )}
-            </div>
-            <p className="mt-2 text-sm text-gray-500">
-              Speed {data.quota.flash.remaining} / Precision {data.quota.pro.remaining} remaining
-            </p>
-          </div>
-          <div className="flex gap-2">
+          {/* Right: action buttons */}
+          <div className="flex gap-2 sm:shrink-0">
             <button
               type="button"
               onClick={() => setShowTopUpModal(true)}
@@ -230,18 +229,73 @@ export default function AccountDashboard() {
         />
       </section>
 
-      {/* Credit Details */}
-      <CreditDetailsSection
+      {/* Illustration Quota */}
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <UsageBar
+          label="Illustration Credits"
+          used={data.quota.illustration.used}
+          limit={data.quota.illustration.limit}
+          remaining={data.quota.illustration.remaining}
+          credits={data.quota.illustration.credits}
+        />
+        <div className="rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between text-sm">
+            <p className="font-semibold text-gray-900">Daily Style Tests</p>
+            <p className="font-medium text-gray-500">
+              {data.dailySampleUsage.used}/{data.dailySampleUsage.limit}
+            </p>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            <div
+              className={
+                data.dailySampleUsage.used >= data.dailySampleUsage.limit
+                  ? "h-full bg-amber-500"
+                  : "h-full bg-emerald-500"
+              }
+              style={{
+                width: `${Math.min(100, Math.round((data.dailySampleUsage.used / data.dailySampleUsage.limit) * 100))}%`,
+              }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            Resets daily at midnight (KST)
+          </p>
+        </div>
+      </section>
+
+      {/* Illustration Samples */}
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between text-sm">
+            <p className="font-semibold text-gray-900">Illustration Samples</p>
+            <p className="font-medium text-gray-500">
+              {data.illustrationSamples.count}/{PLANS[currentPlan].maxSamples}
+            </p>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            <div
+              className={
+                data.illustrationSamples.count >= PLANS[currentPlan].maxSamples
+                  ? "h-full bg-amber-500"
+                  : "h-full bg-emerald-500"
+              }
+              style={{
+                width: `${Math.min(100, Math.round((data.illustrationSamples.count / PLANS[currentPlan].maxSamples) * 100))}%`,
+              }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            {PLANS[currentPlan].maxSamples - data.illustrationSamples.count} slots remaining
+          </p>
+        </div>
+      </section>
+
+      {/* History Tabs */}
+      <HistoryTabs
         flash={data.credits.flash}
         pro={data.credits.pro}
         illustration={data.credits.illustration}
       />
-
-      {/* Payment History */}
-      <PaymentHistorySection />
-
-      {/* Usage History */}
-      <UsageHistorySection />
 
       {/* Danger Zone */}
       <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
