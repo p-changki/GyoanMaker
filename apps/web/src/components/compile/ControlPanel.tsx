@@ -97,10 +97,10 @@ export default function ControlPanel({
   >("all");
   const derivedConceptDefault: IllustrationConceptMode = activeSample ? "hard" : "off";
   const [conceptMode, setConceptMode] = useState<IllustrationConceptMode>(derivedConceptDefault);
-  const [lastSampleId, setLastSampleId] = useState<string | null>(activeSample?.sampleId ?? null);
+  const [lastSampleId, setLastSampleId] = useState<string | null>(activeSample?.prompt ?? null);
 
   // Sync concept mode when activeSample changes (React recommended pattern for derived state)
-  const currentSampleId = activeSample?.sampleId ?? null;
+  const currentSampleId = activeSample?.prompt ?? null;
   if (currentSampleId !== lastSampleId) {
     setLastSampleId(currentSampleId);
     if (currentSampleId && !lastSampleId) {
