@@ -1,4 +1,4 @@
-import type { Page2SectionKey } from "@gyoanmaker/shared/types";
+import type { BuiltInSectionKey } from "@gyoanmaker/shared/types";
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { TopicSection } from "./TopicSection";
 import { SummarySection } from "./SummarySection";
@@ -6,9 +6,10 @@ import { FlowSection } from "./FlowSection";
 import { VocabularySection } from "./VocabularySection";
 
 export { TopicSection, SummarySection, FlowSection, VocabularySection };
+export { CustomSection } from "./CustomSection";
 
-export const SECTION_COMPONENTS: Record<
-  Page2SectionKey,
+export const BUILTIN_SECTION_COMPONENTS: Record<
+  BuiltInSectionKey,
   React.ComponentType<{ section: HandoutSection }>
 > = {
   topic: TopicSection,

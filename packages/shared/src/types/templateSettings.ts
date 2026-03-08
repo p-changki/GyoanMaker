@@ -1,4 +1,21 @@
-export type Page2SectionKey = "topic" | "summary" | "flow" | "vocabulary";
+export type BuiltInSectionKey = "topic" | "summary" | "flow" | "vocabulary";
+export type CustomSectionKey = `custom_${number}`;
+export type Page2SectionKey = BuiltInSectionKey | CustomSectionKey;
+
+export const MAX_CUSTOM_SECTIONS = 5;
+
+export interface CustomSectionContent {
+  title: string;
+  body: string;
+}
+
+export function isCustomSectionKey(key: string): key is CustomSectionKey {
+  return /^custom_\d+$/.test(key);
+}
+
+export function isBuiltInSectionKey(key: string): key is BuiltInSectionKey {
+  return key === "topic" || key === "summary" || key === "flow" || key === "vocabulary";
+}
 
 export type ThemePreset = "purple" | "blue" | "green" | "black" | "white";
 
@@ -176,6 +193,8 @@ export interface Page1LayoutConfig {
   sentenceColumnRatio: number;    // 0.5 ~ 0.8 (default: 0.65)
   numberStyle: "padded" | "plain" | "circle";
   tableOuterBorderWidth: number;  // px (default: 3)
+  showSentenceNumbers?: boolean;  // default true
+  showKoreanColumn?: boolean;     // default true
 }
 
 export const DEFAULT_PAGE1_LAYOUT: Page1LayoutConfig = {
@@ -183,6 +202,8 @@ export const DEFAULT_PAGE1_LAYOUT: Page1LayoutConfig = {
   sentenceColumnRatio: 0.65,
   numberStyle: "padded",
   tableOuterBorderWidth: 3,
+  showSentenceNumbers: true,
+  showKoreanColumn: true,
 };
 
 export interface SectionStyleConfig {
@@ -209,9 +230,10 @@ export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
   titleWeight: "",
 };
 
+export type BuiltInEditableKey = BuiltInSectionKey | "page1Body" | "page2Header" | "header" | "headerBadge";
 export type EditableSectionKey = Page2SectionKey | "page1Body" | "page2Header" | "header" | "headerBadge";
 
-export const SECTION_FONT_SIZE_KEYS: Record<EditableSectionKey, (keyof FontSizeConfig)[]> = {
+export const SECTION_FONT_SIZE_KEYS: Record<BuiltInEditableKey, (keyof FontSizeConfig)[]> = {
   header:      ["headerLogo", "passageNumber"],
   headerBadge: ["headerBadge"],
   page1Body:   ["analysisEn", "analysisKo", "sentenceNumber"],
@@ -222,7 +244,14 @@ export const SECTION_FONT_SIZE_KEYS: Record<EditableSectionKey, (keyof FontSizeC
   vocabulary: ["vocabText", "sectionTitle"],
 };
 
-export const EDITABLE_SECTION_LABELS: Record<EditableSectionKey, string> = {
+export const CUSTOM_SECTION_FONT_SIZE_KEYS: (keyof FontSizeConfig)[] = ["sectionTitle"];
+
+export function getSectionFontSizeKeys(key: EditableSectionKey): (keyof FontSizeConfig)[] {
+  if (isCustomSectionKey(key)) return CUSTOM_SECTION_FONT_SIZE_KEYS;
+  return SECTION_FONT_SIZE_KEYS[key as BuiltInEditableKey] ?? CUSTOM_SECTION_FONT_SIZE_KEYS;
+}
+
+export const EDITABLE_SECTION_LABELS: Record<BuiltInEditableKey, string> = {
   header: "헤더",
   headerBadge: "헤더 배지",
   page1Body: "문장 테이블",
@@ -232,6 +261,14 @@ export const EDITABLE_SECTION_LABELS: Record<EditableSectionKey, string> = {
   flow: "내용 정리",
   vocabulary: "핵심 어휘",
 };
+
+// Phase 2: display config types
+export interface VocabDisplayConfig {
+  showSynonyms?: boolean;  // default true
+  showAntonyms?: boolean;  // default true
+}
+
+export type SummaryLanguage = "both" | "en" | "ko";
 
 export interface CustomThemeColors {
   primary: string;
@@ -273,6 +310,11 @@ export interface TemplateSettings {
   vocabColumnLayout?: VocabColumnLayout;
   customThemeColors?: CustomThemeColors | null;
   useCustomTheme?: boolean;
+  // Custom sections
+  customSections?: Record<string, CustomSectionContent>;
+  // Phase 2: display options
+  vocabDisplay?: VocabDisplayConfig;
+  summaryLanguage?: SummaryLanguage;
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
@@ -290,14 +332,14 @@ export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
   fontSizes: FONT_SIZE_PRESETS.medium,
 };
 
-export const VALID_PAGE2_SECTIONS: ReadonlySet<Page2SectionKey> = new Set([
+export const VALID_PAGE2_SECTIONS: ReadonlySet<BuiltInSectionKey> = new Set([
   "topic",
   "summary",
   "flow",
   "vocabulary",
 ]);
 
-export const PAGE2_SECTION_LABELS: Record<Page2SectionKey, string> = {
+export const PAGE2_SECTION_LABELS: Record<BuiltInSectionKey, string> = {
   topic: "주제문",
   summary: "요약",
   flow: "내용 정리",

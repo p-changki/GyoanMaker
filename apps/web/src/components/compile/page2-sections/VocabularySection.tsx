@@ -10,12 +10,16 @@ function VocabRow4({
   fontSizes,
   fontCss,
   textColor,
+  showSynonyms,
+  showAntonyms,
 }: {
   vocab: VocabItem;
   index: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
   textColor: string;
+  showSynonyms: boolean;
+  showAntonyms: boolean;
 }) {
   return (
     <tr
@@ -28,24 +32,28 @@ function VocabRow4({
       <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20">
         {vocab.meaning}
       </td>
-      <td className="px-3 py-2 text-[#4B5563] border-r border-current/20 align-middle font-normal">
-        {vocab.synonyms.length > 0
-          ? vocab.synonyms.map((s) => (
-              <div key={`syn-${vocab.word}-${s.word}-${s.meaning}`} className="mb-1 last:mb-0">
-                {s.word} {s.meaning}
-              </div>
-            ))
-          : "-"}
-      </td>
-      <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
-        {vocab.antonyms.length > 0
-          ? vocab.antonyms.map((a) => (
-              <div key={`ant-${vocab.word}-${a.word}-${a.meaning}`} className="mb-1 last:mb-0">
-                {a.word} {a.meaning}
-              </div>
-            ))
-          : "-"}
-      </td>
+      {showSynonyms && (
+        <td className="px-3 py-2 text-[#4B5563] border-r border-current/20 align-middle font-normal">
+          {vocab.synonyms.length > 0
+            ? vocab.synonyms.map((s) => (
+                <div key={`syn-${vocab.word}-${s.word}-${s.meaning}`} className="mb-1 last:mb-0">
+                  {s.word} {s.meaning}
+                </div>
+              ))
+            : "-"}
+        </td>
+      )}
+      {showAntonyms && (
+        <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
+          {vocab.antonyms.length > 0
+            ? vocab.antonyms.map((a) => (
+                <div key={`ant-${vocab.word}-${a.word}-${a.meaning}`} className="mb-1 last:mb-0">
+                  {a.word} {a.meaning}
+                </div>
+              ))
+            : "-"}
+        </td>
+      )}
     </tr>
   );
 }
@@ -133,6 +141,9 @@ function VocabRow2({
 export function VocabularySection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("vocabulary");
   const vocabColumnLayout = useTemplateSettingsStore((s) => s.vocabColumnLayout) ?? 4;
+  const vocabDisplay = useTemplateSettingsStore((s) => s.vocabDisplay);
+  const showSynonyms = vocabDisplay?.showSynonyms ?? true;
+  const showAntonyms = vocabDisplay?.showAntonyms ?? true;
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
@@ -165,8 +176,8 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
               <>
                 <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">핵심 어휘</th>
                 <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">뜻</th>
-                <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">유의어</th>
-                <th className="px-3 py-2 w-[25%]">반의어</th>
+                {showSynonyms && <th className="px-3 py-2 border-r border-[#ffffff]/20 w-[25%]">유의어</th>}
+                {showAntonyms && <th className="px-3 py-2 w-[25%]">반의어</th>}
               </>
             )}
             {vocabColumnLayout === 3 && (
@@ -195,6 +206,8 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
                   fontSizes={fontSizes}
                   fontCss={fontCss}
                   textColor={textColor}
+                  showSynonyms={showSynonyms}
+                  showAntonyms={showAntonyms}
                 />
               );
             }

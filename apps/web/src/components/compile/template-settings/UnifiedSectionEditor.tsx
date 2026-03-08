@@ -9,10 +9,12 @@ import {
   TITLE_WEIGHT_MAP,
   FONT_SIZE_SLOT_META,
   FONT_SIZE_PRESETS,
-  SECTION_FONT_SIZE_KEYS,
+  getSectionFontSizeKeys,
+  isBuiltInSectionKey,
 } from "@gyoanmaker/shared/types";
 import type {
   EditableSectionKey,
+  BuiltInEditableKey,
   Page2SectionKey,
   SectionStyleConfig,
   FontFamily,
@@ -214,12 +216,12 @@ export default function UnifiedSectionEditor({ sectionKey }: Props) {
     textColor: "#111827",
   };
 
-  const fontSizeKeys = SECTION_FONT_SIZE_KEYS[sectionKey];
+  const fontSizeKeys = getSectionFontSizeKeys(sectionKey);
 
   return (
     <div className="space-y-4">
       <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
-        {EDITABLE_SECTION_LABELS[sectionKey]} 섹션 편집
+        {isBuiltInSectionKey(sectionKey) ? EDITABLE_SECTION_LABELS[sectionKey as BuiltInEditableKey] : "커스텀"} 섹션 편집
       </p>
 
       {/* Color Group */}
