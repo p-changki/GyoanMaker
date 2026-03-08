@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { Page2SectionKey } from "@gyoanmaker/shared/types";
 
-export type EditorFocus = "global" | "header" | "header-badge" | "page2-header" | "page1-body" | Page2SectionKey;
+export type EditorFocus = "global" | "header" | "header-badge" | "page1-title" | "page2-header" | "page1-body" | Page2SectionKey;
 
 interface EditorFocusStore {
   focus: EditorFocus;

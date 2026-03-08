@@ -93,6 +93,7 @@ export function HandoutHeader({
   const globalTitleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const hWeight = TITLE_WEIGHT_MAP[headerStyle.titleWeight || globalTitleWeight]?.value ?? 700;
   const badgeWeight = TITLE_WEIGHT_MAP[headerBadgeStyle.titleWeight || globalTitleWeight]?.value ?? 700;
+  const badgeAlign = headerBadgeStyle.textAlign || "right";
 
   // Continuation pages: minimal header
   if (pageNum > 1) {
@@ -108,7 +109,7 @@ export function HandoutHeader({
             : undefined,
         }}
       >
-        <div className="flex items-center justify-between pb-3 pt-4">
+        <div className={`flex items-center pb-3 pt-4 ${badgeAlign === "left" ? "flex-row-reverse justify-between" : badgeAlign === "center" ? "justify-center" : "justify-between"}`}>
           <HeaderClickZone focusKey="header" label="헤더">
             <div
               className="tracking-tighter leading-none"
@@ -164,7 +165,7 @@ export function HandoutHeader({
           : undefined,
       }}
     >
-      <div className="flex items-end justify-between pb-4 pt-6 gap-4">
+      <div className={`flex items-end pb-4 pt-6 gap-4 ${badgeAlign === "left" ? "flex-row-reverse justify-between" : badgeAlign === "center" ? "justify-center" : "justify-between"}`}>
         <HeaderClickZone focusKey="header" label="헤더" className="flex-1">
           <div className="flex flex-col relative h-[56px]">
             {/* Passage number badge */}

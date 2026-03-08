@@ -15,7 +15,7 @@ import SummaryLanguageSection from "./SummaryLanguageSection";
 import UnifiedSectionEditor from "./UnifiedSectionEditor";
 import TemplateGallery from "./TemplateGallery";
 import SaveControls from "./SaveControls";
-import { PAGE2_SECTION_LABELS, isBuiltInSectionKey, isCustomSectionKey } from "@gyoanmaker/shared/types";
+import { PAGE2_SECTION_LABELS, isBuiltInSectionKey, isCustomSectionKey, THEME_PRESETS, DEFAULT_SECTION_STYLE } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import type { Page2SectionKey, CustomSectionKey } from "@gyoanmaker/shared/types";
 import CustomSectionPanel from "./CustomSectionPanel";
@@ -266,6 +266,146 @@ function HeaderBadgePanel() {
   );
 }
 
+function Page1TitlePanel() {
+  const { isSaving, saveMessage, saveMessageType, handleSave, handleResetToDefaults } = useTemplateSettingsPanel();
+  const page1Style = useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
+  const setPage1BodyStyle = useTemplateSettingsStore((s) => s.setPage1BodyStyle);
+  const preset = useTemplateSettingsStore((s) => s.themePreset);
+  const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
+  const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
+  const base = THEME_PRESETS[preset];
+  const theme = useCustom && customColors ? { ...base, ...customColors } : base;
+  const titleColor = page1Style.titleColor || theme.primary;
+  const badgeBgColor = page1Style.badgeBgColor || "transparent";
+  const badgeShape = page1Style.badgeShape || "rounded-full";
+  const badgeFontSize = page1Style.badgeFontSize || 14;
+  const badgeAlign = page1Style.badgeAlign || "left";
+
+  return (
+    <div className="space-y-5">
+      <BackButton label="분석 타이틀" />
+
+      {/* Colors */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">색상</p>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600">테두리 / 글자 색상</span>
+            <input
+              type="color"
+              value={titleColor}
+              onChange={(e) => setPage1BodyStyle({ titleColor: e.target.value })}
+              className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-600">배경색</span>
+            <div className="flex items-center gap-2">
+              {badgeBgColor !== "transparent" && (
+                <button
+                  type="button"
+                  onClick={() => setPage1BodyStyle({ badgeBgColor: "transparent" })}
+                  className="text-[10px] text-gray-400 hover:text-gray-600"
+                >
+                  초기화
+                </button>
+              )}
+              <input
+                type="color"
+                value={badgeBgColor === "transparent" ? "#ffffff" : badgeBgColor}
+                onChange={(e) => setPage1BodyStyle({ badgeBgColor: e.target.value })}
+                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shape */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">뱃지 모양</p>
+        <div className="grid grid-cols-3 gap-1">
+          {([
+            { value: "rounded-full", label: "둥근" },
+            { value: "rounded-lg", label: "약간 둥근" },
+            { value: "rounded-none", label: "각진" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPage1BodyStyle({ badgeShape: opt.value })}
+              className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                badgeShape === opt.value
+                  ? "bg-[#5E35B1] text-white"
+                  : "border border-gray-200 text-gray-500 hover:border-gray-300"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Font Size */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">폰트 크기</p>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-600">{badgeFontSize}px</span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setPage1BodyStyle({ badgeFontSize: Math.max(8, badgeFontSize - 1) })}
+              className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded text-xs font-bold text-gray-500"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage1BodyStyle({ badgeFontSize: Math.min(24, badgeFontSize + 1) })}
+              className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded text-xs font-bold text-gray-500"
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Alignment */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">정렬</p>
+        <div className="grid grid-cols-3 gap-1">
+          {([
+            { value: "left", label: "왼쪽" },
+            { value: "center", label: "가운데" },
+            { value: "right", label: "오른쪽" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPage1BodyStyle({ badgeAlign: opt.value })}
+              className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                badgeAlign === opt.value
+                  ? "bg-[#5E35B1] text-white"
+                  : "border border-gray-200 text-gray-500 hover:border-gray-300"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <SaveControls
+        isSaving={isSaving}
+        saveMessage={saveMessage}
+        saveMessageType={saveMessageType}
+        onSave={handleSave}
+        onReset={handleResetToDefaults}
+      />
+    </div>
+  );
+}
+
 function Page1BodyPanel() {
   const { isSaving, saveMessage, saveMessageType, handleSave, handleResetToDefaults } = useTemplateSettingsPanel();
 
@@ -355,6 +495,7 @@ export default function TemplateSettingsPanel() {
 
   if (focus === "header") return <HeaderPanel />;
   if (focus === "header-badge") return <HeaderBadgePanel />;
+  if (focus === "page1-title") return <Page1TitlePanel />;
   if (focus === "page1-body") return <Page1BodyPanel />;
   if (focus === "page2-header") return <Page2HeaderPanel />;
   if (isCustomSectionKey(focus)) return <CustomSectionPanel sectionKey={focus as CustomSectionKey} />;

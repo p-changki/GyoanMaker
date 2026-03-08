@@ -236,6 +236,10 @@ export interface SectionStyleConfig {
   fontFamily: FontFamily | "";   // "" = use global setting
   titleWeight: TitleWeight | ""; // "" = use global setting
   textAlign: "left" | "center" | "right" | ""; // "" = default (left)
+  badgeShape?: "rounded-full" | "rounded-lg" | "rounded-none"; // badge corner style
+  badgeBgColor?: string;   // badge background color ("" = transparent/white)
+  badgeFontSize?: number;  // badge font size in px
+  badgeAlign?: "left" | "center" | "right"; // badge alignment
 }
 
 export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
