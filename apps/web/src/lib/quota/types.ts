@@ -42,6 +42,7 @@ export interface QuotaLimitsUpdate {
   flashMonthlyLimit?: number;
   proMonthlyLimit?: number;
   storageLimit?: number | null;
+  illustrationMonthlyLimit?: number;
 }
 
 export interface UserDocLike {

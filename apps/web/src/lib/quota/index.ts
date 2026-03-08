@@ -127,6 +127,17 @@ export async function setQuotaLimits(
       }
     }
 
+    if (limits.illustrationMonthlyLimit !== undefined) {
+      state.quota.illustration.monthlyLimit = Math.max(
+        0,
+        Math.floor(limits.illustrationMonthlyLimit)
+      );
+      state.quota.illustration.used = Math.min(
+        state.quota.illustration.used,
+        state.quota.illustration.monthlyLimit
+      );
+    }
+
     tx.set(docRef, buildPersistPayload(state), { merge: true });
   });
 }

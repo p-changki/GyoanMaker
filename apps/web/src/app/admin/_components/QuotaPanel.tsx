@@ -2,11 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+interface QuotaModelStatus {
+  limit: number;
+  used: number;
+  remaining: number;
+  credits: number;
+}
+
 interface QuotaInfo {
   plan: "free" | "basic" | "standard" | "pro";
-  flash: { limit: number; used: number; remaining: number; credits: number };
-  pro: { limit: number; used: number; remaining: number; credits: number };
+  flash: QuotaModelStatus;
+  pro: QuotaModelStatus;
   storage: { limit: number | null; used: number; remaining: number | null };
+  illustration: QuotaModelStatus;
   canGenerate: boolean;
 }
 
@@ -23,9 +31,8 @@ export default function QuotaPanel({ email }: { email: string }) {
   const [editFlash, setEditFlash] = useState("");
   const [editPro, setEditPro] = useState("");
   const [editStorage, setEditStorage] = useState("");
-  const [editPlan, setEditPlan] = useState<"free" | "basic" | "standard" | "pro">(
-    "free"
-  );
+  const [editIllustration, setEditIllustration] = useState("");
+  const [editPlan, setEditPlan] = useState<"free" | "basic" | "standard" | "pro">("free");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
@@ -40,14 +47,15 @@ export default function QuotaPanel({ email }: { email: string }) {
       if (!quotaRes.ok) throw new Error("Failed to fetch quota");
       if (!subRes.ok) throw new Error("Failed to fetch subscription");
 
-      const quotaData = await quotaRes.json();
-      const subData = await subRes.json();
+      const quotaData = (await quotaRes.json()) as QuotaInfo;
+      const subData = (await subRes.json()) as { subscription?: SubscriptionInfo };
       setQuota(quotaData);
       setSubscription(subData.subscription ?? null);
       setEditPlan(subData.subscription?.tier ?? "free");
       setEditFlash(String(quotaData.flash.limit));
       setEditPro(String(quotaData.pro.limit));
       setEditStorage(quotaData.storage.limit === null ? "" : String(quotaData.storage.limit));
+      setEditIllustration(String(quotaData.illustration.limit));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -63,6 +71,7 @@ export default function QuotaPanel({ email }: { email: string }) {
     const flashMonthlyLimit = parseInt(editFlash, 10);
     const proMonthlyLimit = parseInt(editPro, 10);
     const storageLimit = editStorage.trim().length === 0 ? null : parseInt(editStorage, 10);
+    const illustrationMonthlyLimit = parseInt(editIllustration, 10);
 
     if (!Number.isFinite(flashMonthlyLimit) || flashMonthlyLimit < 0) {
       setSaveMsg("Please enter a valid Flash limit.");
@@ -76,6 +85,10 @@ export default function QuotaPanel({ email }: { email: string }) {
       setSaveMsg("Please enter a valid storage limit.");
       return;
     }
+    if (!Number.isFinite(illustrationMonthlyLimit) || illustrationMonthlyLimit < 0) {
+      setSaveMsg("Please enter a valid illustration limit.");
+      return;
+    }
 
     setSaving(true);
     setSaveMsg(null);
@@ -87,14 +100,16 @@ export default function QuotaPanel({ email }: { email: string }) {
           flashMonthlyLimit,
           proMonthlyLimit,
           storageLimit,
+          illustrationMonthlyLimit,
         }),
       });
       if (!res.ok) throw new Error("Failed to update quota");
-      const data = await res.json();
+      const data = (await res.json()) as QuotaInfo;
       setQuota(data);
       setEditFlash(String(data.flash.limit));
       setEditPro(String(data.pro.limit));
       setEditStorage(data.storage.limit === null ? "" : String(data.storage.limit));
+      setEditIllustration(String(data.illustration.limit));
       setSaveMsg("Saved");
       setTimeout(() => setSaveMsg(null), 2000);
     } catch (err) {
@@ -114,7 +129,7 @@ export default function QuotaPanel({ email }: { email: string }) {
         body: JSON.stringify({ planId: editPlan }),
       });
       if (!res.ok) throw new Error("Failed to update plan");
-      const data = await res.json();
+      const data = (await res.json()) as { subscription: SubscriptionInfo };
       setSubscription(data.subscription);
       setSaveMsg("Plan saved");
       setTimeout(() => setSaveMsg(null), 2000);
@@ -138,26 +153,28 @@ export default function QuotaPanel({ email }: { email: string }) {
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      {/* Usage Overview */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Flash Usage
-          </p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Speed Usage</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.flash.used}{" "}
-            <span className="text-gray-400 font-normal">/ {quota.flash.limit}</span>
+            {quota.flash.used} <span className="text-gray-400 font-normal">/ {quota.flash.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Remaining: {quota.flash.remaining}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Credits: {quota.flash.credits}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Pro Usage
-          </p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Precision Usage</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.pro.used}{" "}
-            <span className="text-gray-400 font-normal">/ {quota.pro.limit}</span>
+            {quota.pro.used} <span className="text-gray-400 font-normal">/ {quota.pro.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Remaining: {quota.pro.remaining}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Credits: {quota.pro.credits}</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Illustration</p>
+          <p className="text-sm font-bold text-gray-700 mt-1">
+            {quota.illustration.used} <span className="text-gray-400 font-normal">/ {quota.illustration.limit}</span>
+          </p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Credits: {quota.illustration.credits}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Storage Slots</p>
@@ -171,11 +188,10 @@ export default function QuotaPanel({ email }: { email: string }) {
         </div>
       </div>
 
-      <div className="flex items-end gap-3">
-        <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Flash Limit
-          </label>
+      {/* Limit Editors */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Speed Limit</label>
           <input
             type="number"
             min="0"
@@ -184,8 +200,8 @@ export default function QuotaPanel({ email }: { email: string }) {
             className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
           />
         </div>
-        <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pro Limit</label>
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Precision Limit</label>
           <input
             type="number"
             min="0"
@@ -194,10 +210,18 @@ export default function QuotaPanel({ email }: { email: string }) {
             className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
           />
         </div>
-        <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Storage Limit (empty=unlimited)
-          </label>
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Illustration Limit</label>
+          <input
+            type="number"
+            min="0"
+            value={editIllustration}
+            onChange={(e) => setEditIllustration(e.target.value)}
+            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Storage (empty=∞)</label>
           <input
             type="number"
             min="0"
@@ -210,12 +234,13 @@ export default function QuotaPanel({ email }: { email: string }) {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 shrink-0"
+          className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 shrink-0 h-[34px]"
         >
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
 
+      {/* Plan Editor */}
       <div className="flex items-end gap-3">
         <div className="flex-1">
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subscription Plan</label>

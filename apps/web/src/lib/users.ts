@@ -51,6 +51,14 @@ export interface AppUser {
 
 const COLLECTION = "users";
 
+function maskEmail(email: string): string {
+  const lower = email.trim().toLowerCase();
+  const [local, domain] = lower.split("@");
+  if (!local || !domain) return "***";
+  const head = local.slice(0, 2);
+  return `${head}***@${domain}`;
+}
+
 /**
  * Get user by email
  */
@@ -93,7 +101,7 @@ export async function findOrCreateUser(
     email: key,
     name,
     image,
-    status: "pending",
+    status: "approved",
     createdAt: now,
     updatedAt: now,
   };
@@ -140,7 +148,7 @@ export async function findOrCreateUser(
         illustration: [],
       } satisfies UserCredits,
     });
-  console.log(`[users] new pending user: ${key}`);
+  console.log(`[users] new pending user: ${maskEmail(key)}`);
   return newUser;
 }
 
@@ -156,7 +164,7 @@ export async function updateUserStatus(
     status,
     updatedAt: new Date().toISOString(),
   });
-  console.log(`[users] ${key} -> ${status}`);
+  console.log(`[users] ${maskEmail(key)} -> ${status}`);
 }
 
 /**
@@ -179,5 +187,5 @@ export async function listUsers(filterStatus?: UserStatus): Promise<AppUser[]> {
 export async function deleteUser(email: string): Promise<void> {
   const key = email.toLowerCase();
   await getDb().collection(COLLECTION).doc(key).delete();
-  console.log(`[users] deleted: ${key}`);
+  console.log(`[users] deleted: ${maskEmail(key)}`);
 }

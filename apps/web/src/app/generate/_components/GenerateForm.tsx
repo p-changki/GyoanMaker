@@ -35,7 +35,7 @@ export default function GenerateForm({
   onDuplicateClose,
 }: GenerateFormProps) {
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12 sm:py-16 space-y-10 sm:space-y-12">
+    <div className="max-w-5xl mx-auto px-4 py-12 sm:py-16 pb-28 space-y-10 sm:space-y-12">
       <div className="text-center space-y-4">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
           Generate Handout
@@ -70,6 +70,8 @@ export default function GenerateForm({
 
       <GenerateSubmitSection
         passageCount={passageCount}
+        contentLevel={contentLevel}
+        modelTier={modelTier}
         limitError={limitError}
         isSubmitDisabled={isSubmitDisabled}
         isSubmitting={isSubmitting}
