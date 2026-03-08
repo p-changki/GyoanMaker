@@ -3,10 +3,9 @@ import { auth } from "@/auth";
 import {
   getHandout,
   deleteHandout,
-  listHandouts,
   updateHandoutTitle,
 } from "@/lib/handouts";
-import { setStorageUsed } from "@/lib/quota";
+import { incrementStorageUsed } from "@/lib/quota";
 
 /**
  * GET /api/handouts/[id] — Get handout detail
@@ -116,8 +115,8 @@ export async function DELETE(
       );
     }
 
-    const remaining = await listHandouts(session.user.email, 1000);
-    await setStorageUsed(session.user.email, remaining.length);
+    // Atomic decrement (O(1)) instead of listing all remaining handouts
+    await incrementStorageUsed(session.user.email, -1);
 
     return NextResponse.json({ ok: true, id });
   } catch (error) {

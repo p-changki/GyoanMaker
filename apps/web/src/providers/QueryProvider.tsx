@@ -5,8 +5,17 @@ import {
   QueryClientProvider,
   type QueryClientConfig,
 } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import dynamic from "next/dynamic";
 import { useState } from "react";
+
+const ReactQueryDevtools =
+  process.env.NODE_ENV === "development"
+    ? dynamic(() =>
+        import("@tanstack/react-query-devtools").then((mod) => ({
+          default: mod.ReactQueryDevtools,
+        }))
+      )
+    : () => null;
 
 const queryClientConfig: QueryClientConfig = {
   defaultOptions: {
