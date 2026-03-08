@@ -1,6 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Pagination from "./Pagination";
 
 interface UsageLogRow {
   requestId: string;
@@ -15,6 +17,8 @@ interface UsageResponse {
   logs: UsageLogRow[];
   summary: { totalRequests: number; totalPassages: number };
 }
+
+const PAGE_SIZE = 10;
 
 function formatDateKr(iso: string): string {
   const d = new Date(iso);
@@ -50,6 +54,19 @@ export default function UsageHistorySection() {
     queryFn: fetchUsage,
   });
 
+  const [page, setPage] = useState(1);
+
+  const totalPages = useMemo(
+    () => Math.ceil((data?.logs.length ?? 0) / PAGE_SIZE),
+    [data],
+  );
+
+  const pageLogs = useMemo(() => {
+    if (!data) return [];
+    const start = (page - 1) * PAGE_SIZE;
+    return data.logs.slice(start, start + PAGE_SIZE);
+  }, [data, page]);
+
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -68,40 +85,47 @@ export default function UsageHistorySection() {
       ) : !data || data.logs.length === 0 ? (
         <p className="mt-3 text-sm text-gray-400">사용 이력이 없습니다</p>
       ) : (
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
-                <th className="pb-2 font-medium">날짜</th>
-                <th className="pb-2 font-medium">모델</th>
-                <th className="pb-2 font-medium">레벨</th>
-                <th className="pb-2 text-right font-medium">지문</th>
-                <th className="pb-2 text-right font-medium">토큰</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {data.logs.map((log) => (
-                <tr key={log.requestId}>
-                  <td className="py-2.5 text-gray-500">
-                    {formatDateKr(log.createdAt)}
-                  </td>
-                  <td className="py-2.5 text-gray-700">
-                    {modelLabel(log.model)}
-                  </td>
-                  <td className="py-2.5 text-gray-700">
-                    {levelLabel(log.level)}
-                  </td>
-                  <td className="py-2.5 text-right font-medium text-gray-900">
-                    {log.passageCount}
-                  </td>
-                  <td className="py-2.5 text-right text-gray-500">
-                    {log.totalTokens.toLocaleString()}
-                  </td>
+        <>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
+                  <th className="pb-2 font-medium">날짜</th>
+                  <th className="pb-2 font-medium">모델</th>
+                  <th className="pb-2 font-medium">레벨</th>
+                  <th className="pb-2 text-right font-medium">지문</th>
+                  <th className="pb-2 text-right font-medium">토큰</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {pageLogs.map((log) => (
+                  <tr key={log.requestId}>
+                    <td className="py-2.5 text-gray-500">
+                      {formatDateKr(log.createdAt)}
+                    </td>
+                    <td className="py-2.5 text-gray-700">
+                      {modelLabel(log.model)}
+                    </td>
+                    <td className="py-2.5 text-gray-700">
+                      {levelLabel(log.level)}
+                    </td>
+                    <td className="py-2.5 text-right font-medium text-gray-900">
+                      {log.passageCount}
+                    </td>
+                    <td className="py-2.5 text-right text-gray-500">
+                      {log.totalTokens.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </section>
   );
