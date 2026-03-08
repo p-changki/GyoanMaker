@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { generatePassages } from "@/services/api";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
@@ -22,6 +22,16 @@ import { useCompileActions } from "./useCompileActions";
 export function useCompileData() {
   const searchParams = useSearchParams();
   const handoutId = searchParams.get("handoutId");
+  const queryClient = useQueryClient();
+
+  // Invalidate template settings on mount so manual edits don't persist across navigations
+  const didInvalidateRef = useRef(false);
+  useEffect(() => {
+    if (!didInvalidateRef.current) {
+      didInvalidateRef.current = true;
+      queryClient.invalidateQueries({ queryKey: ["templateSettings"] });
+    }
+  }, [queryClient]);
 
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exportProgress, setExportProgress] = useState({ current: 0, total: 0 });
@@ -88,8 +98,12 @@ export function useCompileData() {
     },
   });
 
+  // Apply saved template settings only once per mount to avoid overriding
+  // manual changes when templateQuery refetches (e.g., window refocus).
+  const didApplyTemplateRef = useRef(false);
   useEffect(() => {
-    if (templateQuery.data) {
+    if (templateQuery.data && !didApplyTemplateRef.current) {
+      didApplyTemplateRef.current = true;
       useTemplateSettingsStore.getState().loadSettings(templateQuery.data);
 
       // Apply default texts only for new handouts (not saved ones)

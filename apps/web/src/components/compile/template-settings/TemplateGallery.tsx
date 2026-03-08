@@ -79,7 +79,7 @@ export default function TemplateGallery() {
           onClick={() => setShowModal(true)}
           className="text-[10px] font-bold text-[#5E35B1] hover:text-[#4527A0] transition-colors"
         >
-          + 현재 설정 저장
+          + 템플릿으로 저장
         </button>
       </div>
 

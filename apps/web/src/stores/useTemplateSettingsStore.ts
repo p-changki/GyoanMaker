@@ -58,7 +58,25 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
 
     setAvatarBase64: (avatarBase64) => set({ avatarBase64 }),
 
-    setThemePreset: (themePreset) => set({ themePreset }),
+    setThemePreset: (themePreset) =>
+      set((state) => {
+        // Clear color overrides in section styles so the new theme colors apply.
+        const clearColors = (s: import("@gyoanmaker/shared/types").SectionStyleConfig | undefined) =>
+          s ? { ...s, bgColor: "", titleColor: "", textColor: "" } : undefined;
+        return {
+          themePreset,
+          useCustomTheme: false,
+          headerStyle: clearColors(state.headerStyle),
+          headerBadgeStyle: clearColors(state.headerBadgeStyle),
+          page1BodyStyle: clearColors(state.page1BodyStyle),
+          page2HeaderStyle: clearColors(state.page2HeaderStyle),
+          sectionStyles: state.sectionStyles
+            ? Object.fromEntries(
+                Object.entries(state.sectionStyles).map(([k, v]) => [k, clearColors(v)])
+              ) as typeof state.sectionStyles
+            : undefined,
+        };
+      }),
 
     setDefaultHeaderText: (defaultHeaderText) => set({ defaultHeaderText }),
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { TemplateSettingsPanel } from "./template-settings";
+import TemplateGuideModal, { GUIDE_DISMISSED_KEY } from "./template-settings/TemplateGuideModal";
 
 type TabKey = "actions" | "settings";
 
@@ -39,6 +40,7 @@ export default function ControlPanel({
   );
 
   const [activeTab, setActiveTab] = useState<TabKey>("actions");
+  const [showGuide, setShowGuide] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
 
   const TABS: { key: TabKey; label: string }[] = [
@@ -54,7 +56,12 @@ export default function ControlPanel({
           <button
             key={tab.key}
             type="button"
-            onClick={() => setActiveTab(tab.key)}
+            onClick={() => {
+              setActiveTab(tab.key);
+              if (tab.key === "settings" && !localStorage.getItem(GUIDE_DISMISSED_KEY)) {
+                setShowGuide(true);
+              }
+            }}
             className={`flex-1 py-3.5 text-xs font-bold tracking-wide transition-colors ${
               activeTab === tab.key
                 ? "text-[#5E35B1] border-b-2 border-[#5E35B1] bg-white"
@@ -184,7 +191,20 @@ export default function ControlPanel({
             </section>
           </div>
         ) : (
-          <TemplateSettingsPanel />
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => setShowGuide(true)}
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-gray-400 hover:text-[#5E35B1] border border-dashed border-gray-200 hover:border-[#5E35B1]/30 rounded-lg transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <title>Guide</title>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              사용 가이드
+            </button>
+            <TemplateSettingsPanel />
+          </div>
         )}
       </div>
 
@@ -193,6 +213,8 @@ export default function ControlPanel({
           GyoanMaker Enterprise v1.0
         </p>
       </div>
+
+      <TemplateGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
     </aside>
   );
 }
