@@ -17,7 +17,7 @@ export default function SampleGallery() {
   const { data: samples = [], isLoading } = useQuery({
     queryKey: ["illustration-samples"],
     queryFn: fetchSamples,
-    staleTime: 30_000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const activateMutation = useMutation({

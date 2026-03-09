@@ -43,6 +43,7 @@ export default function SampleCard({
           alt={sample.prompt}
           fill
           sizes="(max-width: 640px) 50vw, 33vw"
+          quality={75}
           className="object-cover transition-transform group-hover:scale-105"
         />
       </div>
