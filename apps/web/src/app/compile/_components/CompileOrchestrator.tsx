@@ -95,7 +95,7 @@ export default function CompileOrchestrator() {
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4 text-center px-6">
           <p className="text-sm font-black text-red-600 uppercase tracking-widest">
-            Compile Error
+            편집 오류
           </p>
           <p className="text-sm text-gray-600 font-medium">{errorMessage}</p>
           <button
@@ -103,7 +103,7 @@ export default function CompileOrchestrator() {
             onClick={() => router.push("/generate")}
             className="px-6 py-2 bg-[#5E35B1] text-white rounded-xl font-bold text-sm"
           >
-            Go Home
+            홈으로
           </button>
         </div>
       </div>
@@ -115,14 +115,14 @@ export default function CompileOrchestrator() {
       <div className="h-screen w-full flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
           <p className="text-sm font-black text-gray-500 uppercase tracking-widest">
-            No input data found
+            입력 데이터 없음
           </p>
           <button
             type="button"
             onClick={() => router.push("/generate")}
             className="px-6 py-2 bg-[#5E35B1] text-white rounded-xl font-bold text-sm"
           >
-            Go Home
+            홈으로
           </button>
         </div>
       </div>
@@ -166,8 +166,8 @@ export default function CompileOrchestrator() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-lg font-bold text-gray-900">Save Handout</h3>
-              <p className="text-sm text-gray-500 mt-1">Enter a name for the handout.</p>
+              <h3 className="text-lg font-bold text-gray-900">교안 저장</h3>
+              <p className="text-sm text-gray-500 mt-1">교안 이름을 입력하세요.</p>
             </div>
             <div className="px-6 py-5">
               <input
@@ -181,7 +181,7 @@ export default function CompileOrchestrator() {
                   if (e.key === "Enter") handleSaveConfirm();
                 }}
               />
-              <p className="text-xs text-gray-400 mt-2">Leave empty to use today&apos;s date.</p>
+              <p className="text-xs text-gray-400 mt-2">비워두면 오늘 날짜가 사용됩니다.</p>
             </div>
             <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
               <button
@@ -189,14 +189,14 @@ export default function CompileOrchestrator() {
                 onClick={() => setShowSaveModal(false)}
                 className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
               >
-                Cancel
+                취소
               </button>
               <button
                 type="button"
                 onClick={handleSaveConfirm}
                 className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
               >
-                Save
+                저장
               </button>
             </div>
           </div>

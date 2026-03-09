@@ -13,7 +13,7 @@ interface BillingKeyButtonProps {
 }
 
 export default function BillingKeyButton({
-  label = "Register Card",
+  label = "카드 등록",
   className,
   disabled,
 }: BillingKeyButtonProps) {
@@ -32,7 +32,7 @@ export default function BillingKeyButton({
     try {
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!clientKey) {
-        throw new Error("NEXT_PUBLIC_TOSS_CLIENT_KEY is not configured.");
+        throw new Error("결제 키가 설정되지 않았습니다.");
       }
 
       const tossPayments = await loadTossPayments(clientKey);
@@ -50,7 +50,7 @@ export default function BillingKeyButton({
       });
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Failed to start card registration.";
+        err instanceof Error ? err.message : "카드 등록을 시작하지 못했습니다.";
       setError(message);
       setIsLoading(false);
       return;
@@ -71,7 +71,7 @@ export default function BillingKeyButton({
           className
         )}
       >
-        {isLoading ? "Redirecting..." : label}
+        {isLoading ? "이동 중..." : label}
       </button>
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>

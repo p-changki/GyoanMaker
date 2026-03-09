@@ -18,66 +18,66 @@ const PLAN_META: Record<
   { label: string; description: string; features: string[] }
 > = {
   free: {
-    label: "Free",
-    description: "Perfect for trying out the service",
+    label: "무료",
+    description: "서비스를 체험해 보세요",
     features: [
-      "10 Speed gen / mo",
-      "5 Precision gen / mo",
-      "5 Illustration credits / mo",
-      "10 Illustration samples",
-      "3 Style tests / day",
-      "Up to 3 handouts",
-      "Basic PDF export",
+      "10 속도 생성 / 월",
+      "5 정밀 생성 / 월",
+      "5 삽화 크레딧 / 월",
+      "10 삽화 샘플",
+      "3 스타일 테스트 / 일",
+      "최대 3개 교안",
+      "기본 PDF 내보내기",
     ],
   },
   basic: {
-    label: "Basic",
-    description: "For individual tutors & small academies",
+    label: "베이직",
+    description: "개인 과외·소규모 학원용",
     features: [
-      "250 Speed gen / mo",
-      "30 Precision gen / mo",
-      "10 Illustration credits / mo",
-      "20 Illustration samples",
-      "5 Style tests / day",
-      "Unlimited storage",
-      "PDF export",
-      "Credit top-up",
+      "250 속도 생성 / 월",
+      "30 정밀 생성 / 월",
+      "10 삽화 크레딧 / 월",
+      "20 삽화 샘플",
+      "5 스타일 테스트 / 일",
+      "무제한 저장",
+      "PDF 내보내기",
+      "크레딧 충전",
     ],
   },
   standard: {
-    label: "Standard",
-    description: "For mid-size academies",
+    label: "스탠다드",
+    description: "중형 학원용",
     features: [
-      "500 Speed gen / mo",
-      "120 Precision gen / mo",
-      "30 Illustration credits / mo",
-      "30 Illustration samples",
-      "10 Style tests / day",
-      "Unlimited storage",
-      "PDF export",
-      "Credit top-up",
-      "Priority processing",
+      "500 속도 생성 / 월",
+      "120 정밀 생성 / 월",
+      "30 삽화 크레딧 / 월",
+      "30 삽화 샘플",
+      "10 스타일 테스트 / 일",
+      "무제한 저장",
+      "PDF 내보내기",
+      "크레딧 충전",
+      "우선 처리",
     ],
   },
   pro: {
-    label: "Pro",
-    description: "For large academies & franchises",
+    label: "프로",
+    description: "대형 학원·프랜차이즈용",
     features: [
-      "1,000 Speed gen / mo",
-      "400 Precision gen / mo",
-      "60 Illustration credits / mo",
-      "30 Illustration samples",
-      "10 Style tests / day",
-      "Unlimited storage",
-      "PDF export",
-      "Credit top-up",
-      "Priority processing",
+      "1,000 속도 생성 / 월",
+      "400 정밀 생성 / 월",
+      "60 삽화 크레딧 / 월",
+      "30 삽화 샘플",
+      "10 스타일 테스트 / 일",
+      "무제한 저장",
+      "PDF 내보내기",
+      "크레딧 충전",
+      "우선 처리",
     ],
   },
 };
 
 function formatPrice(price: number): string {
-  if (price === 0) return "Free";
+  if (price === 0) return "무료";
   return price.toLocaleString("ko-KR");
 }
 
@@ -126,11 +126,11 @@ export default function PricingCard({
             className="h-3.5 w-3.5 fill-current text-white"
             viewBox="0 0 24 24"
           >
-            <title>Popular</title>
+            <title>인기</title>
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
           <span className="ml-1 text-xs font-semibold text-white">
-            Popular
+            인기
           </span>
         </div>
       )}
@@ -143,7 +143,7 @@ export default function PricingCard({
         <div className="mt-4 flex items-baseline justify-center gap-1">
           {plan.price === 0 ? (
             <span className="text-3xl font-bold tracking-tight text-gray-900">
-              Free
+              무료
             </span>
           ) : (
             <>
@@ -151,13 +151,13 @@ export default function PricingCard({
               <span className="text-3xl font-bold tracking-tight text-gray-900">
                 {formatPrice(plan.price)}
               </span>
-              <span className="text-xs font-medium text-gray-400">/mo</span>
+              <span className="text-xs font-medium text-gray-400">/월</span>
             </>
           )}
         </div>
 
         <p className="mt-1 text-[11px] text-gray-400">
-          {plan.price === 0 ? "No credit card required" : "VAT excluded"}
+          {plan.price === 0 ? "신용카드 불필요" : "VAT 별도"}
         </p>
 
         {/* Features */}
@@ -176,7 +176,7 @@ export default function PricingCard({
         {isCurrent && (
           <div className="mb-2 text-center">
             <span className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-600">
-              Current Plan
+              현재 플랜
             </span>
           </div>
         )}
@@ -195,7 +195,7 @@ export default function PricingCard({
                 : "bg-gray-900 text-white hover:bg-gray-800 hover:ring-2 hover:ring-gray-900 hover:ring-offset-1"
           )}
         >
-          {isCurrent ? "Current Plan" : "Get Started"}
+          {isCurrent ? "현재 플랜" : "시작하기"}
         </button>
 
         <p className="mt-3 text-[11px] leading-4 text-gray-400">

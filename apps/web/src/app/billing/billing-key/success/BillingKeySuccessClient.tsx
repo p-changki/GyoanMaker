@@ -42,7 +42,7 @@ export default function BillingKeySuccessClient({
       if (!res.ok) {
         const payload = (await res.json().catch(() => null)) as RegisterErrorPayload | null;
         throw new Error(
-          payload?.error?.message ?? "Billing key registration failed."
+          payload?.error?.message ?? "빌링키 등록에 실패했습니다."
         );
       }
 
@@ -51,7 +51,7 @@ export default function BillingKeySuccessClient({
 
     registerKey().catch((err) => {
       const message =
-        err instanceof Error ? err.message : "Billing key registration failed.";
+        err instanceof Error ? err.message : "빌링키 등록에 실패했습니다.";
       setError(message);
     });
   }, [authKey, customerKey, hasInvalidParams, router]);
@@ -60,17 +60,17 @@ export default function BillingKeySuccessClient({
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
         <h1 className="text-2xl font-bold text-gray-900">
-          Card Registration Failed
+          카드 등록 실패
         </h1>
         <p className="mt-3 text-sm text-red-600">
-          Invalid billing key parameters.
+          빌링키 파라미터가 유효하지 않습니다.
         </p>
         <div className="mt-6">
           <Link
             href="/account"
             className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
           >
-            Go to Account
+            내 계정으로
           </Link>
         </div>
       </main>
@@ -81,7 +81,7 @@ export default function BillingKeySuccessClient({
     return (
       <main className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
         <h1 className="text-2xl font-bold text-gray-900">
-          Card Registration Failed
+          카드 등록 실패
         </h1>
         <p className="mt-3 text-sm text-red-600">{error}</p>
         <div className="mt-6">
@@ -89,7 +89,7 @@ export default function BillingKeySuccessClient({
             href="/account"
             className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white"
           >
-            Go to Account
+            내 계정으로
           </Link>
         </div>
       </main>
@@ -99,10 +99,10 @@ export default function BillingKeySuccessClient({
   return (
     <main className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-4 text-center">
       <h1 className="text-2xl font-bold text-gray-900">
-        Registering Card...
+        카드 등록 중...
       </h1>
       <p className="mt-3 text-sm text-gray-500">
-        Please wait while we register your payment method.
+        결제 수단을 등록하는 동안 잠시 기다려 주세요.
       </p>
     </main>
   );

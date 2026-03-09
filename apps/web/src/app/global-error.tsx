@@ -77,7 +77,7 @@ export default function GlobalError({
               margin: "0 0 0.5rem",
             }}
           >
-            Something went wrong
+            오류가 발생했습니다
           </h1>
           <p
             style={{
@@ -87,9 +87,9 @@ export default function GlobalError({
               margin: "0 0 1.5rem",
             }}
           >
-            A critical error occurred.
+            심각한 오류가 발생했습니다.
             <br />
-            Please try again.
+            다시 시도해 주세요.
           </p>
 
           {error.digest && (
@@ -121,7 +121,7 @@ export default function GlobalError({
                 cursor: "pointer",
               }}
             >
-              Try again
+              다시 시도
             </button>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error renders outside Next.js layout */}
             <a
@@ -139,7 +139,7 @@ export default function GlobalError({
                 textAlign: "center",
               }}
             >
-              Home
+              홈으로
             </a>
           </div>
         </div>

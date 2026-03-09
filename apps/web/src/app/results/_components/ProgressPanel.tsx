@@ -31,23 +31,23 @@ export default function ProgressPanel({
 
       {total > 0 && (
         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-          Progress {processed}/{total} ({progressPercent}%)
-          {completed > 0 ? ` · Done ${completed}` : ""}
-          {failed > 0 ? ` · Failed ${failed}` : ""}
-          {generating > 0 ? ` · Generating ${generating}` : ""}
-          {etaLabel && generating > 0 ? ` · ETA ${etaLabel}` : ""}
+          진행 {processed}/{total} ({progressPercent}%)
+          {completed > 0 ? ` · 완료 ${completed}` : ""}
+          {failed > 0 ? ` · 실패 ${failed}` : ""}
+          {generating > 0 ? ` · 생성 중 ${generating}` : ""}
+          {etaLabel && generating > 0 ? ` · 예상 시간 ${etaLabel}` : ""}
         </p>
       )}
 
       {apiError && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800">
-          <strong>API Error:</strong> {apiError}
+          <strong>API 오류:</strong> {apiError}
         </div>
       )}
 
       {failedIds && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900">
-          <strong>Failed items:</strong> {failedIds}
+          <strong>실패 항목:</strong> {failedIds}
         </div>
       )}
     </>

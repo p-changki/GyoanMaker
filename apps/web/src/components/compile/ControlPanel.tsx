@@ -102,8 +102,8 @@ export default function ControlPanel({
   const [showIllustrationOptions, setShowIllustrationOptions] = useState(false);
 
   const TABS: { key: TabKey; label: string }[] = [
-    { key: "actions", label: "Actions" },
-    { key: "settings", label: "Settings" },
+    { key: "actions", label: "실행" },
+    { key: "settings", label: "설정" },
   ];
 
   const statusLabel = STATUS_LABELS[illustrationProgress.status] ?? illustrationProgress.status;
@@ -143,7 +143,7 @@ export default function ControlPanel({
                 {isApplying ? (
                   <div className="space-y-4">
                     <div className="flex justify-between items-end">
-                      <span className="text-xs font-black text-[#5E35B1]">Applying...</span>
+                      <span className="text-xs font-black text-[#5E35B1]">적용 중...</span>
                       <span className="text-[10px] font-bold text-gray-400">
                         {progress} / {total}
                       </span>
@@ -161,13 +161,11 @@ export default function ControlPanel({
                     onClick={onApplyTemplate}
                     className="w-full py-4 bg-[#5E35B1] text-white rounded-xl font-black text-sm shadow-md shadow-purple-200 hover:scale-[1.02] active:scale-[0.98] transition-[transform,background-color]"
                   >
-                    Apply Handout Template
+                    교안 템플릿 적용
                   </button>
                 )}
                 <p className="text-[10px] text-gray-400 font-medium mt-3 text-center leading-relaxed">
-                  * Converts 20 AI-generated analysis results
-                  <br />
-                  into handout layout.
+                  * AI 분석 결과를 교안 레이아웃으로 변환합니다.
                 </p>
               </div>
             </section>
@@ -267,7 +265,7 @@ export default function ControlPanel({
             {/* Quick Actions */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
-                Quick Actions
+                빠른 실행
               </p>
               {onSave && (
                 <button
@@ -280,7 +278,7 @@ export default function ControlPanel({
                       : "bg-white border border-gray-200 text-gray-700 hover:border-[#5E35B1] hover:text-[#5E35B1]"
                   } disabled:opacity-40`}
                 >
-                  {isSaving ? "Saving..." : saveSuccess ? "Saved!" : "Save Handout"}
+                  {isSaving ? "저장 중..." : saveSuccess ? "저장됨!" : "교안 저장"}
                 </button>
               )}
               <button
@@ -289,7 +287,7 @@ export default function ControlPanel({
                 disabled={!isReady}
                 className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
               >
-                Copy All Text
+                전체 텍스트 복사
               </button>
               <button
                 type="button"
@@ -297,18 +295,18 @@ export default function ControlPanel({
                 disabled={!isReady}
                 className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
               >
-                Download TXT
+                TXT 다운로드
               </button>
             </section>
 
             {/* PDF Export */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
-                PDF Export
+                PDF 내보내기
               </p>
               <input
                 type="text"
-                placeholder="Enter file name (optional)"
+                placeholder="파일명 입력 (선택)"
                 value={pdfFileName}
                 onChange={(e) => setPdfFileName(e.target.value)}
                 disabled={!isReady || isExportingPdf}
@@ -323,15 +321,15 @@ export default function ControlPanel({
                 {isExportingPdf ? (
                   <>
                     <span className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                    Exporting PDF... (please wait)
+                    PDF 내보내기 중... (잠시만 기다려 주세요)
                   </>
                 ) : (
-                  "Download PDF"
+                  "PDF 다운로드"
                 )}
               </button>
               {isExportingPdf && exportTotal > 0 && (
                 <p className="text-[10px] text-gray-400 font-bold text-center">
-                  Progress {exportCurrent} / {exportTotal}
+                  진행 {exportCurrent} / {exportTotal}
                 </p>
               )}
             </section>

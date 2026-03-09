@@ -67,7 +67,7 @@ export default function TemplateGuideModal({
             className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <title>Close</title>
+              <title>닫기</title>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -109,27 +109,27 @@ export default function TemplateGuideModal({
           {/* Step 2: Actions Tab */}
           <section className="space-y-3">
             <SectionHeader
-              icon={<TabIcon label="Actions" />}
-              title="Actions 탭 — 교안 생성 & 내보내기"
+              icon={<TabIcon label="실행" />}
+              title="실행 탭 — 교안 생성 & 내보내기"
             />
             <div className="space-y-2">
               <FeatureRow
-                badge="Apply Handout Template"
+                badge="교안 템플릿 적용"
                 badgeColor="bg-[#5E35B1] text-white"
                 desc="AI 분석 결과 20개를 교안 레이아웃으로 변환합니다. 이 버튼을 먼저 눌러주세요."
               />
               <FeatureRow
-                badge="Save Handout"
+                badge="교안 저장"
                 badgeColor="bg-white border border-gray-200 text-gray-700"
                 desc="현재 교안을 대시보드에 저장합니다. 나중에 다시 불러올 수 있습니다."
               />
               <FeatureRow
-                badge="Copy All / Download TXT"
+                badge="전체 복사 / TXT 다운로드"
                 badgeColor="bg-white border border-gray-200 text-gray-700"
                 desc="교안 텍스트를 클립보드에 복사하거나 TXT 파일로 다운로드합니다."
               />
               <FeatureRow
-                badge="Download PDF"
+                badge="PDF 다운로드"
                 badgeColor="bg-gray-50 border border-dashed border-gray-300 text-gray-500"
                 desc="최종 교안을 PDF 파일로 내보냅니다. 파일명을 직접 지정할 수도 있습니다."
               />
@@ -141,8 +141,8 @@ export default function TemplateGuideModal({
           {/* Step 3: Settings Tab */}
           <section className="space-y-3">
             <SectionHeader
-              icon={<TabIcon label="Settings" />}
-              title="Settings 탭 — 교안 디자인 커스터마이징"
+              icon={<TabIcon label="설정" />}
+              title="설정 탭 — 교안 디자인 커스터마이징"
             />
             <div className="space-y-2">
               <SettingRow emoji="🏫" title="브랜딩" desc="학원 로고와 캐릭터 이미지를 업로드합니다. 교안 상단과 2페이지에 표시됩니다." />
@@ -204,7 +204,7 @@ export default function TemplateGuideModal({
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-md border border-gray-200 text-[10px] font-medium">
                   <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <title>Edit hint</title>
+                    <title>편집 힌트</title>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                   연필 아이콘
@@ -325,7 +325,7 @@ function OverviewIcon() {
   return (
     <div className="w-6 h-6 rounded-md bg-purple-50 flex items-center justify-center">
       <svg className="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <title>Overview</title>
+        <title>개요</title>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
     </div>
@@ -336,7 +336,7 @@ function SaveIcon() {
   return (
     <div className="w-6 h-6 rounded-md bg-blue-50 flex items-center justify-center">
       <svg className="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <title>Save</title>
+        <title>저장</title>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
       </svg>
     </div>
@@ -347,7 +347,7 @@ function PencilIcon() {
   return (
     <div className="w-6 h-6 rounded-md bg-amber-50 flex items-center justify-center">
       <svg className="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <title>Edit</title>
+        <title>편집</title>
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     </div>

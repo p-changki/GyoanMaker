@@ -11,15 +11,15 @@ export default function QuotaExhaustedBanner({
 }: QuotaExhaustedBannerProps) {
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-      You have used all {model === "flash" ? "Speed" : "Precision"} mode generations.{" "}
+      {model === "flash" ? "속도" : "정밀"} 모드 생성 횟수를 모두 사용했습니다.{" "}
       <Link href="/account" className="font-bold underline underline-offset-2">
-        Top up
+        크레딧 충전
       </Link>{" "}
-      or{" "}
+      또는{" "}
       <Link href="/pricing" className="font-bold underline underline-offset-2">
-        upgrade your plan
+        요금제 업그레이드
       </Link>
-      .
+      를 확인하세요.
     </div>
   );
 }

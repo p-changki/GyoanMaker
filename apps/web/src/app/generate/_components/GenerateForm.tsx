@@ -38,11 +38,11 @@ export default function GenerateForm({
     <div className="max-w-5xl mx-auto px-4 py-12 sm:py-16 pb-28 space-y-10 sm:space-y-12">
       <div className="text-center space-y-4">
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">
-          Generate Handout
+          교안 생성
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-          Enter English passages to auto-generate custom handouts. <br className="hidden sm:block" />
-          A premium handout creation tool for educators.
+          영어 지문을 입력하면 맞춤 교안을 자동으로 생성합니다. <br className="hidden sm:block" />
+          교육자를 위한 프리미엄 교안 제작 도구.
         </p>
       </div>
 

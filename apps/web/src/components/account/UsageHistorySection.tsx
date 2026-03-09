@@ -72,7 +72,7 @@ export default function UsageHistorySection({ embedded }: { embedded?: boolean }
       <div className="flex items-center justify-between">
         {!embedded && (
           <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
-            Usage History
+            사용 내역
           </h3>
         )}
         {data && data.summary.totalRequests > 0 && (

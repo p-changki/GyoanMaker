@@ -43,11 +43,11 @@ export default function PassageCard({
                     : "text-amber-600 bg-amber-50"
               }`}
             >
-              {words} words
-              {status === "short" && " (short)"}
-              {status === "long" && " (long)"}
+              {words} 단어
+              {status === "short" && " (짧음)"}
+              {status === "long" && " (김)"}
               {status === "over_limit" &&
-                ` (exceeds ${MAX_WORDS_PER_PASSAGE})`}
+                ` (${MAX_WORDS_PER_PASSAGE} 초과)`}
             </span>
           )}
         </div>
@@ -77,7 +77,7 @@ export default function PassageCard({
       </div>
       <textarea
         className="w-full h-32 p-3 text-sm border border-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-all placeholder:text-gray-300"
-        placeholder="Enter an English passage."
+        placeholder="영어 지문을 입력하세요."
         value={text}
         onChange={(e) => onChange(e.target.value)}
       />

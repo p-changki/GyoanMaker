@@ -106,7 +106,7 @@ export default function PaymentHistorySection({ embedded }: { embedded?: boolean
       <div className="flex items-center justify-between">
         {!embedded && (
           <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
-            Payment History
+            결제 내역
           </h3>
         )}
         {orders && orders.length > 0 && (

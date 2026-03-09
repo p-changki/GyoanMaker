@@ -38,10 +38,10 @@ export default function SectionNav({ onNavigate: onNavCallback }: SectionNavProp
     <aside className="w-full h-full bg-white border-r border-gray-200 overflow-y-auto custom-scrollbar flex flex-col">
       <div className="p-6 border-b border-gray-100 bg-gray-50/50">
         <h2 className="text-sm font-black text-[#5E35B1] uppercase tracking-wider">
-          Section List
+          섹션 목록
         </h2>
         <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase">
-          Total {activeIds.length} Passages
+          총 {activeIds.length}개 지문
         </p>
       </div>
 
@@ -87,7 +87,7 @@ const SectionNavItem = memo(function SectionNavItem({
           {id}
         </span>
         <span className="text-sm font-bold tracking-tight">
-          Passage {id.slice(1)}
+          지문 {id.slice(1)}
         </span>
       </div>
 

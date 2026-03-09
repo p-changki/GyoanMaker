@@ -5,30 +5,30 @@ import { motion } from "framer-motion";
 const STEPS = [
   {
     number: 1,
-    title: "Input Passages",
+    title: "지문 입력",
     description:
-      "Paste English passages as a text block or add them individually as cards.",
+      "영어 지문을 텍스트 블록으로 붙여넣거나 카드별로 개별 추가하세요.",
     color: { bg: "bg-blue-100", text: "text-blue-700" },
   },
   {
     number: 2,
-    title: "Choose Options & Generate",
+    title: "옵션 선택 & 생성",
     description:
-      "Select difficulty level (Advanced/Basic) and generation mode (Precision/Speed). Hit generate and let AI do the work.",
+      "난이도(심화/기본)와 생성 모드(정밀/속도)를 선택하고 생성 버튼을 누르세요.",
     color: { bg: "bg-indigo-100", text: "text-indigo-700" },
   },
   {
     number: 3,
-    title: "Add Illustrations",
+    title: "삽화 추가",
     description:
-      "Apply AI-generated illustrations using preset concepts or your own custom styles.",
+      "프리셋 컨셉이나 커스텀 스타일로 AI 삽화를 적용하세요.",
     color: { bg: "bg-pink-100", text: "text-pink-700" },
   },
   {
     number: 4,
-    title: "Customize & Export",
+    title: "커스터마이징 & 내보내기",
     description:
-      "Fine-tune with the Template Studio, edit inline, then download as a print-ready PDF.",
+      "템플릿 스튜디오로 세부 조정 후 인쇄용 PDF로 다운로드하세요.",
     color: { bg: "bg-emerald-100", text: "text-emerald-700" },
   },
 ] as const;
@@ -68,10 +68,10 @@ export default function HowItWorksSection() {
           className="mb-16 text-center"
         >
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            How It Works
+            이용 방법
           </h2>
           <p className="mt-4 text-lg text-gray-500">
-            Create a complete handout in 4 simple steps
+            4단계로 완성하는 영어 교안
           </p>
         </motion.div>
 

@@ -38,12 +38,12 @@ export default function Error({
 
           <div>
             <h1 className="text-2xl font-extrabold text-gray-900">
-              Something went wrong
+              오류가 발생했습니다
             </h1>
             <p className="mt-2 text-gray-500 text-sm leading-relaxed">
-              An unexpected error occurred.
+              예기치 않은 오류가 발생했습니다.
               <br />
-              Please try again or return to the home page.
+              다시 시도하거나 홈 페이지로 돌아가 주세요.
             </p>
           </div>
 
@@ -59,13 +59,13 @@ export default function Error({
               onClick={reset}
               className="flex-1 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors"
             >
-              Try again
+              다시 시도
             </button>
             <Link
               href="/"
               className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold text-center hover:bg-gray-50 transition-colors"
             >
-              Home
+              홈으로
             </Link>
           </div>
         </div>

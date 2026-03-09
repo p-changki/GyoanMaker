@@ -37,7 +37,7 @@ export default function GenerateOptionsPanel({
                 />
               </svg>
             </div>
-            <h3 className="text-sm font-bold text-gray-900">Difficulty</h3>
+            <h3 className="text-sm font-bold text-gray-900">난이도</h3>
           </div>
           <div className="space-y-3">
             <label
@@ -55,9 +55,9 @@ export default function GenerateOptionsPanel({
                 className="w-4 h-4 mt-0.5 text-emerald-600 border-gray-300 focus:ring-emerald-500"
               />
               <div className="ml-3 min-w-0">
-                <span className="block text-sm font-bold text-gray-900">Advanced</span>
+                <span className="block text-sm font-bold text-gray-900">심화</span>
                 <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
-                  For top-level students, B2~C1 advanced vocabulary
+                  상위권 학생용, B2~C1 고급 어휘
                 </span>
               </div>
             </label>
@@ -76,9 +76,9 @@ export default function GenerateOptionsPanel({
                 className="w-4 h-4 mt-0.5 text-emerald-600 border-gray-300 focus:ring-emerald-500"
               />
               <div className="ml-3 min-w-0">
-                <span className="block text-sm font-bold text-gray-900">Basic</span>
+                <span className="block text-sm font-bold text-gray-900">기본</span>
                 <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">
-                  For mid-level students, A2~B1 easier vocabulary
+                  중위권 학생용, A2~B1 기초 어휘
                 </span>
               </div>
             </label>
@@ -93,7 +93,7 @@ export default function GenerateOptionsPanel({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 className="text-sm font-bold text-gray-900">Generation Mode</h3>
+            <h3 className="text-sm font-bold text-gray-900">생성 모드</h3>
           </div>
           <div className="space-y-3">
             <label
@@ -111,8 +111,8 @@ export default function GenerateOptionsPanel({
                 className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
               <div className="ml-3 min-w-0">
-                <span className="block text-sm font-bold text-gray-900">Precision Mode</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Best quality & accuracy · Slower (30~60s/passage)</span>
+                <span className="block text-sm font-bold text-gray-900">정밀 모드</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">최고 품질 · 느림 (30~60초/지문)</span>
               </div>
             </label>
             <label
@@ -130,8 +130,8 @@ export default function GenerateOptionsPanel({
                 className="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
               <div className="ml-3 min-w-0">
-                <span className="block text-sm font-bold text-gray-900">Speed Mode</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Quick results · Faster (5~10s/passage)</span>
+                <span className="block text-sm font-bold text-gray-900">속도 모드</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">빠른 결과 · 빠름 (5~10초/지문)</span>
               </div>
             </label>
           </div>
@@ -150,7 +150,7 @@ export default function GenerateOptionsPanel({
                 />
               </svg>
             </div>
-            <h3 className="text-sm font-bold text-gray-900">Output Options</h3>
+            <h3 className="text-sm font-bold text-gray-900">출력 옵션</h3>
           </div>
           <div className="space-y-3">
             <div className="flex items-start p-3.5 rounded-xl border border-violet-400 bg-violet-50/40 ring-1 ring-violet-400/30">
@@ -161,8 +161,8 @@ export default function GenerateOptionsPanel({
                 </svg>
               </div>
               <div className="ml-3 min-w-0">
-                <span className="block text-sm font-bold text-gray-900">Copyable Text Block</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Instantly copyable from the results page.</span>
+                <span className="block text-sm font-bold text-gray-900">복사 가능 텍스트</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">결과 페이지에서 바로 복사할 수 있습니다.</span>
               </div>
             </div>
             <label
@@ -179,8 +179,8 @@ export default function GenerateOptionsPanel({
                 className="w-4 h-4 mt-0.5 text-violet-600 border-gray-300 rounded focus:ring-violet-500"
               />
               <div className="ml-3 min-w-0">
-                <span className="block text-sm font-bold text-gray-900">PDF Download</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Generate a printable PDF file.</span>
+                <span className="block text-sm font-bold text-gray-900">PDF 다운로드</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">인쇄용 PDF 파일을 생성합니다.</span>
               </div>
             </label>
           </div>
@@ -201,7 +201,7 @@ export default function GenerateOptionsPanel({
             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <span className="text-sm font-semibold">Not sure which options to choose?</span>
+        <span className="text-sm font-semibold">어떤 옵션을 선택해야 할지 모르겠나요?</span>
       </button>
     </>
   );

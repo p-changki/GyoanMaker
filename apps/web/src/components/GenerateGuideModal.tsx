@@ -50,7 +50,7 @@ export default function GenerateGuideModal({
       <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900">Generation Options Guide</h2>
+          <h2 className="text-lg font-bold text-gray-900">생성 옵션 가이드</h2>
           <button
             type="button"
             onClick={onClose}
@@ -62,7 +62,7 @@ export default function GenerateGuideModal({
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <title>Close</title>
+              <title>닫기</title>
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -95,26 +95,26 @@ export default function GenerateGuideModal({
                 </svg>
               </div>
               <h3 className="text-sm font-bold text-gray-900">
-                Difficulty — Vocabulary level and content depth
+                난이도 — 어휘 수준과 콘텐츠 깊이
               </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
-                <p className="text-sm font-bold text-emerald-700">Advanced</p>
+                <p className="text-sm font-bold text-emerald-700">심화</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                  <li>For top-level exam prep students</li>
-                  <li>B2~C1 advanced vocabulary</li>
-                  <li>3 synonyms, 2 antonyms provided</li>
-                  <li>In-depth paraphrased topic/summary</li>
+                  <li>상위권 시험 대비 학생용</li>
+                  <li>B2~C1 고급 어휘</li>
+                  <li>유의어 3개, 반의어 2개 제공</li>
+                  <li>심층 패러프레이즈 주제문/요약</li>
                 </ul>
               </div>
               <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
-                <p className="text-sm font-bold text-emerald-700">Basic</p>
+                <p className="text-sm font-bold text-emerald-700">기본</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                  <li>For mid-level students</li>
-                  <li>A2~B1 familiar vocabulary</li>
-                  <li>2 synonyms, 1 antonym provided</li>
-                  <li>Simplified comprehension-focused</li>
+                  <li>중위권 학생용</li>
+                  <li>A2~B1 기초 어휘</li>
+                  <li>유의어 2개, 반의어 1개 제공</li>
+                  <li>이해 중심 간소화</li>
                 </ul>
               </div>
             </div>
@@ -142,26 +142,26 @@ export default function GenerateGuideModal({
                 </svg>
               </div>
               <h3 className="text-sm font-bold text-gray-900">
-                Generation Mode — Speed vs. accuracy
+                생성 모드 — 속도 vs. 정확도
               </h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-2">
-                <p className="text-sm font-bold text-blue-700">Precision Mode</p>
+                <p className="text-sm font-bold text-blue-700">정밀 모드</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                  <li>High-accuracy AI engine</li>
-                  <li>~30-60 seconds per passage</li>
-                  <li>Consistent quality output</li>
-                  <li>Recommended for important handouts</li>
+                  <li>고정확도 AI 엔진</li>
+                  <li>지문당 ~30-60초</li>
+                  <li>일관된 품질</li>
+                  <li>중요한 교안에 권장</li>
                 </ul>
               </div>
               <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-2">
-                <p className="text-sm font-bold text-blue-700">Speed Mode</p>
+                <p className="text-sm font-bold text-blue-700">속도 모드</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
-                  <li>Fast-response AI engine</li>
-                  <li>~5-10 seconds per passage</li>
-                  <li>Great for bulk generation</li>
-                  <li>Recommended for drafts or urgent needs</li>
+                  <li>빠른 응답 AI 엔진</li>
+                  <li>지문당 ~5-10초</li>
+                  <li>대량 생성에 적합</li>
+                  <li>초안이나 급한 작업에 권장</li>
                 </ul>
               </div>
             </div>
@@ -171,16 +171,16 @@ export default function GenerateGuideModal({
 
           {/* Recommended Combinations */}
           <section className="space-y-3">
-            <h3 className="text-sm font-bold text-gray-900">Recommended Combinations</h3>
+            <h3 className="text-sm font-bold text-gray-900">추천 조합</h3>
             <div className="space-y-2">
               <div className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
                 <span className="text-base mt-0.5">🎯</span>
                 <div>
                   <p className="text-xs font-bold text-gray-800">
-                    Advanced + Precision
+                    심화 + 정밀
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Best quality for exam-prep handouts.
+                    시험 대비 교안에 최고 품질.
                   </p>
                 </div>
               </div>
@@ -188,10 +188,10 @@ export default function GenerateGuideModal({
                 <span className="text-base mt-0.5">⚡</span>
                 <div>
                   <p className="text-xs font-bold text-gray-800">
-                    Basic + Speed
+                    기본 + 속도
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Quick basic handouts before class.
+                    수업 전 빠른 기본 교안.
                   </p>
                 </div>
               </div>
@@ -199,10 +199,10 @@ export default function GenerateGuideModal({
                 <span className="text-base mt-0.5">📝</span>
                 <div>
                   <p className="text-xs font-bold text-gray-800">
-                    Basic + Precision
+                    기본 + 정밀
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Accurate foundational handouts for beginners.
+                    초보자를 위한 정확한 기초 교안.
                   </p>
                 </div>
               </div>
@@ -217,7 +217,7 @@ export default function GenerateGuideModal({
             onClick={onClose}
             className="w-full py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
           >
-            Got it
+            확인
           </button>
         </div>
       </div>
