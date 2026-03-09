@@ -1,7 +1,11 @@
+import { useCallback } from "react";
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
+import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useSectionStyle } from "./useSectionStyle";
+import { EditableText } from "../EditableText";
+import { updateSummaryText } from "@/lib/sectionUpdaters";
 
 export function SummarySection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("summary");
@@ -9,6 +13,14 @@ export function SummarySection({ section }: { section: HandoutSection }) {
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
   const summaryLanguage = useTemplateSettingsStore((s) => s.summaryLanguage) ?? "both";
   const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.summary || "요약";
+  const updateSection = useHandoutStore((s) => s.updateSection);
+
+  const handleEdit = useCallback(
+    (field: "en" | "ko", value: string) => {
+      updateSection(section.passageId, updateSummaryText(section, field, value));
+    },
+    [section, updateSection],
+  );
 
   if (!section.summary?.en) return null;
 
@@ -30,18 +42,28 @@ export function SummarySection({ section }: { section: HandoutSection }) {
       </div>
       <div className="pl-1">
         {showEn && (
-          <p className="font-normal mb-1 leading-relaxed"
+          <EditableText
+            value={section.summary.en}
+            label="요약 (영어)"
+            multiline
+            themeColor={titleColor}
+            onConfirm={(v) => handleEdit("en", v)}
+            className="font-normal mb-1 leading-relaxed"
             style={{ fontSize: `${fontSizes.summaryEn}pt`, fontFamily: fontCss, color: textColor }}
-          >
-            {section.summary.en}
-          </p>
+            as="p"
+          />
         )}
         {showKo && (
-          <p className="font-medium tracking-tight"
+          <EditableText
+            value={section.summary.ko}
+            label="요약 (한국어)"
+            multiline
+            themeColor={titleColor}
+            onConfirm={(v) => handleEdit("ko", v)}
+            className="font-medium tracking-tight"
             style={{ fontSize: `${fontSizes.summaryKo}pt`, fontFamily: fontCss, color: textColor === "#111827" ? "#374151" : textColor }}
-          >
-            {section.summary.ko}
-          </p>
+            as="p"
+          />
         )}
       </div>
     </div>

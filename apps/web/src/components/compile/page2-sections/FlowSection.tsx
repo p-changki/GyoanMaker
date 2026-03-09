@@ -1,7 +1,11 @@
+import { useCallback } from "react";
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
+import { useHandoutStore } from "@/stores/useHandoutStore";
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useSectionStyle } from "./useSectionStyle";
+import { EditableText } from "../EditableText";
+import { updateFlowText } from "@/lib/sectionUpdaters";
 
 export function FlowSection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, sentenceBg, fontSizes, fontFamily, titleWeight } = useSectionStyle("flow");
@@ -9,6 +13,14 @@ export function FlowSection({ section }: { section: HandoutSection }) {
   const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.flow || "내용 정리";
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
   const itemBg = bgColor || `${sentenceBg}99`;
+  const updateSection = useHandoutStore((s) => s.updateSection);
+
+  const handleEdit = useCallback(
+    (index: number, value: string) => {
+      updateSection(section.passageId, updateFlowText(section, index, value));
+    },
+    [section, updateSection],
+  );
 
   return (
     <div>
@@ -24,14 +36,17 @@ export function FlowSection({ section }: { section: HandoutSection }) {
         </h3>
       </div>
       <div className="pl-1 space-y-2">
-        {section.flow.map((step) => (
-          <div
-            key={step.text}
+        {section.flow.map((step, i) => (
+          <EditableText
+            key={`flow-${step.index}-${i}`}
+            value={step.text}
+            label={`내용 정리 #${i + 1}`}
+            themeColor={titleColor}
+            onConfirm={(v) => handleEdit(i, v)}
             className="px-3 py-2 rounded-md font-bold text-center"
             style={{ backgroundColor: itemBg, fontSize: `${fontSizes.flowText}px`, fontFamily: fontCss, color: textColor }}
-          >
-            {step.text}
-          </div>
+            as="div"
+          />
         ))}
       </div>
     </div>
