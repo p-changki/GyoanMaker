@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -103,6 +103,21 @@ export default function DashboardPage() {
   function confirmDelete(id: string) {
     setDeletingId(id);
   }
+
+  const handlePrefetch = useCallback(
+    (handoutId: string) => {
+      queryClient.prefetchQuery({
+        queryKey: ["compile-init", handoutId],
+        queryFn: async () => {
+          const res = await fetch(`/api/compile/init/${handoutId}`);
+          if (!res.ok) throw new Error("Failed to prefetch.");
+          return res.json();
+        },
+        staleTime: 5 * 60 * 1000,
+      });
+    },
+    [queryClient]
+  );
 
   const totalPages = handouts ? Math.ceil(handouts.length / PAGE_SIZE) : 0;
   const paginatedHandouts = handouts
@@ -218,6 +233,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Link
                       href={`/compile?handoutId=${h.id}`}
+                      onMouseEnter={() => handlePrefetch(h.id)}
                       className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
                     >
                       Open

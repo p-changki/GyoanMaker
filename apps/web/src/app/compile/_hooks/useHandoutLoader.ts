@@ -5,11 +5,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { generatePassages } from "@/services/api";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
-import type { HandoutIllustrations } from "@gyoanmaker/shared/types";
+import type { HandoutIllustrations, TemplateSettings } from "@gyoanmaker/shared/types";
 import { getCachedResult, hashPassages, setCachedResult } from "@/services/cache";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
-import type { TemplateSettings } from "@gyoanmaker/shared/types";
 import { DEFAULT_TEMPLATE_SETTINGS } from "@gyoanmaker/shared/types";
 import {
   COMPILED_PREFIX,
@@ -19,12 +18,30 @@ import {
   createInitialSections,
 } from "./compileData.constants";
 
+interface CompileInitResponse {
+  handout: {
+    id: string;
+    title: string;
+    level: string;
+    model: string;
+    sections: Record<string, string>;
+    illustrations?: HandoutIllustrations;
+    customTexts?: {
+      headerText?: string;
+      analysisTitleText?: string;
+      summaryTitleText?: string;
+    };
+  };
+  templateSettings: TemplateSettings;
+}
+
 export function useHandoutLoader() {
   const searchParams = useSearchParams();
   const handoutId = searchParams.get("handoutId");
   const queryClient = useQueryClient();
 
   // Invalidate template settings on mount so manual edits don't persist across navigations
+  // Only relevant for new handout flow (saved handouts use the combined endpoint)
   const didInvalidateRef = useRef(false);
   useEffect(() => {
     if (!didInvalidateRef.current) {
@@ -35,18 +52,21 @@ export function useHandoutLoader() {
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
 
-  const handoutQuery = useQuery({
-    queryKey: ["handout", handoutId],
+  // ── Saved handout: combined endpoint (handout + template in one request) ──
+
+  const compileInitQuery = useQuery({
+    queryKey: ["compile-init", handoutId],
     enabled: Boolean(handoutId),
     staleTime: Infinity,
     gcTime: Infinity,
     queryFn: async () => {
-      const res = await fetch(`/api/handouts/${handoutId}`);
+      const res = await fetch(`/api/compile/init/${handoutId}`);
       if (!res.ok) throw new Error("Failed to load handout.");
-      const data = await res.json();
+      const data = (await res.json()) as CompileInitResponse;
 
+      // Apply handout sections
       const sections: Record<string, HandoutSection> = {};
-      for (const [id, rawText] of Object.entries(data.sections as Record<string, string>)) {
+      for (const [id, rawText] of Object.entries(data.handout.sections)) {
         sections[id] = {
           passageId: id,
           sentences: [],
@@ -59,32 +79,39 @@ export function useHandoutLoader() {
         };
       }
       const illustrations =
-        data.illustrations && typeof data.illustrations === "object"
-          ? (data.illustrations as HandoutIllustrations)
+        data.handout.illustrations && typeof data.handout.illustrations === "object"
+          ? data.handout.illustrations
           : {};
       setCompiledData(sections, illustrations);
 
-      if (data.customTexts) {
+      // Apply custom texts
+      if (data.handout.customTexts) {
         const store = useHandoutStore.getState();
-        if (data.customTexts.headerText) store.setCustomHeaderText(data.customTexts.headerText);
-        if (data.customTexts.analysisTitleText)
-          store.setAnalysisTitleText(data.customTexts.analysisTitleText);
-        if (data.customTexts.summaryTitleText)
-          store.setSummaryTitleText(data.customTexts.summaryTitleText);
+        if (data.handout.customTexts.headerText)
+          store.setCustomHeaderText(data.handout.customTexts.headerText);
+        if (data.handout.customTexts.analysisTitleText)
+          store.setAnalysisTitleText(data.handout.customTexts.analysisTitleText);
+        if (data.handout.customTexts.summaryTitleText)
+          store.setSummaryTitleText(data.handout.customTexts.summaryTitleText);
       }
 
+      // Apply template settings
+      useTemplateSettingsStore.getState().loadSettings(data.templateSettings);
+
       return {
-        id: data.id,
-        title: data.title,
-        level: data.level,
-        model: data.model,
+        id: data.handout.id,
+        title: data.handout.title,
+        level: data.handout.level,
+        model: data.handout.model,
       };
     },
   });
 
-  // Load user template settings
+  // ── New handout: standalone template query ──
+
   const templateQuery = useQuery<TemplateSettings>({
     queryKey: ["templateSettings"],
+    enabled: !handoutId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const res = await fetch("/api/template-settings");
@@ -111,6 +138,8 @@ export function useHandoutLoader() {
       }
     }
   }, [templateQuery.data, handoutId]);
+
+  // ── New handout: input from sessionStorage ──
 
   const inputQuery = useQuery<CompileInputData | null>({
     queryKey: ["compile", "input"],
@@ -203,13 +232,13 @@ export function useHandoutLoader() {
   });
 
   const isLoading =
-    handoutQuery.isLoading ||
-    inputQuery.isLoading ||
-    (inputQuery.data !== null && inputQuery.data !== undefined && compileQuery.isLoading);
+    compileInitQuery.isLoading ||
+    (!handoutId && inputQuery.isLoading) ||
+    (!handoutId && inputQuery.data !== null && inputQuery.data !== undefined && compileQuery.isLoading);
 
   return {
     handoutId,
-    handoutQuery,
+    handoutQuery: compileInitQuery,
     inputQuery,
     compileQuery,
     isLoading,

@@ -5,12 +5,24 @@ import CompileOrchestrator from "./_components/CompileOrchestrator";
 
 function CompileFallback() {
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-[#5E35B1] border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-black text-[#5E35B1] animate-pulse uppercase tracking-widest">
-          Loading Layout...
-        </p>
+    <div className="h-screen flex flex-col bg-white overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-start pt-12 px-8 bg-gray-50/50">
+          <div className="w-full max-w-[595px] bg-white rounded-lg shadow-sm border border-gray-200 p-8 space-y-5">
+            <div className="animate-pulse rounded bg-gray-100 h-5 w-48" />
+            <div className="animate-pulse rounded bg-gray-100 h-3 w-full" />
+            <div className="animate-pulse rounded bg-gray-100 h-3 w-5/6" />
+            <div className="animate-pulse rounded bg-gray-100 h-3 w-4/6" />
+          </div>
+        </div>
+        <div className="w-[320px] shrink-0 border-l border-gray-200 p-5 space-y-6">
+          <div className="animate-pulse rounded-lg bg-gray-100 h-8 w-full" />
+          <div className="space-y-3">
+            <div className="animate-pulse rounded bg-gray-100 h-3 w-24" />
+            <div className="animate-pulse rounded-lg bg-gray-100 h-10 w-full" />
+            <div className="animate-pulse rounded-lg bg-gray-100 h-10 w-full" />
+          </div>
+        </div>
       </div>
     </div>
   );
