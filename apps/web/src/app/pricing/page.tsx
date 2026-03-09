@@ -6,6 +6,9 @@ import type { PlanId } from "@gyoanmaker/shared/plans";
 import { getSubscription } from "@/lib/subscription";
 
 export const metadata: Metadata = {
+  title: "요금제 안내",
+  description:
+    "교안메이커 요금제를 비교하고 학원 규모에 맞는 플랜을 선택하세요. 무료 체험부터 프로 플랜까지, AI 교안 생성과 PDF 출력을 지원합니다.",
   alternates: {
     canonical: "/pricing",
   },

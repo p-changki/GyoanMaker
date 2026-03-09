@@ -3,6 +3,9 @@ import HeroSection from "@/components/landing/HeroSection";
 import SampleCarousel from "@/components/landing/SampleCarousel";
 
 export const metadata: Metadata = {
+  title: "교안메이커 | AI 영어 교안 자동 생성기",
+  description:
+    "영어 지문을 입력하면 AI가 문장 분석, 핵심 어휘, 요약을 자동 생성합니다. 학원·과외용 PDF 교안을 원클릭으로 제작하세요.",
   alternates: {
     canonical: "/",
   },
