@@ -75,6 +75,8 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
               <img
                 src={illustration.imageUrl}
                 alt={`${section.passageId} visual summary`}
+                width={560}
+                height={280}
                 crossOrigin="anonymous"
                 loading="lazy"
                 className="block w-full max-h-[280px] rounded-xl object-contain"
