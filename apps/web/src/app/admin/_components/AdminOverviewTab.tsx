@@ -69,9 +69,9 @@ export default function AdminOverviewTab({ onNavigate }: AdminOverviewTabProps) 
               </div>
               <div>
                 <p className="text-sm font-bold text-amber-800">
-                  {pendingCount} pending user{pendingCount !== 1 ? "s" : ""} awaiting approval
+                  {pendingCount}명의 사용자가 승인 대기 중
                 </p>
-                <p className="text-xs text-amber-600">Click to review in Users tab</p>
+                <p className="text-xs text-amber-600">클릭하여 사용자 탭에서 확인</p>
               </div>
             </button>
           )}
@@ -90,9 +90,9 @@ export default function AdminOverviewTab({ onNavigate }: AdminOverviewTabProps) 
               </div>
               <div>
                 <p className="text-sm font-bold text-red-800">
-                  {paidNotApplied} paid order{paidNotApplied !== 1 ? "s" : ""} not applied
+                  {paidNotApplied}건의 결제가 미적용 상태
                 </p>
-                <p className="text-xs text-red-600">Click to review in Billing tab</p>
+                <p className="text-xs text-red-600">클릭하여 빌링 탭에서 확인</p>
               </div>
             </button>
           )}
@@ -101,29 +101,29 @@ export default function AdminOverviewTab({ onNavigate }: AdminOverviewTabProps) 
 
       {/* Usage & Billing Stats */}
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Usage</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">사용량</h2>
         <UsageDashboard />
       </div>
 
       <div className="space-y-3">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Billing</h2>
+        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">빌링</h2>
         <BillingSummary />
       </div>
 
       {/* Recent Users */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Recent Users</h2>
+          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">최근 사용자</h2>
           <button
             type="button"
             onClick={() => onNavigate("users")}
             className="text-xs font-semibold text-blue-600 hover:text-blue-700"
           >
-            View all
+            전체 보기
           </button>
         </div>
         {recentUsers.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center">No users yet</p>
+          <p className="text-sm text-gray-400 py-4 text-center">사용자 없음</p>
         ) : (
           <div className="bg-white border border-gray-200/60 rounded-2xl divide-y divide-gray-100 overflow-hidden">
             {recentUsers.map((user) => (
@@ -133,7 +133,7 @@ export default function AdminOverviewTab({ onNavigate }: AdminOverviewTabProps) 
                     {(user.name ?? user.email)[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{user.name ?? "No name"}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{user.name ?? "이름 없음"}</p>
                     <p className="text-xs text-gray-400 truncate">{user.email}</p>
                   </div>
                 </div>

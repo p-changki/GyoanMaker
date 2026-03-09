@@ -34,7 +34,7 @@ export default function PricingGrid({ currentPlan }: PricingGridProps) {
         ))}
       </div>
       <p className="text-center text-xs text-gray-400">
-        Usage is deducted based on generation mode, regardless of content difficulty level.
+        사용량은 콘텐츠 난이도와 관계없이 생성 모드에 따라 차감됩니다.
       </p>
     </div>
   );

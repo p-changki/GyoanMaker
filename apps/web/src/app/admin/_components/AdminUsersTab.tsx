@@ -16,10 +16,10 @@ type StatusFilter = "all" | "pending" | "approved" | "rejected";
 type SortMode = "newest" | "name";
 
 const FILTER_TABS: { key: StatusFilter; label: string; color: string }[] = [
-  { key: "all", label: "All", color: "bg-gray-100 text-gray-700" },
-  { key: "pending", label: "Pending", color: "bg-amber-100 text-amber-700" },
-  { key: "approved", label: "Approved", color: "bg-green-100 text-green-700" },
-  { key: "rejected", label: "Rejected", color: "bg-red-100 text-red-700" },
+  { key: "all", label: "전체", color: "bg-gray-100 text-gray-700" },
+  { key: "pending", label: "대기", color: "bg-amber-100 text-amber-700" },
+  { key: "approved", label: "승인", color: "bg-green-100 text-green-700" },
+  { key: "rejected", label: "거부", color: "bg-red-100 text-red-700" },
 ];
 
 const STATUS_BADGE: Record<string, string> = {
@@ -41,7 +41,7 @@ export default function AdminUsersTab() {
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/users");
-      if (!res.ok) throw new Error("Failed to load user list");
+      if (!res.ok) throw new Error("사용자 목록 불러오기 실패");
       const data = (await res.json()) as { users: AppUser[] };
       setUsers(data.users);
       setError(null);
@@ -67,10 +67,10 @@ export default function AdminUsersTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("Status update failed");
+      if (!res.ok) throw new Error("상태 변경 실패");
       await fetchUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Status update failed");
+      setError(err instanceof Error ? err.message : "상태 변경 실패");
     } finally {
       setUpdating(null);
     }
@@ -131,7 +131,7 @@ export default function AdminUsersTab() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or email..."
+            placeholder="이름 또는 이메일로 검색..."
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
           />
         </div>
@@ -143,7 +143,7 @@ export default function AdminUsersTab() {
               sortMode === "newest" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             }`}
           >
-            Newest
+            최신순
           </button>
           <button
             type="button"
@@ -152,7 +152,7 @@ export default function AdminUsersTab() {
               sortMode === "name" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
             }`}
           >
-            Name
+            이름순
           </button>
         </div>
       </div>
@@ -180,11 +180,11 @@ export default function AdminUsersTab() {
       {loading ? (
         <div className="text-center py-16 text-gray-400">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-3" />
-          Loading...
+          로딩 중...
         </div>
       ) : displayUsers.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          {search ? "No users matching search" : filter === "pending" ? "No pending users" : "No users with this status"}
+          {search ? "검색 결과 없음" : filter === "pending" ? "대기 중인 사용자 없음" : "해당 상태의 사용자 없음"}
         </div>
       ) : (
         <div className="space-y-3">
@@ -199,7 +199,7 @@ export default function AdminUsersTab() {
                     {(user.name ?? user.email)[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{user.name ?? "No name"}</p>
+                    <p className="font-semibold text-gray-900 truncate">{user.name ?? "이름 없음"}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {new Date(user.createdAt).toLocaleDateString("ko-KR")}
@@ -222,7 +222,7 @@ export default function AdminUsersTab() {
                           onClick={() => handleStatusChange(user.email, "approved")}
                           className="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors"
                         >
-                          Approve
+                          승인
                         </button>
                       )}
                       {user.status !== "rejected" && (
@@ -231,7 +231,7 @@ export default function AdminUsersTab() {
                           onClick={() => handleStatusChange(user.email, "rejected")}
                           className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
                         >
-                          Reject
+                          거부
                         </button>
                       )}
                       <button
@@ -243,7 +243,7 @@ export default function AdminUsersTab() {
                             : "bg-gray-50 text-gray-500 hover:bg-gray-100"
                         }`}
                       >
-                        Quota
+                        할당량
                       </button>
                     </div>
                   )}

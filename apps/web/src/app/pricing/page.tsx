@@ -29,12 +29,12 @@ export default async function PricingPage() {
     <main className="mx-auto max-w-6xl px-4 py-16 space-y-10">
       <section className="text-center space-y-3">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-          Simple, Transparent Pricing
+          합리적이고 투명한 요금제
         </h1>
         <p className="text-lg text-gray-500">
-          Choose the plan that fits your academy.
+          학원에 맞는 플랜을 선택하세요.
           <br className="hidden sm:block" />
-          All plans include PDF export and AI-powered handout generation.
+          모든 플랜에 PDF 내보내기와 AI 교안 생성이 포함됩니다.
         </p>
       </section>
 

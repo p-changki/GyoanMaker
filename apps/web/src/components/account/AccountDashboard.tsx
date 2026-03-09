@@ -197,10 +197,10 @@ export default function AccountDashboard() {
               <p className="text-sm text-gray-500">{session?.user?.email}</p>
               <p className="mt-0.5 text-xs text-gray-400">
                 {data.account.createdAt
-                  ? `Joined ${new Date(data.account.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}`
+                  ? `가입일 ${new Date(data.account.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}`
                   : ""}
                 {data.account.createdAt ? " · " : ""}
-                Speed {data.quota.flash.remaining} / Precision {data.quota.pro.remaining} remaining
+                속도 {data.quota.flash.remaining} / 정밀 {data.quota.pro.remaining} 남음
               </p>
             </div>
           </div>
@@ -212,14 +212,14 @@ export default function AccountDashboard() {
               onClick={() => setShowTopUpModal(true)}
               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50"
             >
-              Top Up
+              충전
             </button>
             <button
               type="button"
               onClick={() => setShowPlanModal(true)}
               className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
             >
-              Change Plan
+              플랜 변경
             </button>
           </div>
         </div>
@@ -242,14 +242,14 @@ export default function AccountDashboard() {
       {/* Quota */}
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <UsageBar
-          label="Speed Mode"
+          label="속도 모드"
           used={data.quota.flash.used}
           limit={data.quota.flash.limit}
           remaining={data.quota.flash.remaining}
           credits={data.quota.flash.credits}
         />
         <UsageBar
-          label="Precision Mode"
+          label="정밀 모드"
           used={data.quota.pro.used}
           limit={data.quota.pro.limit}
           remaining={data.quota.pro.remaining}
@@ -260,7 +260,7 @@ export default function AccountDashboard() {
       {/* Illustration Quota */}
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <UsageBar
-          label="Illustration Credits"
+          label="삽화 크레딧"
           used={data.quota.illustration.used}
           limit={data.quota.illustration.limit}
           remaining={data.quota.illustration.remaining}
@@ -268,7 +268,7 @@ export default function AccountDashboard() {
         />
         <div className="rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between text-sm">
-            <p className="font-semibold text-gray-900">Daily Style Tests</p>
+            <p className="font-semibold text-gray-900">일일 스타일 테스트</p>
             <p className="font-medium text-gray-500">
               {data.dailySampleUsage.used}/{data.dailySampleUsage.limit}
             </p>
@@ -286,7 +286,7 @@ export default function AccountDashboard() {
             />
           </div>
           <p className="mt-2 text-xs text-gray-500">
-            Resets daily at midnight (KST)
+            매일 자정(KST)에 초기화
           </p>
         </div>
       </section>
@@ -295,7 +295,7 @@ export default function AccountDashboard() {
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between text-sm">
-            <p className="font-semibold text-gray-900">Illustration Samples</p>
+            <p className="font-semibold text-gray-900">삽화 샘플</p>
             <p className="font-medium text-gray-500">
               {data.illustrationSamples.count}/{PLANS[currentPlan].maxSamples}
             </p>
@@ -313,7 +313,7 @@ export default function AccountDashboard() {
             />
           </div>
           <p className="mt-2 text-xs text-gray-500">
-            {PLANS[currentPlan].maxSamples - data.illustrationSamples.count} slots remaining
+            {PLANS[currentPlan].maxSamples - data.illustrationSamples.count}개 슬롯 남음
           </p>
         </div>
       </section>
@@ -340,9 +340,9 @@ export default function AccountDashboard() {
 
       {/* Danger Zone */}
       <section className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
-        <h3 className="text-sm font-bold text-red-700">Danger Zone</h3>
+        <h3 className="text-sm font-bold text-red-700">위험 구역</h3>
         <p className="mt-1 text-xs text-gray-500">
-          Deleting your account will permanently remove all data and cannot be undone.
+          계정을 삭제하면 모든 데이터가 영구적으로 제거되며 되돌릴 수 없습니다.
         </p>
         <div className="mt-4 flex gap-3">
           {showCancelButton && (
@@ -351,7 +351,7 @@ export default function AccountDashboard() {
               onClick={() => setShowCancelModal(true)}
               className="rounded-xl border border-yellow-400 px-4 py-2 text-sm font-bold text-yellow-700 transition-colors hover:bg-yellow-50"
             >
-              Cancel Subscription
+              구독 취소
             </button>
           )}
           <button
@@ -359,7 +359,7 @@ export default function AccountDashboard() {
             onClick={() => setShowDeleteModal(true)}
             className="rounded-xl border border-red-300 px-4 py-2 text-sm font-bold text-red-600 transition-colors hover:bg-red-100"
           >
-            Delete Account
+            계정 삭제
           </button>
         </div>
       </section>

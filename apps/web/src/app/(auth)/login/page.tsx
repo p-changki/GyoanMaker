@@ -36,26 +36,26 @@ function LoginContent() {
             </svg>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            GyoanMaker
+            교안메이커
           </h1>
           <p className="mt-2 text-gray-500">
-            AI-powered teaching handout generator
+            AI 기반 영어 교안 자동 생성기
           </p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-premium border border-gray-200/60 p-8 space-y-6">
           <div className="text-center">
-            <h2 className="text-lg font-bold text-gray-900">Sign In</h2>
+            <h2 className="text-lg font-bold text-gray-900">로그인</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Sign in with your approved account
+              승인된 계정으로 로그인하세요
             </p>
           </div>
 
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
               {error === "OAuthAccountNotLinked"
-                ? "This email is already linked to another sign-in method."
-                : "An error occurred. Please try again."}
+                ? "이 이메일은 다른 로그인 방식에 연결되어 있습니다."
+                : "오류가 발생했습니다. 다시 시도해 주세요."}
             </div>
           )}
 
@@ -88,13 +88,13 @@ function LoginContent() {
                 />
               </svg>
             )}
-            {isLoading ? "Signing in..." : "Sign in with Google"}
+            {isLoading ? "로그인 중..." : "Google로 로그인"}
           </button>
 
           <p className="text-xs text-center text-gray-400 leading-relaxed">
-            Only admin-approved accounts can access the service.
+            관리자가 승인한 계정만 서비스를 이용할 수 있습니다.
             <br />
-            Please contact the admin if you need approval.
+            승인이 필요하시면 관리자에게 문의해 주세요.
           </p>
         </div>
       </div>

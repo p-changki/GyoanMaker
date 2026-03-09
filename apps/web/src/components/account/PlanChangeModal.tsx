@@ -42,14 +42,14 @@ export default function PlanChangeModal({
         | null;
 
       if (!res.ok) {
-        throw new Error(payload?.error?.message ?? "Failed to downgrade plan.");
+        throw new Error(payload?.error?.message ?? "플랜 다운그레이드에 실패했습니다.");
       }
 
       await onChanged();
       onClose();
     } catch (error) {
       setDowngradeError(
-        error instanceof Error ? error.message : "Failed to downgrade plan."
+        error instanceof Error ? error.message : "플랜 다운그레이드에 실패했습니다."
       );
     } finally {
       setIsDowngradingPlan(null);
@@ -60,13 +60,13 @@ export default function PlanChangeModal({
     <div className="fixed inset-0 z-[70] bg-black/40 px-4 py-8">
       <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">Change Plan</h3>
+          <h3 className="text-lg font-bold text-gray-900">플랜 변경</h3>
           <button
             type="button"
             onClick={onClose}
             className="rounded-lg border border-gray-200 px-3 py-1 text-sm text-gray-500"
           >
-            Close
+            닫기
           </button>
         </div>
 
@@ -88,16 +88,16 @@ export default function PlanChangeModal({
                 >
                   <p className="text-sm font-bold text-gray-900">{planId.toUpperCase()}</p>
                   <p className="mt-1 text-sm text-gray-600">
-                    Speed {plan.flashLimit} / Precision {plan.proLimit}
+                    속도 {plan.flashLimit} / 정밀 {plan.proLimit}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">
-                    ₩{plan.price.toLocaleString()} /mo
+                    ₩{plan.price.toLocaleString()} /월
                   </p>
 
                   <div className="mt-3">
                     {isCurrent ? (
                       <span className="inline-flex rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500">
-                        Current Plan
+                        현재 요금제
                       </span>
                     ) : null}
 
@@ -105,7 +105,7 @@ export default function PlanChangeModal({
                       <TossPaymentButton
                         type="subscription"
                         planId={planId}
-                        label={`Upgrade to ${planId.toUpperCase()}`}
+                        label={`${planId.toUpperCase()} 업그레이드`}
                         className="w-full"
                       />
                     ) : null}
@@ -118,8 +118,8 @@ export default function PlanChangeModal({
                         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isDowngradingPlan === planId
-                          ? "Applying..."
-                          : `Switch to ${planId.toUpperCase()}`}
+                          ? "적용 중..."
+                          : `${planId.toUpperCase()}(으)로 변경`}
                       </button>
                     ) : null}
                   </div>

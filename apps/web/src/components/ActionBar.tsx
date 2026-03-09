@@ -24,7 +24,7 @@ export default function ActionBar({
             type="button"
             onClick={onBack}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900"
-            aria-label="Go back"
+            aria-label="뒤로 가기"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -37,7 +37,7 @@ export default function ActionBar({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <title>Go back</title>
+              <title>뒤로 가기</title>
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>

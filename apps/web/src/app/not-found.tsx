@@ -11,12 +11,12 @@ export default function NotFound() {
 
           <div>
             <h1 className="text-2xl font-extrabold text-gray-900">
-              Page Not Found
+              페이지를 찾을 수 없습니다
             </h1>
             <p className="mt-2 text-gray-500 text-sm leading-relaxed">
-              The page you are looking for does not exist
+              요청하신 페이지가 존재하지 않거나
               <br />
-              or may have been moved.
+              이동되었을 수 있습니다.
             </p>
           </div>
 
@@ -25,13 +25,13 @@ export default function NotFound() {
               href="/"
               className="flex-1 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold text-center hover:bg-gray-800 transition-colors"
             >
-              Home
+              홈으로
             </Link>
             <Link
               href="/generate"
               className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 text-sm font-bold text-center hover:bg-gray-50 transition-colors"
             >
-              Generate
+              생성하기
             </Link>
           </div>
         </div>

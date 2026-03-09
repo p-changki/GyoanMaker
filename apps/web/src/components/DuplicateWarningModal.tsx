@@ -17,7 +17,7 @@ interface DuplicateWarningModalProps {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+  return new Date(iso).toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -51,11 +51,11 @@ export default function DuplicateWarningModal({
           </div>
           <div>
             <h3 className="text-base font-bold text-gray-900">
-              Duplicate handout found
+              중복 교안 발견
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              A handout with the same passages already exists. Generating again
-              will consume your quota.
+              동일한 지문의 교안이 이미 존재합니다. 다시 생성하면 사용량이
+              차감됩니다.
             </p>
           </div>
         </div>
@@ -70,11 +70,11 @@ export default function DuplicateWarningModal({
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-gray-900">{d.title}</p>
                 <p className="text-xs text-gray-400">
-                  {d.passageCount} passages · {formatDate(d.createdAt)}
+                  {d.passageCount} 지문 · {formatDate(d.createdAt)}
                 </p>
               </div>
               <span className="ml-3 shrink-0 text-xs font-bold text-blue-600">
-                Open
+                열기
               </span>
             </Link>
           ))}
@@ -86,14 +86,14 @@ export default function DuplicateWarningModal({
             onClick={onClose}
             className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
           >
-            Cancel
+            취소
           </button>
           <button
             type="button"
             onClick={onProceed}
             className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-bold text-white hover:bg-amber-600 transition-colors"
           >
-            Generate Anyway
+            그래도 생성
           </button>
         </div>
       </div>

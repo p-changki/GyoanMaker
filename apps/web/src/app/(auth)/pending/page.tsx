@@ -53,20 +53,20 @@ export default function PendingPage() {
 
           <div>
             <h1 className="text-2xl font-extrabold text-gray-900">
-              {isRejected ? "Access Restricted" : "Pending Approval"}
+              {isRejected ? "접근 제한됨" : "승인 대기 중"}
             </h1>
             <p className="mt-2 text-gray-500 text-sm leading-relaxed">
               {isRejected ? (
                 <>
-                  Your access has been restricted by the administrator.
+                  관리자에 의해 접근이 제한되었습니다.
                   <br />
-                  Please contact the admin if you believe this is an error.
+                  오류라고 생각되시면 관리자에게 문의해 주세요.
                 </>
               ) : (
                 <>
-                  Sign-in is complete.
+                  로그인이 완료되었습니다.
                   <br />
-                  You can use the service after admin approval.
+                  관리자 승인 후 서비스를 이용하실 수 있습니다.
                 </>
               )}
             </p>
@@ -93,7 +93,7 @@ export default function PendingPage() {
                 isRejected ? "text-red-800" : "text-blue-800"
               }`}
             >
-              {isRejected ? "Why was my access restricted?" : "How to Get Approved"}
+              {isRejected ? "접근이 제한된 이유는?" : "승인받는 방법"}
             </p>
             <p
               className={`text-xs leading-relaxed ${
@@ -101,8 +101,8 @@ export default function PendingPage() {
               }`}
             >
               {isRejected
-                ? "Your account may have been flagged for policy violations. Please contact the administrator for details."
-                : "Please share the email address you used to sign in with the administrator. Once approved, you will automatically gain access to the service."}
+                ? "정책 위반으로 계정이 제한되었을 수 있습니다. 자세한 내용은 관리자에게 문의해 주세요."
+                : "로그인에 사용한 이메일을 관리자에게 공유해 주세요. 승인되면 자동으로 서비스를 이용할 수 있습니다."}
             </p>
           </div>
 
@@ -115,15 +115,15 @@ export default function PendingPage() {
               } else {
                 toast(
                   isRejected
-                    ? "Access is still restricted. Please contact the admin."
-                    : "Still pending approval. Please try again later.",
+                    ? "접근이 여전히 제한되어 있습니다. 관리자에게 문의해 주세요."
+                    : "아직 승인 대기 중입니다. 나중에 다시 확인해 주세요.",
                   "info"
                 );
               }
             }}
             className="w-full py-4 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all"
           >
-            Check status
+            상태 확인
           </button>
 
           <button
@@ -131,7 +131,7 @@ export default function PendingPage() {
             onClick={() => signOut({ callbackUrl: "/" })}
             className="w-full py-3 rounded-xl border border-gray-200 text-gray-400 text-xs font-medium hover:bg-gray-50 transition-all"
           >
-            Sign in with a different account
+            다른 계정으로 로그인
           </button>
         </div>
       </div>

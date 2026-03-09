@@ -95,7 +95,7 @@ export default function SubscriptionInfoSection({
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <h3 className="text-sm font-bold uppercase tracking-wide text-gray-400">
-        Subscription Info
+        구독 정보
       </h3>
       <dl className="mt-3 space-y-2">
         {rows.map((row) => (

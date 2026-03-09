@@ -8,8 +8,7 @@ export default function Footer() {
           {/* Business info */}
           <div className="text-xs text-gray-400 space-y-0.5">
             <p className="text-sm text-gray-500">
-              &copy; {new Date().getFullYear()} GyoanMaker. All Rights
-              Reserved.
+              &copy; {new Date().getFullYear()} GyoanMaker. 모든 권리 보유.
             </p>
             <p>
               사업자등록번호: xxx-xx-xxxxx | 통신판매업 신고번호:

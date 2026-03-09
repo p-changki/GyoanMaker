@@ -38,8 +38,8 @@ function PrecisionWarningModal({
             </svg>
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900">Precision Mode Notice</h3>
-            <p className="mt-0.5 text-xs text-gray-500">Advanced + Precision</p>
+            <h3 className="text-base font-bold text-gray-900">정밀 모드 안내</h3>
+            <p className="mt-0.5 text-xs text-gray-500">심화 + 정밀</p>
           </div>
         </div>
 
@@ -61,14 +61,14 @@ function PrecisionWarningModal({
             onClick={onCancel}
             className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50"
           >
-            Cancel
+            취소
           </button>
           <button
             type="button"
             onClick={onConfirm}
             className="flex-1 rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700"
           >
-            Continue
+            계속
           </button>
         </div>
       </div>
@@ -112,7 +112,7 @@ export default function GenerateSubmitSection({
           {/* Errors */}
           {passageCount > 20 && (
             <span className="shrink-0 text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full">
-              Max 20
+              최대 20개
             </span>
           )}
           {limitError && (
@@ -132,7 +132,7 @@ export default function GenerateSubmitSection({
                 : "shrink-0 rounded-full px-10 py-3 text-base font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md shadow-blue-200/50"
             }
           >
-            {isSubmitting ? "Generating..." : "Generate"}
+            {isSubmitting ? "생성 중..." : "생성"}
           </button>
         </div>
       </div>

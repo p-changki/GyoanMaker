@@ -63,7 +63,7 @@ export default function UserMenu({ user }: UserMenuProps) {
         href="/login"
         className="px-5 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
       >
-        Sign In
+        로그인
       </a>
     );
   }
@@ -82,7 +82,7 @@ export default function UserMenu({ user }: UserMenuProps) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-full p-1 hover:bg-gray-100 transition-colors"
-        aria-label="User menu"
+        aria-label="사용자 메뉴"
       >
         {user.image ? (
           <Image
@@ -155,7 +155,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                   d="M5.121 17.804A8.966 8.966 0 0112 15c2.5 0 4.764 1.02 6.379 2.667M15 7a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              My Account
+              내 계정
             </a>
             <a
               href="/pricing"
@@ -175,7 +175,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                   d="M12 8c-2.21 0-4 .896-4 2s1.79 2 4 2 4 .896 4 2-1.79 2-4 2m0-12v2m0 12v2"
                 />
               </svg>
-              Pricing
+              요금제
             </a>
             <div className="mx-3 border-t border-gray-100" />
             {isAdmin && (
@@ -198,7 +198,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                       d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                     />
                   </svg>
-                  User Management
+                  사용자 관리
                 </a>
                 <div className="mx-3 border-t border-gray-100" />
               </>
@@ -222,7 +222,7 @@ export default function UserMenu({ user }: UserMenuProps) {
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-              Sign Out
+              로그아웃
             </button>
           </div>
         </div>

@@ -40,7 +40,7 @@ export default function GenerateInputPanel({
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
             }`}
           >
-            Text Block
+            텍스트 블록
           </button>
           <button
             type="button"
@@ -51,7 +51,7 @@ export default function GenerateInputPanel({
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
             }`}
           >
-            Card Mode
+            카드 모드
           </button>
         </div>
       </div>
@@ -66,13 +66,13 @@ export default function GenerateInputPanel({
         ) : (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <h2 className="text-lg font-bold text-gray-800">Passage List</h2>
+              <h2 className="text-lg font-bold text-gray-800">지문 목록</h2>
               <span
                 className={`text-sm font-bold px-3 py-1 rounded-full ${
                   passageCount > 20 ? "bg-red-50 text-red-500" : "bg-blue-50 text-blue-600"
                 }`}
               >
-                Detected: {passageCount} / 20
+                감지: {passageCount} / 20
               </span>
             </div>
 
@@ -109,7 +109,7 @@ export default function GenerateInputPanel({
                       <path d="M12 5v14M5 12h14" />
                     </svg>
                   </div>
-                  <span className="text-sm font-bold">Add Passage</span>
+                  <span className="text-sm font-bold">지문 추가</span>
                 </button>
               )}
             </div>

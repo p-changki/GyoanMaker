@@ -48,7 +48,7 @@ export default function QuotaIndicator() {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-400">
         <div className="w-3 h-3 rounded-full bg-gray-200 animate-pulse" />
-        <span>Checking remaining quota...</span>
+        <span>잔여 사용량 확인 중...</span>
       </div>
     );
   }
@@ -78,21 +78,21 @@ export default function QuotaIndicator() {
       />
       <div className="flex items-center gap-3">
         <span>
-          Speed{" "}
+          속도{" "}
           <strong>
             {data.flash.remaining}/{data.flash.limit}
           </strong>
         </span>
         <span className="text-gray-300">|</span>
         <span>
-          Precision{" "}
+          정밀{" "}
           <strong>
             {data.pro.remaining}/{data.pro.limit}
           </strong>
         </span>
       </div>
       {isExhausted && (
-        <span className="ml-auto text-xs font-bold">Quota Exceeded</span>
+        <span className="ml-auto text-xs font-bold">사용량 초과</span>
       )}
     </div>
   );

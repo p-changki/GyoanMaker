@@ -76,7 +76,7 @@ export default function RawResultCard({
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs font-medium text-blue-600">
-              Generating...
+              생성 중...
             </span>
           </div>
         </div>
@@ -99,23 +99,23 @@ export default function RawResultCard({
               {passageId}
             </div>
             <h2 className="text-base font-bold text-gray-900">
-              Passage Analysis
+              지문 분석
             </h2>
           </div>
           <span className="px-2 py-1 bg-red-50 text-red-700 text-xs font-bold rounded border border-red-100">
-            Failed
+            실패
           </span>
         </div>
         <div className="bg-red-50 rounded-lg p-4 text-center">
           <p className="text-sm text-red-800 mb-3">
-            An error occurred during passage analysis.
+            지문 분석 중 오류가 발생했습니다.
           </p>
           <button
             type="button"
             onClick={onRetry}
             className="px-4 py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700 transition-colors shadow-sm"
           >
-            Retry
+            재시도
           </button>
         </div>
       </div>
@@ -134,11 +134,11 @@ export default function RawResultCard({
           </div>
           <div className="flex flex-col">
             <h2 className="text-base font-bold text-gray-900">
-              Passage Analysis
+              지문 분석
             </h2>
             <span className="text-[10px] font-bold text-green-600 uppercase tracking-widest flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Completed
+              완료
             </span>
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function RawResultCard({
             type="button"
             onClick={handleRegenerateClick}
             className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-            title="Regenerate"
+            title="재생성"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -171,7 +171,7 @@ export default function RawResultCard({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <title>Regenerate</title>
+              <title>재생성</title>
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
               <path d="M21 3v5h-5" />
               <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
@@ -180,7 +180,7 @@ export default function RawResultCard({
           </button>
           <CopyButton
             getText={() => displayText}
-            label="Copy"
+            label="복사"
             className="text-xs py-1.5 h-9 px-4 rounded-xl font-bold"
           />
         </div>
@@ -207,7 +207,7 @@ export default function RawResultCard({
                   onClick={() => setIsCollapsed((prev) => !prev)}
                   className="px-4 py-2 text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition-colors"
                 >
-                  {isCollapsed ? "Show More" : "Show Less"}
+                  {isCollapsed ? "더 보기" : "접기"}
                 </button>
               </div>
             )}
@@ -318,7 +318,7 @@ function renderFormattedBlocks(text: string): ReactNode[] {
       relatedMode = "syn";
       nodes.push(
         <div key={key} className="pt-2 pl-2">
-          <span className="inline-flex items-center text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Synonyms</span>
+          <span className="inline-flex items-center text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">유의어</span>
         </div>
       );
       continue;
@@ -328,7 +328,7 @@ function renderFormattedBlocks(text: string): ReactNode[] {
       relatedMode = "ant";
       nodes.push(
         <div key={key} className="pt-2 pl-2">
-          <span className="inline-flex items-center text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">Antonyms</span>
+          <span className="inline-flex items-center text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">반의어</span>
         </div>
       );
       continue;
@@ -381,7 +381,7 @@ function renderFormattedBlocks(text: string): ReactNode[] {
     }
 
     // Style section labels
-    if (trimmed === "영어 섹션" || trimmed === "한글 섹션" || trimmed === "English Section" || trimmed === "Korean Section") {
+    if (trimmed === "영어 섹션" || trimmed === "한글 섹션" || trimmed === "English Section" || trimmed === "Korean Section" || trimmed === "영어 섹션" || trimmed === "한국어 섹션") {
       nodes.push(
         <div key={key} className="mt-4 mb-1">
           <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{trimmed}</span>

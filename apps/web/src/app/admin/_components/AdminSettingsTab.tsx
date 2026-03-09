@@ -27,7 +27,7 @@ export default function AdminSettingsTab() {
   const fetchPresets = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/illustration-presets");
-      if (!res.ok) throw new Error("Failed to fetch presets");
+      if (!res.ok) throw new Error("프리셋 불러오기 실패");
       const data = (await res.json()) as { presets: IllustrationPreset[] };
       setPresets(data.presets);
       setError(null);
@@ -54,13 +54,13 @@ export default function AdminSettingsTab() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Failed to add preset");
+        throw new Error(data.error ?? "프리셋 추가 실패");
       }
       setSampleId("");
       setOwnerEmail("");
       await fetchPresets();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add preset");
+      setError(err instanceof Error ? err.message : "프리셋 추가 실패");
     } finally {
       setAdding(false);
     }
@@ -72,10 +72,10 @@ export default function AdminSettingsTab() {
       const res = await fetch(`/api/admin/illustration-presets?presetId=${encodeURIComponent(presetId)}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete preset");
+      if (!res.ok) throw new Error("프리셋 삭제 실패");
       await fetchPresets();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete preset");
+      setError(err instanceof Error ? err.message : "프리셋 삭제 실패");
     } finally {
       setDeleting(null);
     }
@@ -86,9 +86,9 @@ export default function AdminSettingsTab() {
       {/* Illustration Presets */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Illustration Presets</h2>
+          <h2 className="text-lg font-bold text-gray-900">삽화 프리셋</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Manage illustration presets available to all users as default concepts.
+            모든 사용자에게 기본 컨셉으로 제공되는 삽화 프리셋을 관리합니다.
           </p>
         </div>
 
@@ -100,20 +100,20 @@ export default function AdminSettingsTab() {
 
         {/* Add Preset Form */}
         <div className="bg-white border border-gray-200/60 rounded-2xl p-5 shadow-sm space-y-3">
-          <h3 className="text-sm font-bold text-gray-700">Add Preset from User Sample</h3>
+          <h3 className="text-sm font-bold text-gray-700">사용자 샘플에서 프리셋 추가</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="email"
               value={ownerEmail}
               onChange={(e) => setOwnerEmail(e.target.value)}
-              placeholder="Owner email"
+              placeholder="소유자 이메일"
               className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
             />
             <input
               type="text"
               value={sampleId}
               onChange={(e) => setSampleId(e.target.value)}
-              placeholder="Sample ID"
+              placeholder="샘플 ID"
               className="px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
             />
           </div>
@@ -123,7 +123,7 @@ export default function AdminSettingsTab() {
             disabled={adding || !sampleId.trim() || !ownerEmail.trim()}
             className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {adding ? "Adding..." : "Add Preset"}
+            {adding ? "추가 중..." : "프리셋 추가"}
           </button>
         </div>
 
@@ -131,10 +131,10 @@ export default function AdminSettingsTab() {
         {loading ? (
           <div className="text-center py-12 text-gray-400">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-3" />
-            Loading presets...
+            프리셋 로딩 중...
           </div>
         ) : presets.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">No presets configured</div>
+          <div className="text-center py-12 text-gray-400">설정된 프리셋 없음</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {presets.map((preset) => (
@@ -173,7 +173,7 @@ export default function AdminSettingsTab() {
                       disabled={deleting === preset.presetId}
                       className="px-2 py-1 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors"
                     >
-                      {deleting === preset.presetId ? "..." : "Delete"}
+                      {deleting === preset.presetId ? "..." : "삭제"}
                     </button>
                   </div>
                 </div>

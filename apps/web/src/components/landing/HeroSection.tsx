@@ -24,9 +24,9 @@ export default function HeroSection() {
           custom={0.1}
           className="text-5xl font-extrabold italic leading-[1.1] tracking-tight text-gray-900 sm:text-6xl lg:text-7xl"
         >
-          English Handouts,
+          AI가 만드는
           <br />
-          Powered by AI.
+          영어 교안.
         </motion.h1>
 
         {/* Subtitle */}
@@ -37,9 +37,9 @@ export default function HeroSection() {
           custom={0.25}
           className="mx-auto mt-8 max-w-xl text-base leading-relaxed text-gray-500 sm:text-lg"
         >
-          Enter a passage to auto-generate sentence analysis, vocabulary, and summaries.
+          영어 지문을 입력하면 문장 분석, 어휘, 요약을 자동 생성합니다.
           <br className="hidden sm:block" />
-          Export custom handouts by difficulty as PDF instantly.
+          난이도별 맞춤 교안을 PDF로 바로 내보내세요.
         </motion.p>
 
         {/* Dual CTA */}
@@ -55,7 +55,7 @@ export default function HeroSection() {
             href="/about"
             className="inline-flex items-center gap-2 rounded-2xl border border-gray-300 bg-white px-8 py-4 text-base font-bold text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50 sm:text-lg"
           >
-            Browse Features
+            기능 둘러보기
           </a>
         </motion.div>
 
@@ -68,7 +68,7 @@ export default function HeroSection() {
           className="mt-8 flex flex-col items-center gap-3"
         >
           <p className="text-xs italic text-gray-400">
-            * Free to start, no payment required
+            * 무료로 시작, 결제 없이 체험 가능
           </p>
         </motion.div>
       </div>

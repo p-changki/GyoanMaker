@@ -13,50 +13,50 @@ interface Sample {
 
 const SAMPLES: Sample[] = [
   {
-    label: "Sentence Analysis",
-    category: "ANALYSIS",
+    label: "문장 분석",
+    category: "분석",
     image: "/images/samples/sample-1.png",
     color: "from-violet-500/20 to-indigo-500/20",
   },
   {
-    label: "Core Vocabulary",
-    category: "VOCABULARY",
+    label: "핵심 어휘",
+    category: "어휘",
     image: "/images/samples/sample-2.png",
     color: "from-blue-500/20 to-cyan-500/20",
   },
   {
-    label: "Lecture Handout (1)",
-    category: "HANDOUT",
+    label: "수업 교안 (1)",
+    category: "교안",
     image: "/images/samples/sample-3.png",
     color: "from-emerald-500/20 to-teal-500/20",
   },
   {
-    label: "Lecture Handout (2)",
-    category: "HANDOUT",
+    label: "수업 교안 (2)",
+    category: "교안",
     image: "/images/samples/sample-4.png",
     color: "from-amber-500/20 to-orange-500/20",
   },
   {
-    label: "Generate Page",
-    category: "GENERATE",
+    label: "생성 페이지",
+    category: "생성",
     image: "/images/samples/sample-5.png",
     color: "from-rose-500/20 to-pink-500/20",
   },
   {
-    label: "Illustrated Handout (1)",
-    category: "HANDOUT",
+    label: "삽화 교안 (1)",
+    category: "교안",
     image: "/images/samples/sample-6.png",
     color: "from-purple-500/20 to-violet-500/20",
   },
   {
-    label: "Illustrated Handout (2)",
-    category: "HANDOUT",
+    label: "삽화 교안 (2)",
+    category: "교안",
     image: "/images/samples/sample-7.png",
     color: "from-sky-500/20 to-blue-500/20",
   },
   {
-    label: "Style Gallery",
-    category: "ILLUSTRATION",
+    label: "스타일 갤러리",
+    category: "삽화",
     image: "/images/samples/sample-8.png",
     color: "from-fuchsia-500/20 to-pink-500/20",
   },
@@ -123,7 +123,7 @@ function CarouselCard({
         {/* Click hint */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-opacity group-hover:opacity-100">
           <div className="rounded-full bg-black/50 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
-            Click to expand
+            클릭하여 확대
           </div>
         </div>
       </motion.div>
@@ -244,7 +244,7 @@ export default function SampleCarousel() {
           viewport={{ once: true }}
           className="text-sm font-bold uppercase tracking-widest text-blue-600"
         >
-          Sample Outputs
+          샘플 결과물
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 15 }}
@@ -253,7 +253,7 @@ export default function SampleCarousel() {
           transition={{ delay: 0.1 }}
           className="mt-3 text-3xl font-black text-gray-900 sm:text-4xl"
         >
-          See What You Can Create
+          이런 교안을 만들 수 있습니다
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 15 }}
@@ -262,8 +262,8 @@ export default function SampleCarousel() {
           transition={{ delay: 0.2 }}
           className="mt-4 text-base text-gray-500 sm:text-lg"
         >
-          From passage analysis to printable handouts — all generated
-          automatically.
+          지문 분석부터 인쇄용 교안까지, 모두 자동으로
+          생성됩니다.
         </motion.p>
       </div>
 

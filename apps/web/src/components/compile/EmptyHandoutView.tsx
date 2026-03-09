@@ -14,10 +14,10 @@ export default function EmptyHandoutView({
       </div>
       <div className="space-y-2">
         <h3 className="text-xl font-black text-[#9CA3AF] tracking-tight">
-          Waiting for passage content
+          지문 콘텐츠 대기 중
         </h3>
         <p className="text-sm text-[#D1D5DB] font-bold max-w-sm">
-          Click the [Apply Template] button in the top right to complete the handout.
+          우측 상단의 [템플릿 적용] 버튼을 클릭하여 교안을 완성하세요.
         </p>
       </div>
 

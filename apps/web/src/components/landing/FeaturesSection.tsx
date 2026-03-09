@@ -4,65 +4,65 @@ import { motion } from "framer-motion";
 
 const FEATURES = [
   {
-    title: "Sentence Analysis",
+    title: "문장 분석",
     description:
-      "Automatic sentence-by-sentence EN/KO translation with topic sentence identification.",
+      "문장별 영한 번역과 주제문 자동 식별을 제공합니다.",
     icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
     color: { bg: "bg-blue-50", text: "text-blue-600" },
   },
   {
-    title: "Core Vocabulary",
+    title: "핵심 어휘",
     description:
-      "Extract key vocabulary with meanings, synonyms, and antonyms at B2~C1 level.",
+      "B2~C1 수준의 핵심 어휘를 뜻, 유의어, 반의어와 함께 추출합니다.",
     icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
     color: { bg: "bg-indigo-50", text: "text-indigo-600" },
   },
   {
-    title: "Smart Summary",
+    title: "스마트 요약",
     description:
-      "AI-generated passage summaries in both English and Korean, with logical flow analysis.",
+      "AI가 영어·한국어 요약과 논리 흐름 분석을 자동 생성합니다.",
     icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
     color: { bg: "bg-violet-50", text: "text-violet-600" },
   },
   {
-    title: "Level Customization",
+    title: "난이도 설정",
     description:
-      "Choose Advanced (B2~C1) or Basic (A2~B1) to match student proficiency levels.",
+      "심화 (B2~C1) 또는 기본 (A2~B1)을 선택해 학생 수준에 맞출 수 있습니다.",
     icon: "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4",
     color: { bg: "bg-amber-50", text: "text-amber-600" },
   },
   {
-    title: "Template Studio",
+    title: "템플릿 스튜디오",
     description:
-      "Customize fonts, colors, layouts, and branding. Apply your academy's style to every handout.",
+      "글꼴, 색상, 레이아웃, 브랜딩을 커스터마이징하여 학원만의 스타일을 적용하세요.",
     icon: "M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01",
     color: { bg: "bg-rose-50", text: "text-rose-600" },
   },
   {
-    title: "AI Illustrations",
+    title: "AI 삽화",
     description:
-      "Generate custom illustrations for your handouts. Use preset concepts or create your own style with style tests.",
+      "프리셋 컨셉이나 커스텀 스타일로 교안에 맞는 삽화를 AI로 생성합니다.",
     icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
     color: { bg: "bg-pink-50", text: "text-pink-600" },
   },
   {
-    title: "PDF Export",
+    title: "PDF 내보내기",
     description:
-      "Export print-ready handouts as PDF. Inline editing before download for final adjustments.",
+      "인쇄용 PDF로 교안을 내보냅니다. 다운로드 전 인라인 편집으로 최종 조정이 가능합니다.",
     icon: "M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
     color: { bg: "bg-emerald-50", text: "text-emerald-600" },
   },
   {
-    title: "Dual AI Models",
+    title: "듀얼 AI 모델",
     description:
-      "Choose between precision mode and speed mode depending on your needs. Separate quotas per model.",
+      "정밀 모드와 속도 모드 중 선택 가능합니다. 모델별 사용량이 별도로 관리됩니다.",
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
     color: { bg: "bg-cyan-50", text: "text-cyan-600" },
   },
   {
-    title: "Dashboard",
+    title: "대시보드",
     description:
-      "Save, manage, and revisit your handouts anytime. Duplicate detection prevents redundant work.",
+      "교안을 저장하고 언제든 다시 열 수 있습니다. 중복 감지로 불필요한 작업을 방지합니다.",
     icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
     color: { bg: "bg-gray-100", text: "text-gray-600" },
   },
@@ -94,10 +94,10 @@ export default function FeaturesSection() {
           className="mb-16 text-center"
         >
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            Features
+            주요 기능
           </h2>
           <p className="mt-4 text-lg text-gray-500">
-            Everything you need to create professional teaching handouts
+            전문적인 영어 교안 제작에 필요한 모든 것
           </p>
         </motion.div>
 

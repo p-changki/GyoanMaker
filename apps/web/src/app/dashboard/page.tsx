@@ -37,7 +37,7 @@ async function renameHandoutApi(id: string, title: string): Promise<void> {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
+  return d.toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -128,16 +128,16 @@ export default function DashboardPage() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">My Handouts</h2>
+          <h2 className="text-xl font-bold text-gray-900">내 교안</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Manage and reload your saved handouts.
+            저장된 교안을 관리하고 다시 열 수 있습니다.
           </p>
         </div>
         <Link
           href="/generate"
           className="px-4 py-2 bg-[#5E35B1] text-white rounded-lg text-sm font-bold hover:bg-[#4527A0] transition-colors"
         >
-          New Handout
+          새 교안
         </Link>
       </div>
 
@@ -149,20 +149,20 @@ export default function DashboardPage() {
 
       {isError && (
         <div className="text-center py-20 text-sm text-red-600 font-medium">
-          Failed to load handouts. Please refresh the page.
+          교안을 불러오지 못했습니다. 페이지를 새로고침해 주세요.
         </div>
       )}
 
       {!isLoading && !isError && handouts && handouts.length === 0 && (
         <div className="text-center py-20">
           <p className="text-gray-400 text-sm font-medium mb-4">
-            No saved handouts yet.
+            저장된 교안이 없습니다.
           </p>
           <Link
             href="/generate"
             className="text-[#5E35B1] text-sm font-bold hover:underline"
           >
-            Create your first handout
+            첫 교안 만들기
           </Link>
         </div>
       )}
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                         disabled={renameMutation.isPending}
                         className="px-3 py-1.5 bg-[#5E35B1] text-white rounded-lg text-xs font-bold disabled:opacity-50"
                       >
-                        Save
+                        저장
                       </button>
                       <button
                         type="button"
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                         }}
                         className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-500"
                       >
-                        Cancel
+                        취소
                       </button>
                     </div>
                   ) : (
@@ -219,7 +219,7 @@ export default function DashboardPage() {
                   )}
 
                   <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                    <span>{h.passageCount} passages</span>
+                    <span>{h.passageCount} 지문</span>
                     <span className="text-gray-200">|</span>
                     <span>{levelLabel(h.level)}</span>
                     <span className="text-gray-200">|</span>
@@ -236,14 +236,14 @@ export default function DashboardPage() {
                       onMouseEnter={() => handlePrefetch(h.id)}
                       className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
                     >
-                      Open
+                      열기
                     </Link>
                     <button
                       type="button"
                       onClick={() => startRename(h)}
                       className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-500 hover:border-gray-300 transition-colors"
                     >
-                      Rename
+                      이름 변경
                     </button>
                     {deletingId === h.id ? (
                       <div className="flex items-center gap-1">
@@ -253,14 +253,14 @@ export default function DashboardPage() {
                           disabled={deleteMutation.isPending}
                           className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold disabled:opacity-50"
                         >
-                          Confirm
+                          확인
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeletingId(null)}
                           className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-500"
                         >
-                          Cancel
+                          취소
                         </button>
                       </div>
                     ) : (
@@ -269,7 +269,7 @@ export default function DashboardPage() {
                         onClick={() => confirmDelete(h.id)}
                         className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-red-400 hover:border-red-300 hover:text-red-500 transition-colors"
                       >
-                        Delete
+                        삭제
                       </button>
                     )}
                   </div>

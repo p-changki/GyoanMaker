@@ -95,13 +95,13 @@ export default function TossPaymentButton({
 
       if (!initRes.ok || !isCheckoutInitResponse(initPayload)) {
         throw new Error(
-          resolveErrorMessage(initPayload, "Failed to initialize checkout.")
+          resolveErrorMessage(initPayload, "결제 초기화에 실패했습니다.")
         );
       }
 
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
       if (!clientKey) {
-        throw new Error("NEXT_PUBLIC_TOSS_CLIENT_KEY is not configured.");
+        throw new Error("결제 키가 설정되지 않았습니다.");
       }
 
       const tossPayments = await loadTossPayments(clientKey);
@@ -124,7 +124,7 @@ export default function TossPaymentButton({
         customerName: session?.user?.name ?? undefined,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to start payment.";
+      const message = err instanceof Error ? err.message : "결제를 시작하지 못했습니다.";
       setError(message);
       setIsLoading(false);
       return;
@@ -145,7 +145,7 @@ export default function TossPaymentButton({
           className
         )}
       >
-        {isLoading ? "Redirecting..." : label}
+        {isLoading ? "이동 중..." : label}
       </button>
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
     </div>
