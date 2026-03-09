@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import Image from "next/image";
 
 interface ConceptPromptBarProps {
   value: string;
@@ -78,10 +79,11 @@ export default function ConceptPromptBar({
             </button>
           ) : (
             <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-2 py-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={referenceImageUrl}
                 alt="Reference style"
+                width={28}
+                height={28}
                 className="h-7 w-7 rounded-full object-cover"
               />
               <span className="text-xs font-medium text-gray-600">참조 이미지 적용됨</span>

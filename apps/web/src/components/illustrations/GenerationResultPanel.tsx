@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface GenerationResult {
   imageUrl: string;
   storagePath: string;
@@ -28,10 +30,12 @@ export default function GenerationResultPanel({
       <div className="flex flex-col gap-4 md:flex-row">
         <div className="flex-1">
           <div className="overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={result.imageUrl}
               alt="Generated illustration"
+              width={800}
+              height={600}
+              sizes="(max-width: 768px) 100vw, 50vw"
               className="h-auto w-full object-cover"
             />
           </div>
