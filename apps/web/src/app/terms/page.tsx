@@ -1,5 +1,10 @@
-export const metadata = {
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
   title: "이용약관 | GyoanMaker",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 export default function TermsPage() {
