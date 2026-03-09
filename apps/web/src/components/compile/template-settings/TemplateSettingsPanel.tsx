@@ -68,7 +68,7 @@ function AvatarSlot({
       {avatarBase64 ? (
         <div className="relative w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={avatarBase64} alt="캐릭터" className="w-full h-full object-contain" />
+          <img src={avatarBase64} alt="캐릭터" width={48} height={48} className="w-full h-full object-contain" />
           <button
             type="button"
             onClick={() => setAvatarBase64(null)}
@@ -88,7 +88,7 @@ function AvatarSlot({
       ) : (
         <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center shrink-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/avatar.png" alt="기본" className="w-full h-full object-contain opacity-50" />
+          <img src="/images/avatar.png" alt="기본" width={48} height={48} className="w-full h-full object-contain opacity-50" />
         </div>
       )}
       <div>
@@ -156,7 +156,7 @@ function LogoOnlySection({
         {logoBase64 ? (
           <div className="relative w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoBase64} alt="로고" className="w-full h-full object-contain" />
+            <img src={logoBase64} alt="로고" width={48} height={48} className="w-full h-full object-contain" />
             <button
               type="button"
               onClick={() => setLogoBase64(null)}
