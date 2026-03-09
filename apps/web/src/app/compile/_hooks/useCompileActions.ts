@@ -203,6 +203,15 @@ export function useCompileActions({
               backgroundColor: "#ffffff",
               windowWidth: 794,
               windowHeight: fitScale < 1 ? a4HeightPx : naturalHeight,
+              ignoreElements: (el) => {
+                // Exclude devtools elements that cause 404 errors in iframe cloning
+                const tag = el.tagName?.toLowerCase();
+                if (tag === "script" || tag === "link") {
+                  const src = el.getAttribute("src") || el.getAttribute("href") || "";
+                  if (src.includes("query-devtools") || src.includes("react-devtools")) return true;
+                }
+                return false;
+              },
             });
 
             const imageData = canvas.toDataURL("image/png");
