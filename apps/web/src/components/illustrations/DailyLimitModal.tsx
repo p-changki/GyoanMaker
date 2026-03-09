@@ -16,7 +16,7 @@ export default function DailyLimitModal({ dailyUsage, onClose }: DailyLimitModal
         </div>
         <h2 className="text-lg font-black text-gray-900 mb-2">일일 테스트 한도 초과</h2>
         <p className="text-sm text-gray-500 mb-1">
-          오늘의 스타일 테스트 생성 한도({dailyUsage?.limit ?? 10}회)를 모두 사용했습니다.
+          오늘의 일러스트 테스트 생성 한도({dailyUsage?.limit ?? 10}회)를 모두 사용했습니다.
         </p>
         <p className="text-xs text-gray-400 mb-5">
           매일 자정(KST)에 초기화됩니다.

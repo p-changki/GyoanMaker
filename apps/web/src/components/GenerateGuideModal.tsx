@@ -150,7 +150,7 @@ export default function GenerateGuideModal({
                 <p className="text-sm font-bold text-blue-700">정밀 모드</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
                   <li>고정확도 AI 엔진</li>
-                  <li>지문당 ~30-60초</li>
+                  <li>지문당 ~30초-2분</li>
                   <li>일관된 품질</li>
                   <li>중요한 교안에 권장</li>
                 </ul>
@@ -159,7 +159,7 @@ export default function GenerateGuideModal({
                 <p className="text-sm font-bold text-blue-700">속도 모드</p>
                 <ul className="text-xs text-gray-600 space-y-1 leading-relaxed">
                   <li>빠른 응답 AI 엔진</li>
-                  <li>지문당 ~5-10초</li>
+                  <li>지문당 ~10-20초</li>
                   <li>대량 생성에 적합</li>
                   <li>초안이나 급한 작업에 권장</li>
                 </ul>

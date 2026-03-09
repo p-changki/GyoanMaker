@@ -184,7 +184,7 @@ export default function IllustrationConceptPage() {
           setShowLimitModal(true);
           return;
         }
-        throw new Error(data.error?.message || "스타일 테스트 생성에 실패했습니다.");
+        throw new Error(data.error?.message || "일러스트 테스트 생성에 실패했습니다.");
       }
 
       if (!data.sample?.imageUrl) {
@@ -201,7 +201,7 @@ export default function IllustrationConceptPage() {
         aspectRatio,
       });
 
-      setMessage({ text: "스타일 테스트 이미지가 생성되었습니다.", type: "success" });
+      setMessage({ text: "일러스트 테스트 이미지가 생성되었습니다.", type: "success" });
     } catch (error) {
       const text = error instanceof Error ? error.message : "Unknown error";
       setMessage({ text, type: "error" });

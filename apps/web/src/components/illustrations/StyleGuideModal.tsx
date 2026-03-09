@@ -33,7 +33,7 @@ export default function StyleGuideModal({ onClose }: StyleGuideModalProps) {
           <p className="text-xs text-gray-500 mb-3">가장 빠른 방법. 원하는 스타일을 텍스트로 설명하면 AI가 생성합니다.</p>
           <ol className="space-y-1.5 text-xs text-gray-700">
             <li className="flex gap-2"><span className="font-bold text-emerald-600 shrink-0">Step 1</span>상단 입력창에 원하는 화풍을 설명합니다<br/><span className="text-gray-400">예: &quot;따뜻한 수채화풍, 동화 같은 분위기&quot;</span></li>
-            <li className="flex gap-2"><span className="font-bold text-emerald-600 shrink-0">Step 2</span>&lsquo;스타일 테스트 생성&rsquo; 버튼을 클릭합니다</li>
+            <li className="flex gap-2"><span className="font-bold text-emerald-600 shrink-0">Step 2</span>&lsquo;일러스트 테스트 생성&rsquo; 버튼을 클릭합니다</li>
             <li className="flex gap-2"><span className="font-bold text-emerald-600 shrink-0">Step 3</span>결과가 마음에 들면 &lsquo;저장&rsquo;하여 샘플 갤러리에 추가합니다</li>
             <li className="flex gap-2"><span className="font-bold text-emerald-600 shrink-0">Step 4</span>갤러리에서 원하는 샘플을 &lsquo;활성화&rsquo;하면 교안 일러스트에 적용됩니다</li>
           </ol>
@@ -49,7 +49,7 @@ export default function StyleGuideModal({ onClose }: StyleGuideModalProps) {
           <ol className="space-y-1.5 text-xs text-gray-700">
             <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">Step 1</span>입력창 좌측의 이미지 아이콘을 클릭하여 참조 이미지를 업로드합니다</li>
             <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">Step 2</span>추가 설명을 입력합니다 (선택사항)</li>
-            <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">Step 3</span>&lsquo;스타일 테스트 생성&rsquo;을 클릭합니다</li>
+            <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">Step 3</span>&lsquo;일러스트 테스트 생성&rsquo;을 클릭합니다</li>
             <li className="flex gap-2"><span className="font-bold text-blue-600 shrink-0">Step 4</span>결과를 저장하고 갤러리에서 활성화합니다</li>
           </ol>
         </div>
@@ -65,7 +65,7 @@ export default function StyleGuideModal({ onClose }: StyleGuideModalProps) {
             <li className="flex gap-2"><span className="font-bold text-amber-600 shrink-0">Step 1</span>&lsquo;스타일 고급 설정&rsquo; 패널을 열어 세부 항목을 조정합니다</li>
             <li className="flex gap-2"><span className="font-bold text-amber-600 shrink-0">Step 2</span>&lsquo;이미지에서 스타일 추출&rsquo;로 자동 채우기도 가능합니다</li>
             <li className="flex gap-2"><span className="font-bold text-amber-600 shrink-0">Step 3</span>설정 완료 후 &lsquo;설정 저장&rsquo;을 클릭합니다</li>
-            <li className="flex gap-2"><span className="font-bold text-amber-600 shrink-0">Step 4</span>상단 입력창에서 프롬프트를 입력하고 스타일 테스트를 생성합니다</li>
+            <li className="flex gap-2"><span className="font-bold text-amber-600 shrink-0">Step 4</span>상단 입력창에서 프롬프트를 입력하고 일러스트 테스트를 생성합니다</li>
             <li className="flex gap-2"><span className="font-bold text-amber-600 shrink-0">Step 5</span>결과를 저장하고 갤러리에서 활성화합니다</li>
           </ol>
         </div>

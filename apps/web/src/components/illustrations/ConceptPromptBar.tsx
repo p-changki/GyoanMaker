@@ -107,7 +107,7 @@ export default function ConceptPromptBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="스타일 테스트용 장면을 묘사하세요. 예: 미래 도시에서 로봇이 학생들에게 수업하는 장면 (실제 지문 일러스트는 자동 생성됩니다)"
+          placeholder="일러스트 테스트용 장면을 묘사하세요. 예: 미래 도시에서 로봇이 학생들에게 수업하는 장면 (실제 지문 일러스트는 자동 생성됩니다)"
           maxLength={500}
           rows={1}
           className="min-h-[44px] flex-1 resize-none rounded-xl border-0 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/30"
@@ -127,7 +127,7 @@ export default function ConceptPromptBar({
               생성 중...
             </span>
           ) : (
-            "스타일 테스트 생성"
+            "일러스트 테스트 생성"
           )}
         </button>
       </div>
