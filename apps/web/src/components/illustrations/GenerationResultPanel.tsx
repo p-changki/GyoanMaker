@@ -43,9 +43,8 @@ export default function GenerationResultPanel({
         <div className="flex flex-col justify-between gap-3 md:w-64">
           <div className="space-y-2">
             <h3 className="text-sm font-bold text-gray-900">생성 결과</h3>
-            <p className="text-xs text-gray-500">Model: {result.model}</p>
-            <p className="line-clamp-4 text-xs text-gray-600">
-              {result.prompt}
+            <p className="text-xs text-gray-500">
+              이미지가 마음에 드시면 갤러리에 저장하세요.
             </p>
           </div>
           <div className="flex gap-2">
