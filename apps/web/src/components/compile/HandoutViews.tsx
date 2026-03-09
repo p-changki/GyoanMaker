@@ -1,15 +1,18 @@
 "use client";
 
-import { memo, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, DEFAULT_IMAGE_DISPLAY } from "@gyoanmaker/shared/types";
 import { EditableAnalysisTitle, EditableSummaryTitleText } from "./EditableFields";
+import { EditableText } from "./EditableText";
 import { HandoutFooter, HandoutHeader } from "./HandoutHeader";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
+import { useHandoutStore } from "@/stores/useHandoutStore";
 import { BUILTIN_SECTION_COMPONENTS, CustomSection } from "./page2-sections";
 import { isCustomSectionKey } from "@gyoanmaker/shared/types";
 import { useTemplateFontLoader } from "./useTemplateFontLoader";
+import { updateSentenceText } from "@/lib/sectionUpdaters";
 
 function useTheme() {
   useTemplateFontLoader();
@@ -92,6 +95,15 @@ export function ParsedHandoutViewPage1({
   const page1Layout = useTemplateSettingsStore((s) => s.page1Layout) ?? DEFAULT_PAGE1_LAYOUT;
   const page1Style = useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
   const setFocus = useEditorFocusStore((s) => s.setFocus);
+  const updateSection = useHandoutStore((s) => s.updateSection);
+
+  const handleSentenceEdit = useCallback(
+    (localIndex: number, field: "en" | "ko", value: string) => {
+      const globalIndex = (pageNum - 1) * 7 + localIndex;
+      updateSection(section.passageId, updateSentenceText(section, globalIndex, field, value));
+    },
+    [pageNum, section, updateSection],
+  );
 
   const p1TitleColor = page1Style.titleColor || theme.primary;
   const p1TextColor = page1Style.textColor || "#111827";
@@ -183,21 +195,29 @@ export function ParsedHandoutViewPage1({
                           {renderSentenceNumber(i, pageNum, page1Layout.numberStyle)}
                         </div>
                       )}
-                      <div
+                      <EditableText
+                        value={pair.en.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
+                        label={`영어 문장 #${(pageNum - 1) * 7 + i + 1}`}
+                        multiline
+                        themeColor={p1TitleColor}
+                        onConfirm={(v) => handleSentenceEdit(i, "en", v)}
                         className="flex-1 font-normal leading-[2.1]"
                         style={enTextStyle}
-                      >
-                        {pair.en.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
-                      </div>
+                        as="div"
+                      />
                     </div>
                     {showKoreanColumn && (
                       <div className="py-6 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
-                        <div
+                        <EditableText
+                          value={pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
+                          label={`한국어 번역 #${(pageNum - 1) * 7 + i + 1}`}
+                          multiline
+                          themeColor={p1TitleColor}
+                          onConfirm={(v) => handleSentenceEdit(i, "ko", v)}
                           className="font-normal leading-[2.1]"
                           style={koTextStyle}
-                        >
-                          {pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
-                        </div>
+                          as="div"
+                        />
                       </div>
                     )}
                   </div>

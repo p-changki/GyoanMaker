@@ -1,45 +1,97 @@
-import { memo } from "react";
+import { useCallback } from "react";
 import type { HandoutSection, VocabItem } from "@gyoanmaker/shared/types/handout";
 import type { FontSizeConfig } from "@gyoanmaker/shared/types";
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
+import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useSectionStyle } from "./useSectionStyle";
+import { EditableText } from "../EditableText";
+import { updateVocabField, updateVocabRelated } from "@/lib/sectionUpdaters";
 
-const VocabRow4 = memo(function VocabRow4({
+/* ─── Shared vocab editing helpers ─── */
+
+interface VocabEditProps {
+  section: HandoutSection;
+  vocabIndex: number;
+  titleColor: string;
+}
+
+function useVocabEdit({ section, vocabIndex }: Omit<VocabEditProps, "titleColor">) {
+  const updateSection = useHandoutStore((s) => s.updateSection);
+
+  const editField = useCallback(
+    (field: "word" | "meaning", value: string) => {
+      updateSection(section.passageId, updateVocabField(section, vocabIndex, field, value));
+    },
+    [section, vocabIndex, updateSection],
+  );
+
+  const editRelated = useCallback(
+    (type: "synonyms" | "antonyms", ri: number, value: string) => {
+      const parts = value.split(/\s+/);
+      const word = parts[0] ?? "";
+      const meaning = parts.slice(1).join(" ");
+      const step1 = updateVocabRelated(section, vocabIndex, type, ri, "word", word);
+      const step2 = updateVocabRelated(step1, vocabIndex, type, ri, "meaning", meaning);
+      updateSection(section.passageId, step2);
+    },
+    [section, vocabIndex, updateSection],
+  );
+
+  return { editField, editRelated };
+}
+
+/* ─── 4-Column Row ─── */
+
+function VocabRow4({
   vocab,
   index,
+  vocabIndex,
   fontSizes,
   fontCss,
   textColor,
+  titleColor,
   showSynonyms,
   showAntonyms,
+  section,
 }: {
   vocab: VocabItem;
   index: number;
+  vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
   textColor: string;
+  titleColor: string;
   showSynonyms: boolean;
   showAntonyms: boolean;
+  section: HandoutSection;
 }) {
+  const { editField, editRelated } = useVocabEdit({ section, vocabIndex });
+
   return (
     <tr
       className={`border-b border-current/20 ${index % 2 === 1 ? "bg-[#F9FAFB]/50" : ""}`}
       style={{ fontSize: `${fontSizes.vocabText}px`, fontFamily: fontCss, color: textColor }}
     >
       <td className="px-3 py-2 text-[#111827] font-bold border-r border-current/20">
-        {vocab.word}
+        <EditableText value={vocab.word} label="어휘" themeColor={titleColor} onConfirm={(v) => editField("word", v)} />
       </td>
       <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20">
-        {vocab.meaning}
+        <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} />
       </td>
       {showSynonyms && (
         <td className="px-3 py-2 text-[#4B5563] border-r border-current/20 align-middle font-normal">
           {vocab.synonyms.length > 0
-            ? vocab.synonyms.map((s) => (
-                <div key={`syn-${vocab.word}-${s.word}-${s.meaning}`} className="mb-1 last:mb-0">
-                  {s.word} {s.meaning}
-                </div>
+            ? vocab.synonyms.map((s, ri) => (
+                <EditableText
+                  key={`syn-${vocab.word}-${ri}`}
+                  value={`${s.word} ${s.meaning}`}
+                  label={`유의어 #${ri + 1}`}
+                  themeColor={titleColor}
+                  onConfirm={(v) => editRelated("synonyms", ri, v)}
+                  className="mb-1 last:mb-0"
+                  as="div"
+                />
               ))
             : "-"}
         </td>
@@ -47,31 +99,47 @@ const VocabRow4 = memo(function VocabRow4({
       {showAntonyms && (
         <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
           {vocab.antonyms.length > 0
-            ? vocab.antonyms.map((a) => (
-                <div key={`ant-${vocab.word}-${a.word}-${a.meaning}`} className="mb-1 last:mb-0">
-                  {a.word} {a.meaning}
-                </div>
+            ? vocab.antonyms.map((a, ri) => (
+                <EditableText
+                  key={`ant-${vocab.word}-${ri}`}
+                  value={`${a.word} ${a.meaning}`}
+                  label={`반의어 #${ri + 1}`}
+                  themeColor={titleColor}
+                  onConfirm={(v) => editRelated("antonyms", ri, v)}
+                  className="mb-1 last:mb-0"
+                  as="div"
+                />
               ))
             : "-"}
         </td>
       )}
     </tr>
   );
-});
+}
 
-const VocabRow3 = memo(function VocabRow3({
+/* ─── 3-Column Row ─── */
+
+function VocabRow3({
   vocab,
   index,
+  vocabIndex,
   fontSizes,
   fontCss,
   textColor,
+  titleColor,
+  section,
 }: {
   vocab: VocabItem;
   index: number;
+  vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
   textColor: string;
+  titleColor: string;
+  section: HandoutSection;
 }) {
+  const { editField } = useVocabEdit({ section, vocabIndex });
+
   const related = [
     ...vocab.synonyms.map((s) => `${s.word} ${s.meaning}`),
     ...vocab.antonyms.map((a) => `${a.word} ${a.meaning}`),
@@ -82,10 +150,10 @@ const VocabRow3 = memo(function VocabRow3({
       style={{ fontSize: `${fontSizes.vocabText}px`, fontFamily: fontCss, color: textColor }}
     >
       <td className="px-3 py-2 text-[#111827] font-bold border-r border-current/20 w-[25%]">
-        {vocab.word}
+        <EditableText value={vocab.word} label="어휘" themeColor={titleColor} onConfirm={(v) => editField("word", v)} />
       </td>
       <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20 w-[30%]">
-        {vocab.meaning}
+        <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} />
       </td>
       <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
         {related.length > 0
@@ -98,21 +166,31 @@ const VocabRow3 = memo(function VocabRow3({
       </td>
     </tr>
   );
-});
+}
 
-const VocabRow2 = memo(function VocabRow2({
+/* ─── 2-Column Row ─── */
+
+function VocabRow2({
   vocab,
   index,
+  vocabIndex,
   fontSizes,
   fontCss,
   textColor,
+  titleColor,
+  section,
 }: {
   vocab: VocabItem;
   index: number;
+  vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
   textColor: string;
+  titleColor: string;
+  section: HandoutSection;
 }) {
+  const { editField } = useVocabEdit({ section, vocabIndex });
+
   const related = [
     ...vocab.synonyms.map((s) => `${s.word} ${s.meaning}`),
     ...vocab.antonyms.map((a) => `${a.word} ${a.meaning}`),
@@ -123,8 +201,8 @@ const VocabRow2 = memo(function VocabRow2({
       style={{ fontSize: `${fontSizes.vocabText}px`, fontFamily: fontCss, color: textColor }}
     >
       <td className="px-3 py-2 font-bold text-[#111827] border-r border-current/20 w-[40%]">
-        <span className="font-bold">{vocab.word}</span>{" "}
-        <span className="font-normal text-[#1F2937]">{vocab.meaning}</span>
+        <EditableText value={vocab.word} label="어휘" themeColor={titleColor} onConfirm={(v) => editField("word", v)} as="span" className="font-bold" />{" "}
+        <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} as="span" className="font-normal text-[#1F2937]" />
       </td>
       <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
         {related.length > 0
@@ -137,7 +215,9 @@ const VocabRow2 = memo(function VocabRow2({
       </td>
     </tr>
   );
-});
+}
+
+/* ─── Main Section ─── */
 
 export function VocabularySection({ section }: { section: HandoutSection }) {
   const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("vocabulary");
@@ -198,41 +278,52 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
           </tr>
         </thead>
         <tbody className="bg-white">
-          {filteredVocab.map((vocab, index) => {
+          {filteredVocab.map((vocab, idx) => {
+            // Find original index in section.vocabulary for updater
+            const vocabIndex = section.vocabulary.indexOf(vocab);
             if (vocabColumnLayout === 4) {
               return (
                 <VocabRow4
-                  key={`${vocab.word}-${vocab.meaning}`}
+                  key={`${vocab.word}-${vocab.meaning}-${idx}`}
                   vocab={vocab}
-                  index={index}
+                  index={idx}
+                  vocabIndex={vocabIndex}
                   fontSizes={fontSizes}
                   fontCss={fontCss}
                   textColor={textColor}
+                  titleColor={titleColor}
                   showSynonyms={showSynonyms}
                   showAntonyms={showAntonyms}
+                  section={section}
                 />
               );
             }
             if (vocabColumnLayout === 3) {
               return (
                 <VocabRow3
-                  key={`${vocab.word}-${vocab.meaning}`}
+                  key={`${vocab.word}-${vocab.meaning}-${idx}`}
                   vocab={vocab}
-                  index={index}
+                  index={idx}
+                  vocabIndex={vocabIndex}
                   fontSizes={fontSizes}
                   fontCss={fontCss}
                   textColor={textColor}
+                  titleColor={titleColor}
+                  section={section}
                 />
               );
             }
             return (
               <VocabRow2
-                key={`${vocab.word}-${vocab.meaning}`}
+                key={`${vocab.word}-${vocab.meaning}-${idx}`}
                 vocab={vocab}
-                index={index}
+                index={idx}
+                vocabIndex={vocabIndex}
                 fontSizes={fontSizes}
                 fontCss={fontCss}
                 textColor={textColor}
+                titleColor={titleColor}
+                section={section}
               />
             );
           })}
