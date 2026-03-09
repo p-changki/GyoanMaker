@@ -85,7 +85,7 @@ export default function SampleGallery() {
     return (
       <section className="rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 p-8 text-center">
         <p className="text-sm text-gray-400">
-          저장된 삽화 샘플이 없습니다. 프롬프트를 입력하고 생성해보세요.
+          저장된 일러스트 샘플이 없습니다. 프롬프트를 입력하고 생성해보세요.
         </p>
       </section>
     );

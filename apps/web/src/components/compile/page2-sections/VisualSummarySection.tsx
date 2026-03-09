@@ -83,10 +83,10 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
               />
             ) : (
               <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-center text-xs text-gray-500">
-                <span>{statusLabel(illustration?.status)}: 삽화 생성 후 여기에 표시됩니다.</span>
+                <span>{statusLabel(illustration?.status)}: 일러스트 생성 후 여기에 표시됩니다.</span>
                 {(illustration?.status === "failed" || illustration?.status === "stale") && (
                   <span className="text-amber-600 font-semibold">
-                    좌측 패널에서 &apos;현재 스타일로 삽화 적용&apos;으로 재생성할 수 있습니다.
+                    좌측 패널에서 &apos;현재 스타일로 일러스트 적용&apos;으로 재생성할 수 있습니다.
                   </span>
                 )}
               </div>

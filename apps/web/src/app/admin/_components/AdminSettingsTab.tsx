@@ -86,9 +86,9 @@ export default function AdminSettingsTab() {
       {/* Illustration Presets */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">삽화 프리셋</h2>
+          <h2 className="text-lg font-bold text-gray-900">일러스트 프리셋</h2>
           <p className="text-sm text-gray-500 mt-1">
-            모든 사용자에게 기본 컨셉으로 제공되는 삽화 프리셋을 관리합니다.
+            모든 사용자에게 기본 컨셉으로 제공되는 일러스트 프리셋을 관리합니다.
           </p>
         </div>
 

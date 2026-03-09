@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
     
     if (error instanceof Error && error.message.includes("No eligible passages")) {
       return NextResponse.json(
-        { error: { code: "NO_ELIGIBLE_PASSAGES", message: "생성할 대상이 없습니다. 모든 삽화가 이미 완료되었습니다. '전부 새로 생성' 옵션을 선택해주세요." } },
+        { error: { code: "NO_ELIGIBLE_PASSAGES", message: "생성할 대상이 없습니다. 모든 일러스트가 이미 완료되었습니다. '전부 새로 생성' 옵션을 선택해주세요." } },
         { status: 400 }
       );
     }
@@ -304,7 +304,7 @@ export async function POST(req: NextRequest) {
     
     if (error instanceof Error && error.message.includes("No eligible passages")) {
       return NextResponse.json(
-        { error: { code: "NO_ELIGIBLE_PASSAGES", message: "생성할 대상이 없습니다. 모든 삽화가 이미 완료되었습니다. '전부 새로 생성' 옵션을 선택해주세요." } },
+        { error: { code: "NO_ELIGIBLE_PASSAGES", message: "생성할 대상이 없습니다. 모든 일러스트가 이미 완료되었습니다. '전부 새로 생성' 옵션을 선택해주세요." } },
         { status: 400 }
       );
     }

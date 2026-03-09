@@ -43,20 +43,20 @@ const SAMPLES: Sample[] = [
     color: "from-rose-500/20 to-pink-500/20",
   },
   {
-    label: "삽화 교안 (1)",
+    label: "일러스트 교안 (1)",
     category: "교안",
     image: "/images/samples/sample-6.png",
     color: "from-purple-500/20 to-violet-500/20",
   },
   {
-    label: "삽화 교안 (2)",
+    label: "일러스트 교안 (2)",
     category: "교안",
     image: "/images/samples/sample-7.png",
     color: "from-sky-500/20 to-blue-500/20",
   },
   {
     label: "스타일 갤러리",
-    category: "삽화",
+    category: "일러스트",
     image: "/images/samples/sample-8.png",
     color: "from-fuchsia-500/20 to-pink-500/20",
   },

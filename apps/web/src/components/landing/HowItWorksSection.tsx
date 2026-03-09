@@ -19,9 +19,9 @@ const STEPS = [
   },
   {
     number: 3,
-    title: "삽화 추가",
+    title: "일러스트 추가",
     description:
-      "프리셋 컨셉이나 커스텀 스타일로 AI 삽화를 적용하세요.",
+      "프리셋 컨셉이나 커스텀 스타일로 AI 일러스트를 적용하세요.",
     color: { bg: "bg-pink-100", text: "text-pink-700" },
   },
   {
