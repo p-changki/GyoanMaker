@@ -8,6 +8,7 @@ import {
   IllustrationPolicyBlockedError,
   listIllustrationJobs,
 } from "@/lib/illustrations";
+import { isOwnedStoragePath } from "@/lib/firebase-storage";
 import type {
   IllustrationAspectRatio,
   IllustrationBubbleStyle,
@@ -220,6 +221,17 @@ export async function POST(req: NextRequest) {
           },
         },
         { status: 400 }
+      );
+    }
+    if (referenceImage && !isOwnedStoragePath(email, referenceImage.storagePath)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Invalid storage path.",
+          },
+        },
+        { status: 403 }
       );
     }
 

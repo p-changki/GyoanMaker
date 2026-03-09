@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
+import { isOwnedStoragePath } from "@/lib/firebase-storage";
 import { type PlanId, PLANS } from "@gyoanmaker/shared/plans";
 import {
   generateIllustrationSample,
@@ -163,6 +164,17 @@ export async function POST(req: NextRequest) {
           },
         },
         { status: 400 }
+      );
+    }
+    if (referenceImage && !isOwnedStoragePath(email, referenceImage.storagePath)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "FORBIDDEN",
+            message: "Invalid storage path.",
+          },
+        },
+        { status: 403 }
       );
     }
 

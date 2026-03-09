@@ -227,6 +227,51 @@ export async function getHandout(
   };
 }
 
+// ── Update (full save) ────────────────────────────────
+
+export interface UpdateHandoutInput {
+  title?: string;
+  sections?: Record<string, string>;
+  illustrations?: HandoutIllustrations;
+  customTexts?: {
+    headerText?: string;
+    analysisTitleText?: string;
+    summaryTitleText?: string;
+  };
+}
+
+export async function updateHandout(
+  id: string,
+  ownerEmail: string,
+  input: UpdateHandoutInput
+): Promise<boolean> {
+  const email = ownerEmail.toLowerCase();
+  const docRef = handoutsCol(email).doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return false;
+
+  const updates: Record<string, unknown> = {
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (input.title !== undefined) {
+    updates.title = input.title;
+  }
+  if (input.sections !== undefined) {
+    updates.sections = input.sections;
+    updates.passageCount = Object.keys(input.sections).length;
+  }
+  if (input.illustrations !== undefined) {
+    updates.illustrations = input.illustrations;
+  }
+  if (input.customTexts !== undefined) {
+    updates.customTexts = input.customTexts;
+  }
+
+  await docRef.update(updates);
+  return true;
+}
+
 // ── Update Title ───────────────────────────────────────
 
 export async function updateHandoutTitle(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
@@ -44,6 +44,63 @@ function formatDate(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function DeleteModal({
+  title,
+  isPending,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  isPending: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onCancel();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onCancel]);
+
+  return (
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={(e) => {
+        if (e.target === backdropRef.current) onCancel();
+      }}
+    >
+      <div className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+        <h3 className="text-base font-bold text-gray-900">교안 삭제</h3>
+        <p className="mt-2 text-sm text-gray-500">
+          <span className="font-semibold text-gray-700">{title}</span>을(를)
+          삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-bold text-gray-500 transition hover:border-gray-300"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isPending}
+            className="rounded-lg bg-red-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-600 disabled:opacity-50"
+          >
+            {isPending ? "삭제 중..." : "삭제"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function levelLabel(level: string): string {
@@ -125,7 +182,7 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-xl font-bold text-gray-900">내 교안</h2>
@@ -238,6 +295,12 @@ export default function DashboardPage() {
                     >
                       열기
                     </Link>
+                    <Link
+                      href={`/voca-test?handoutId=${h.id}`}
+                      className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
+                    >
+                      보카
+                    </Link>
                     <button
                       type="button"
                       onClick={() => startRename(h)}
@@ -245,33 +308,13 @@ export default function DashboardPage() {
                     >
                       이름 변경
                     </button>
-                    {deletingId === h.id ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => deleteMutation.mutate(h.id)}
-                          disabled={deleteMutation.isPending}
-                          className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold disabled:opacity-50"
-                        >
-                          확인
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingId(null)}
-                          className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-gray-500"
-                        >
-                          취소
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => confirmDelete(h.id)}
-                        className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-red-400 hover:border-red-300 hover:text-red-500 transition-colors"
-                      >
-                        삭제
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => confirmDelete(h.id)}
+                      className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs font-bold text-red-400 hover:border-red-300 hover:text-red-500 transition-colors"
+                    >
+                      삭제
+                    </button>
                   </div>
                 )}
               </div>
@@ -316,6 +359,19 @@ export default function DashboardPage() {
         )}
         </>
       )}
+
+      {deletingId && handouts && (() => {
+        const target = handouts.find((h) => h.id === deletingId);
+        if (!target) return null;
+        return (
+          <DeleteModal
+            title={target.title}
+            isPending={deleteMutation.isPending}
+            onConfirm={() => deleteMutation.mutate(deletingId)}
+            onCancel={() => setDeletingId(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

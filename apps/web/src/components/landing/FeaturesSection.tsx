@@ -60,6 +60,13 @@ const FEATURES = [
     color: { bg: "bg-cyan-50", text: "text-cyan-600" },
   },
   {
+    title: "단어 테스트",
+    description:
+      "교안의 핵심 어휘로 유의어 5지선다 시험지를 자동 생성하고 PDF로 인쇄합니다.",
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+    color: { bg: "bg-teal-50", text: "text-teal-600" },
+  },
+  {
     title: "교안 저장소",
     description:
       "교안을 저장하고 언제든 다시 열 수 있습니다. 중복 감지로 불필요한 작업을 방지합니다.",
@@ -106,7 +113,7 @@ export default function FeaturesSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0 }}
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5"
         >
           {FEATURES.map((f) => (
             <motion.div

@@ -47,7 +47,7 @@ function LoginContent() {
           <div className="text-center">
             <h2 className="text-lg font-bold text-gray-900">로그인</h2>
             <p className="mt-1 text-sm text-gray-500">
-              승인된 계정으로 로그인하세요
+              Google 계정으로 시작하세요
             </p>
           </div>
 
@@ -92,9 +92,9 @@ function LoginContent() {
           </button>
 
           <p className="text-xs text-center text-gray-400 leading-relaxed">
-            관리자가 승인한 계정만 서비스를 이용할 수 있습니다.
+            회원가입 없이 Google 계정으로 바로 이용할 수 있습니다.
             <br />
-            승인이 필요하시면 관리자에게 문의해 주세요.
+            무료 플랜으로 시작해 보세요!
           </p>
         </div>
       </div>

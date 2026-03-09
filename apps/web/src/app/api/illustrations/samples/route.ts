@@ -12,6 +12,7 @@ import type {
 } from "@gyoanmaker/shared/types";
 import type { PlanId } from "@gyoanmaker/shared/plans";
 import { getUser } from "@/lib/users";
+import { isOwnedStoragePath } from "@/lib/firebase-storage";
 
 interface SaveBody {
   prompt: string;
@@ -72,6 +73,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: { code: "INVALID_BODY", message: "Missing required fields." } },
         { status: 400 }
+      );
+    }
+
+    if (!isOwnedStoragePath(email, body.storagePath)) {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN", message: "Invalid storage path." } },
+        { status: 403 }
       );
     }
 

@@ -11,7 +11,7 @@ export default function Footer() {
               &copy; {new Date().getFullYear()} GyoanMaker. 모든 권리 보유.
             </p>
             <p>
-              사업자등록번호: xxx-xx-xxxxx | 통신판매업 신고번호:
+              사업자등록번호: 885-51-00965 | 통신판매업 신고번호:
               xxxx-xxxx-xxxx
             </p>
             <p>대표: 박창기 | 문의: dnsxj12345aa@gmail.com</p>
