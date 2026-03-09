@@ -273,7 +273,7 @@ export default function AdvancedSettingsPanel({
             />
             <div>
               <span className="font-medium text-gray-900">스타일 설정 적용</span>
-              <p className="text-xs text-gray-500">켜면 아래 설정이 삽화 생성에 반영됩니다</p>
+              <p className="text-xs text-gray-500">켜면 아래 설정이 일러스트 생성에 반영됩니다</p>
             </div>
           </label>
 

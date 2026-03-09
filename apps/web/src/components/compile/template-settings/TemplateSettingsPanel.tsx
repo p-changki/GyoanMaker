@@ -432,7 +432,7 @@ function Page2HeaderPanel() {
       <BackButton label="요약바" />
       <div className="space-y-3">
         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
-          요약바 아바타 (삽화 스타일과 별개)
+          요약바 아바타 (일러스트 스타일과 별개)
         </p>
         <div className="flex items-center gap-3">
           <AvatarSlot avatarInputRef={avatarInputRef} onAvatarUpload={handleAvatarUpload} />

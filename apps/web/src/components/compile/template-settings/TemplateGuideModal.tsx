@@ -121,7 +121,7 @@ export default function TemplateGuideModal({
               <FeatureRow
                 badge="교안 저장"
                 badgeColor="bg-white border border-gray-200 text-gray-700"
-                desc="현재 교안을 대시보드에 저장합니다. 나중에 다시 불러올 수 있습니다."
+                desc="현재 교안을 교안 저장소에 저장합니다. 나중에 다시 불러올 수 있습니다."
               />
               <FeatureRow
                 badge="전체 복사 / TXT 다운로드"
@@ -156,7 +156,7 @@ export default function TemplateGuideModal({
               <SettingRow emoji="📐" title="1페이지 레이아웃" desc="영어 컬럼 비율, 번호 스타일(01/1/①), 테이블 테두리 두께를 설정합니다. 문장 번호와 한국어 열의 표시/숨김도 토글할 수 있습니다." />
               <SettingRow emoji="↔️" title="텍스트 정렬" desc="각 섹션별로 텍스트를 왼쪽/가운데/오른쪽으로 정렬할 수 있습니다." />
               <SettingRow emoji="🧑‍🏫" title="아바타 설정" desc="2페이지 요약바의 캐릭터 위치, 크기를 조절하고, 레이어(앞/뒤)를 전환하여 바 위 또는 뒤에 배치할 수 있습니다. 기본 캐릭터와 업로드 이미지 모두 지원합니다." />
-              <SettingRow emoji="🖼️" title="Visual Summary" desc="삽화와 내용 정리가 2컬럼 레이아웃으로 나란히 표시됩니다. 내용 정리 항목의 배경색도 개별 설정 가능합니다." />
+              <SettingRow emoji="🖼️" title="Visual Summary" desc="일러스트와 내용 정리가 2컬럼 레이아웃으로 나란히 표시됩니다. 내용 정리 항목의 배경색도 개별 설정 가능합니다." />
               <SettingRow emoji="🔠" title="추가 폰트" desc="지마켓산스 Bold/Medium, KoPub돋움체, Times New Roman 등 11종의 폰트를 섹션별로 선택할 수 있습니다." />
             </div>
           </section>

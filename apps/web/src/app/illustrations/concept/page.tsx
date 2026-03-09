@@ -184,7 +184,7 @@ export default function IllustrationConceptPage() {
           setShowLimitModal(true);
           return;
         }
-        throw new Error(data.error?.message || "스타일 테스트 생성에 실패했습니다.");
+        throw new Error(data.error?.message || "일러스트 테스트 생성에 실패했습니다.");
       }
 
       if (!data.sample?.imageUrl) {
@@ -201,7 +201,7 @@ export default function IllustrationConceptPage() {
         aspectRatio,
       });
 
-      setMessage({ text: "스타일 테스트 이미지가 생성되었습니다.", type: "success" });
+      setMessage({ text: "일러스트 테스트 이미지가 생성되었습니다.", type: "success" });
     } catch (error) {
       const text = error instanceof Error ? error.message : "Unknown error";
       setMessage({ text, type: "error" });
@@ -259,9 +259,9 @@ export default function IllustrationConceptPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-black text-gray-900">교안 삽화 스타일 설정</h1>
+          <h1 className="text-xl font-black text-gray-900">교안 일러스트 스타일 설정</h1>
           <p className="mt-1 text-sm text-gray-500">
-            스타일을 설정하면 교안 생성 시 일관된 화풍으로 삽화가 적용됩니다
+            스타일을 설정하면 교안 생성 시 일관된 화풍으로 일러스트가 적용됩니다
           </p>
         </div>
         <div className="flex items-center gap-2">

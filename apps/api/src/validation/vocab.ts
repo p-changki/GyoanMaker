@@ -198,10 +198,10 @@ const VOCAB_THRESHOLDS = {
   },
   basic: {
     vocabCount: 4,
-    synonymsMin: 2,
-    synonymsMax: 2,
-    antonymsMin: 1,
-    antonymsMax: 1,
+    synonymsMin: 3,
+    synonymsMax: 3,
+    antonymsMin: 2,
+    antonymsMax: 2,
   },
 } as const;
 

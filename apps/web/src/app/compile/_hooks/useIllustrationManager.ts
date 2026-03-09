@@ -80,7 +80,7 @@ export function useIllustrationManager(handoutId: string | null) {
         });
         const runData = await runRes.json().catch(() => ({}));
         if (!runRes.ok) {
-          throw new Error(runData?.error?.message || "삽화 생성 실행 중 오류가 발생했습니다.");
+          throw new Error(runData?.error?.message || "일러스트 생성 실행 중 오류가 발생했습니다.");
         }
 
         const job = runData?.job as IllustrationJobProgress;
@@ -98,7 +98,7 @@ export function useIllustrationManager(handoutId: string | null) {
         }
 
         if (Date.now() - startedAt > timeoutMs) {
-          throw new Error("삽화 생성 시간이 10분을 초과했습니다. 잠시 후 다시 시도해주세요.");
+          throw new Error("일러스트 생성 시간이 10분을 초과했습니다. 잠시 후 다시 시도해주세요.");
         }
 
         await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -112,7 +112,7 @@ export function useIllustrationManager(handoutId: string | null) {
   const handleApplyIllustrations = useCallback(
     async (options?: Partial<IllustrationApplyOptions>) => {
       if (!handoutId) {
-        setIllustrationMessage("저장된 교안(handout)에서만 삽화를 생성할 수 있습니다.");
+        setIllustrationMessage("저장된 교안(handout)에서만 일러스트를 생성할 수 있습니다.");
         return;
       }
 
@@ -166,16 +166,16 @@ export function useIllustrationManager(handoutId: string | null) {
           const conflictedJobId = createData?.error?.jobId;
           if (typeof conflictedJobId === "string" && conflictedJobId.length > 0) {
             setIllustrationJobId(conflictedJobId);
-            setIllustrationMessage("이미 진행 중인 삽화 작업을 이어서 진행합니다.");
+            setIllustrationMessage("이미 진행 중인 일러스트 작업을 이어서 진행합니다.");
             const finalStatus = await runIllustrationLoop(conflictedJobId);
             if (finalStatus === "completed") {
-              setIllustrationMessage("삽화 생성이 완료되었습니다.");
+              setIllustrationMessage("일러스트 생성이 완료되었습니다.");
             } else if (finalStatus === "partial_failed") {
               setIllustrationMessage(
-                "일부 삽화 생성에 실패했습니다. 재시도를 진행해주세요."
+                "일부 일러스트 생성에 실패했습니다. 재시도를 진행해주세요."
               );
             } else {
-              setIllustrationMessage("삽화 생성이 중단되었거나 실패했습니다.");
+              setIllustrationMessage("일러스트 생성이 중단되었거나 실패했습니다.");
             }
             return;
           }
@@ -192,7 +192,7 @@ export function useIllustrationManager(handoutId: string | null) {
         if (!createRes.ok) {
           const detail =
             createData?.error?.message ??
-            "삽화 작업을 생성하지 못했습니다. 크레딧을 확인해주세요.";
+            "일러스트 작업을 생성하지 못했습니다. 크레딧을 확인해주세요.";
           throw new Error(detail);
         }
 
@@ -200,7 +200,7 @@ export function useIllustrationManager(handoutId: string | null) {
         const jobId =
           typeof createData.jobId === "string" ? createData.jobId : createData?.job?.id;
         if (!jobId) {
-          throw new Error("삽화 작업 ID를 받지 못했습니다.");
+          throw new Error("일러스트 작업 ID를 받지 못했습니다.");
         }
         if (job) {
           setIllustrationProgress(toIllustrationProgress(job));
@@ -209,11 +209,11 @@ export function useIllustrationManager(handoutId: string | null) {
         const finalStatus = await runIllustrationLoop(jobId);
 
         if (finalStatus === "completed") {
-          setIllustrationMessage("삽화 생성이 완료되었습니다.");
+          setIllustrationMessage("일러스트 생성이 완료되었습니다.");
         } else if (finalStatus === "partial_failed") {
-          setIllustrationMessage("일부 삽화 생성에 실패했습니다. 재시도를 진행해주세요.");
+          setIllustrationMessage("일부 일러스트 생성에 실패했습니다. 재시도를 진행해주세요.");
         } else {
-          setIllustrationMessage("삽화 생성이 중단되었거나 실패했습니다.");
+          setIllustrationMessage("일러스트 생성이 중단되었거나 실패했습니다.");
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -235,7 +235,7 @@ export function useIllustrationManager(handoutId: string | null) {
       });
       const cancelData = await cancelRes.json().catch(() => ({}));
       if (!cancelRes.ok) {
-        throw new Error(cancelData?.error?.message || "삽화 작업 취소에 실패했습니다.");
+        throw new Error(cancelData?.error?.message || "일러스트 작업 취소에 실패했습니다.");
       }
 
       const job = cancelData?.job as IllustrationJobProgress | undefined;
@@ -245,7 +245,7 @@ export function useIllustrationManager(handoutId: string | null) {
         setIllustrationProgress((prev) => ({ ...prev, status: "canceled" }));
       }
       await syncHandoutIllustrations();
-      setIllustrationMessage("삽화 작업이 취소되었습니다. 미사용 크레딧은 환불 처리됩니다.");
+      setIllustrationMessage("일러스트 작업이 취소되었습니다. 미사용 크레딧은 환불 처리됩니다.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       setIllustrationMessage(message);
@@ -269,7 +269,7 @@ export function useIllustrationManager(handoutId: string | null) {
 
       const finalStatus = await runIllustrationLoop(illustrationJobId);
       if (finalStatus === "completed") {
-        setIllustrationMessage("재시도 후 삽화 생성이 완료되었습니다.");
+        setIllustrationMessage("재시도 후 일러스트 생성이 완료되었습니다.");
       } else if (finalStatus === "partial_failed") {
         setIllustrationMessage("재시도 후에도 일부 항목이 실패했습니다.");
       } else {
@@ -304,17 +304,17 @@ export function useIllustrationManager(handoutId: string | null) {
 
         setIllustrationJobId(activeJob.id);
         setIllustrationProgress(toIllustrationProgress(activeJob));
-        setIllustrationMessage("진행 중인 삽화 작업을 이어서 진행합니다.");
+        setIllustrationMessage("진행 중인 일러스트 작업을 이어서 진행합니다.");
         setIsApplyingIllustrations(true);
         const finalStatus = await runIllustrationLoop(activeJob.id);
         if (cancelled) return;
 
         if (finalStatus === "completed") {
-          setIllustrationMessage("삽화 생성이 완료되었습니다.");
+          setIllustrationMessage("일러스트 생성이 완료되었습니다.");
         } else if (finalStatus === "partial_failed") {
-          setIllustrationMessage("일부 삽화 생성에 실패했습니다. 재시도를 진행해주세요.");
+          setIllustrationMessage("일부 일러스트 생성에 실패했습니다. 재시도를 진행해주세요.");
         } else {
-          setIllustrationMessage("삽화 생성이 중단되었거나 실패했습니다.");
+          setIllustrationMessage("일러스트 생성이 중단되었거나 실패했습니다.");
         }
       } catch (error) {
         if (cancelled) return;

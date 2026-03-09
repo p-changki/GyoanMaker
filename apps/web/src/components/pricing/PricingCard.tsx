@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/cn";
 import type { PlanDefinition, PlanId } from "@gyoanmaker/shared/plans";
 
@@ -13,65 +14,142 @@ interface PricingCardProps {
   totalPlans: number;
 }
 
-const PLAN_META: Record<
-  PlanId,
-  { label: string; description: string; features: string[] }
-> = {
+interface FeatureItem {
+  label: string;
+  tooltip?: string;
+}
+
+interface FeatureGroup {
+  category: string;
+  items: FeatureItem[];
+}
+
+interface PlanMeta {
+  label: string;
+  description: string;
+  features: FeatureGroup[];
+}
+
+const PLAN_META: Record<PlanId, PlanMeta> = {
   free: {
     label: "무료",
     description: "서비스를 체험해 보세요",
     features: [
-      "10 속도 생성 / 월",
-      "5 정밀 생성 / 월",
-      "5 삽화 크레딧 / 월",
-      "10 삽화 샘플",
-      "3 스타일 테스트 / 일",
-      "최대 3개 교안",
-      "기본 PDF 내보내기",
+      {
+        category: "교안 생성",
+        items: [
+          { label: "빠른 모드 지문 10개 / 월", tooltip: "지문당 10~20초" },
+          { label: "정밀 모드 지문 5개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
+          { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+        ],
+      },
+      {
+        category: "일러스트",
+        items: [
+          { label: "교안 일러스트 삽입 5회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "일러스트 샘플 저장 10개", tooltip: "마음에 드는 화풍을 저장" },
+          { label: "일러스트 미리보기 3회 / 일", tooltip: "화풍을 미리 테스트" },
+        ],
+      },
+      {
+        category: "저장 & 내보내기",
+        items: [
+          { label: "교안 저장 최대 3개" },
+          { label: "PDF 다운로드" },
+        ],
+      },
     ],
   },
   basic: {
     label: "베이직",
     description: "개인 과외·소규모 학원용",
     features: [
-      "250 속도 생성 / 월",
-      "30 정밀 생성 / 월",
-      "10 삽화 크레딧 / 월",
-      "20 삽화 샘플",
-      "5 스타일 테스트 / 일",
-      "무제한 저장",
-      "PDF 내보내기",
-      "크레딧 충전",
+      {
+        category: "교안 생성",
+        items: [
+          { label: "빠른 모드 지문 250개 / 월", tooltip: "지문당 10~20초" },
+          { label: "정밀 모드 지문 30개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
+          { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+        ],
+      },
+      {
+        category: "일러스트",
+        items: [
+          { label: "교안 일러스트 삽입 10회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "일러스트 샘플 저장 20개", tooltip: "마음에 드는 화풍을 저장" },
+          { label: "일러스트 미리보기 5회 / 일", tooltip: "화풍을 미리 테스트" },
+        ],
+      },
+      {
+        category: "저장 & 내보내기",
+        items: [
+          { label: "무제한 저장" },
+          { label: "PDF 다운로드" },
+          { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
+        ],
+      },
     ],
   },
   standard: {
     label: "스탠다드",
     description: "중형 학원용",
     features: [
-      "500 속도 생성 / 월",
-      "120 정밀 생성 / 월",
-      "30 삽화 크레딧 / 월",
-      "30 삽화 샘플",
-      "10 스타일 테스트 / 일",
-      "무제한 저장",
-      "PDF 내보내기",
-      "크레딧 충전",
-      "우선 처리",
+      {
+        category: "교안 생성",
+        items: [
+          { label: "빠른 모드 지문 500개 / 월", tooltip: "지문당 10~20초" },
+          { label: "정밀 모드 지문 120개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
+          { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+        ],
+      },
+      {
+        category: "일러스트",
+        items: [
+          { label: "교안 일러스트 삽입 30회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "일러스트 샘플 저장 30개", tooltip: "마음에 드는 화풍을 저장" },
+          { label: "일러스트 미리보기 10회 / 일", tooltip: "화풍을 미리 테스트" },
+        ],
+      },
+      {
+        category: "저장 & 내보내기",
+        items: [
+          { label: "무제한 저장" },
+          { label: "PDF 다운로드" },
+          { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
+          { label: "우선 처리", tooltip: "생성 요청이 우선 큐에서 처리" },
+        ],
+      },
     ],
   },
   pro: {
     label: "프로",
     description: "대형 학원·프랜차이즈용",
     features: [
-      "1,000 속도 생성 / 월",
-      "400 정밀 생성 / 월",
-      "60 삽화 크레딧 / 월",
-      "30 삽화 샘플",
-      "10 스타일 테스트 / 일",
-      "무제한 저장",
-      "PDF 내보내기",
-      "크레딧 충전",
-      "우선 처리",
+      {
+        category: "교안 생성",
+        items: [
+          { label: "빠른 모드 지문 1,000개 / 월", tooltip: "지문당 10~20초" },
+          { label: "정밀 모드 지문 400개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
+          { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+        ],
+      },
+      {
+        category: "일러스트",
+        items: [
+          { label: "교안 일러스트 삽입 60회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "일러스트 샘플 저장 30개", tooltip: "마음에 드는 화풍을 저장" },
+          { label: "일러스트 미리보기 10회 / 일", tooltip: "화풍을 미리 테스트" },
+        ],
+      },
+      {
+        category: "저장 & 내보내기",
+        items: [
+          { label: "무제한 저장" },
+          { label: "PDF 다운로드" },
+          { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
+          { label: "우선 처리", tooltip: "생성 요청이 우선 큐에서 처리" },
+        ],
+      },
     ],
   },
 };
@@ -94,6 +172,37 @@ function CheckIcon() {
         clipRule="evenodd"
       />
     </svg>
+  );
+}
+
+function Tooltip({ text }: { text: string }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <span
+      className="relative ml-0.5 inline-flex cursor-help"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <svg
+        className="h-3 w-3 text-gray-300 hover:text-gray-500 transition-colors"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={2}
+      >
+        <title>도움말</title>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" strokeLinecap="round" />
+        <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none" />
+      </svg>
+      {visible && (
+        <span className="absolute bottom-full left-1/2 z-50 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-2.5 py-1.5 text-[11px] font-medium text-white shadow-lg">
+          {text}
+          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        </span>
+      )}
+    </span>
   );
 }
 
@@ -161,14 +270,24 @@ export default function PricingCard({
         </p>
 
         {/* Features */}
-        <ul className="mt-5 flex flex-col gap-2">
-          {meta.features.map((feature) => (
-            <li key={feature} className="flex items-start gap-1.5 text-left">
-              <CheckIcon />
-              <span className="text-xs text-gray-600">{feature}</span>
-            </li>
+        <div className="mt-5 flex flex-col gap-3 text-left">
+          {meta.features.map((group) => (
+            <div key={group.category}>
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                {group.category}
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                {group.items.map((item) => (
+                  <li key={item.label} className="flex items-center gap-1.5">
+                    <CheckIcon />
+                    <span className="text-xs text-gray-600">{item.label}</span>
+                    {item.tooltip && <Tooltip text={item.tooltip} />}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
 
         <hr className="my-4 border-gray-100" />
 

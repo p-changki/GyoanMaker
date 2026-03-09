@@ -179,7 +179,7 @@ export default function ControlPanel({
                   disabled={!canApplyIllustrations || isApplyingIllustrations}
                   className="w-full py-4 bg-[#F59E0B] text-white rounded-xl font-black text-sm disabled:opacity-50 hover:bg-[#D97706] active:scale-[0.98] transition-[transform,background-color,opacity]"
                 >
-                  {isApplyingIllustrations ? "삽화 생성 중..." : "현재 스타일로 삽화 적용"}
+                  {isApplyingIllustrations ? "일러스트 생성 중..." : "현재 스타일로 일러스트 적용"}
                 </button>
                 {!canApplyIllustrations && (
                   <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-amber-600 font-semibold">
@@ -400,7 +400,7 @@ export default function ControlPanel({
             </div>
             <div className="mt-4 space-y-2 text-sm text-gray-600">
               <p>
-                삽화 생성에{" "}
+                일러스트 생성에{" "}
                 <strong className="text-gray-900">{illustrationCreditError.needed}건</strong>의
                 크레딧이 필요하지만, 현재
                 <strong className="text-red-600"> {illustrationCreditError.available}건</strong>만

@@ -46,7 +46,7 @@ function PrecisionWarningModal({
         <div className="mt-4 space-y-2 text-sm text-gray-600">
           <p>
             <strong>{passageCount}개 지문</strong>을 Precision 모드로 생성하면
-            지문당 30~60초가 소요되어 총
+            지문당 30초~2분이 소요되어 총
             <strong className="text-amber-700"> {estimateMin}~{estimateMax}분</strong>이
             걸릴 수 있습니다.
           </p>

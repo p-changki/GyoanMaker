@@ -260,7 +260,7 @@ export default function AccountDashboard() {
       {/* Illustration Quota */}
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <UsageBar
-          label="삽화 크레딧"
+          label="일러스트 크레딧"
           used={data.quota.illustration.used}
           limit={data.quota.illustration.limit}
           remaining={data.quota.illustration.remaining}
@@ -268,7 +268,7 @@ export default function AccountDashboard() {
         />
         <div className="rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between text-sm">
-            <p className="font-semibold text-gray-900">일일 스타일 테스트</p>
+            <p className="font-semibold text-gray-900">일일 일러스트 테스트</p>
             <p className="font-medium text-gray-500">
               {data.dailySampleUsage.used}/{data.dailySampleUsage.limit}
             </p>
@@ -295,7 +295,7 @@ export default function AccountDashboard() {
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between text-sm">
-            <p className="font-semibold text-gray-900">삽화 샘플</p>
+            <p className="font-semibold text-gray-900">일러스트 샘플</p>
             <p className="font-medium text-gray-500">
               {data.illustrationSamples.count}/{PLANS[currentPlan].maxSamples}
             </p>

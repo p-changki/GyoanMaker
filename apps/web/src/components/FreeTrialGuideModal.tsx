@@ -21,14 +21,14 @@ const STEPS = [
     ),
     color: "blue",
     items: [
-      "Speed 모드로 2~3개 지문을 빠르게 생성해보세요 (5~10초)",
-      "Precision 모드로 1~2개 지문을 정밀 생성해서 품질 차이를 비교해보세요 (30~60초)",
+      "Speed 모드로 2~3개 지문을 빠르게 생성해보세요 (10~20초)",
+      "Precision 모드로 1~2개 지문을 정밀 생성해서 품질 차이를 비교해보세요 (30초~2분)",
       "다양한 난이도(고급/기초)를 조합해보세요",
     ],
     tip: "난이도(고급/기초)는 쿼타에 영향 없어요! 자유롭게 바꿔보세요.",
   },
   {
-    title: "삽화 & 컨셉 체험",
+    title: "일러스트 & 컨셉 체험",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <title>Illustration</title>
@@ -37,11 +37,11 @@ const STEPS = [
     ),
     color: "amber",
     items: [
-      "기본 제공 프리셋 컨셉으로 교안에 삽화를 적용해보세요",
-      "스타일 테스트로 나만의 컨셉을 미리보기 해보세요 (하루 3회)",
+      "기본 제공 프리셋 컨셉으로 교안에 일러스트를 적용해보세요",
+      "일러스트 테스트로 나만의 컨셉을 미리보기 해보세요 (하루 3회)",
       "마음에 드는 스타일을 샘플로 저장해서 재사용하세요",
     ],
-    tip: "삽화 크레딧 5건으로 교안에 삽화를 넣어보세요!",
+    tip: "일러스트 크레딧 5건으로 교안에 일러스트를 넣어보세요!",
   },
   {
     title: "편집 & PDF 내보내기",
@@ -84,8 +84,8 @@ function QuotaOverview() {
   const quotaItems = [
     { label: "Speed 생성", value: "10회 / 월", icon: "⚡" },
     { label: "Precision 생성", value: "5회 / 월", icon: "🎯" },
-    { label: "삽화 크레딧", value: "5건 / 월", icon: "🖼" },
-    { label: "스타일 테스트", value: "3회 / 일", icon: "🎨" },
+    { label: "일러스트 크레딧", value: "5건 / 월", icon: "🖼" },
+    { label: "일러스트 테스트", value: "3회 / 일", icon: "🎨" },
     { label: "저장 공간", value: "3개", icon: "💾" },
     { label: "PDF 내보내기", value: "무제한", icon: "📄" },
   ];

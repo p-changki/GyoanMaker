@@ -107,7 +107,7 @@ export default function ConceptPromptBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="스타일 테스트용 장면을 묘사하세요. 예: 미래 도시에서 로봇이 학생들에게 수업하는 장면 (실제 지문 삽화는 자동 생성됩니다)"
+          placeholder="일러스트 테스트용 장면을 묘사하세요. 예: 미래 도시에서 로봇이 학생들에게 수업하는 장면 (실제 지문 일러스트는 자동 생성됩니다)"
           maxLength={500}
           rows={1}
           className="min-h-[44px] flex-1 resize-none rounded-xl border-0 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#5E35B1]/30"
@@ -127,13 +127,13 @@ export default function ConceptPromptBar({
               생성 중...
             </span>
           ) : (
-            "스타일 테스트 생성"
+            "일러스트 테스트 생성"
           )}
         </button>
       </div>
       <div className="mt-2 flex items-center justify-between px-1">
         <p className="text-xs text-gray-400">
-          Enter로 생성 · Shift+Enter로 줄바꿈 · 이 프롬프트는 테스트용이며 실제 지문 삽화에는 사용되지 않습니다
+          Enter로 생성 · Shift+Enter로 줄바꿈 · 이 프롬프트는 테스트용이며 실제 지문 일러스트에는 사용되지 않습니다
         </p>
         <p className="text-xs font-semibold text-[#5E35B1]">
           테스트 생성 무료{dailyUsage ? ` (${dailyUsage.used}/${dailyUsage.limit}회)` : ""} · 잔여 크레딧 {credits.toLocaleString()}

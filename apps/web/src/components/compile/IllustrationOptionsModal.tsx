@@ -109,9 +109,9 @@ export default function IllustrationOptionsModal({
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-black text-gray-900">삽화 생성</h3>
+            <h3 className="text-lg font-black text-gray-900">일러스트 생성</h3>
             <p className="mt-1 text-sm text-gray-500">
-              각 지문에 맞는 삽화를 AI가 자동으로 생성합니다
+              각 지문에 맞는 일러스트를 AI가 자동으로 생성합니다
             </p>
           </div>
           <a
@@ -210,9 +210,9 @@ export default function IllustrationOptionsModal({
               )}
             </div>
             <p className="text-[11px] text-gray-400">
-              {illustrationScope === "all" && "전체 지문에 삽화를 생성합니다"}
+              {illustrationScope === "all" && "전체 지문에 일러스트를 생성합니다"}
               {illustrationScope === "stale" &&
-                "아직 삽화가 없거나, 실패·변경된 지문만 생성합니다"}
+                "아직 일러스트가 없거나, 실패·변경된 지문만 생성합니다"}
               {illustrationScope === "passages" && "아래에서 원하는 지문을 선택하세요"}
             </p>
           </label>
@@ -364,7 +364,7 @@ export default function IllustrationOptionsModal({
 
           {/* Overwrite policy */}
           <label className="block space-y-1.5">
-            <span className="text-sm font-bold text-gray-700">기존 삽화 처리</span>
+            <span className="text-sm font-bold text-gray-700">기존 일러스트 처리</span>
             <div
               className="relative"
               ref={openDropdown === "overwrite" ? dropdownRef : undefined}
@@ -383,7 +383,7 @@ export default function IllustrationOptionsModal({
                 <span className="text-gray-700">
                   {
                     {
-                      skip_completed: "이미 완성된 삽화는 건너뛰기",
+                      skip_completed: "이미 완성된 일러스트는 건너뛰기",
                       overwrite_all: "전부 새로 생성",
                       stale_only: "변경된 지문만 새로 생성",
                     }[illustrationOverwritePolicy]
@@ -409,7 +409,7 @@ export default function IllustrationOptionsModal({
                     [
                       {
                         value: "skip_completed" as const,
-                        label: "이미 완성된 삽화는 건너뛰기",
+                        label: "이미 완성된 일러스트는 건너뛰기",
                       },
                       { value: "overwrite_all" as const, label: "전부 새로 생성" },
                       { value: "stale_only" as const, label: "변경된 지문만 새로 생성" },
@@ -516,7 +516,7 @@ export default function IllustrationOptionsModal({
           <div>
             <span className="text-sm font-bold text-gray-800">한글 말풍선 포함</span>
             <p className="text-[11px] text-gray-500">
-              삽화에 지문 내용 기반 한글 말풍선·캡션을 넣습니다
+              일러스트에 지문 내용 기반 한글 말풍선·캡션을 넣습니다
             </p>
           </div>
         </label>
@@ -622,7 +622,7 @@ export default function IllustrationOptionsModal({
             onClick={handleConfirm}
             className="rounded-xl bg-[#F59E0B] px-5 py-2.5 text-sm font-black text-white hover:bg-[#D97706] disabled:opacity-50 transition-colors"
           >
-            삽화 생성 시작
+            일러스트 생성 시작
           </button>
         </div>
       </div>

@@ -112,7 +112,7 @@ export default function GenerateOptionsPanel({
               />
               <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">정밀 모드</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">최고 품질 · 느림 (30~60초/지문)</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">최고 품질 · 느림 (30초~2분/지문)</span>
               </div>
             </label>
             <label
@@ -131,7 +131,7 @@ export default function GenerateOptionsPanel({
               />
               <div className="ml-3 min-w-0">
                 <span className="block text-sm font-bold text-gray-900">속도 모드</span>
-                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">빠른 결과 · 빠름 (5~10초/지문)</span>
+                <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">빠른 결과 · 빠름 (10~20초/지문)</span>
               </div>
             </label>
           </div>

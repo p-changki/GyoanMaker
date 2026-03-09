@@ -82,6 +82,7 @@ export const middleware = auth((req) => {
     "/pricing",
     "/privacy",
     "/terms",
+    "/about",
     "/api/auth",
     "/api/billing/webhook",
     "/api/cron",
