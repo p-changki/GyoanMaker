@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "개인정보처리방침 | GyoanMaker",
+  title: "개인정보처리방침",
+  description:
+    "교안메이커의 개인정보처리방침입니다. 수집 항목, 이용 목적, 보유 기간, 제3자 제공 등 개인정보 보호에 관한 사항을 안내합니다.",
   alternates: {
     canonical: "/privacy",
   },

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "이용약관 | GyoanMaker",
+  title: "이용약관",
+  description:
+    "교안메이커 서비스 이용약관입니다. 서비스 이용 조건, 결제·환불 정책, 저작권, 면책 사항 등을 안내합니다.",
   alternates: {
     canonical: "/terms",
   },

@@ -13,27 +13,30 @@ const SITE_URL = "https://gyoan-maker.store";
 
 export const metadata: Metadata = {
   title: {
-    default: "GyoanMaker | AI-Powered English Handout Generator",
-    template: "%s | GyoanMaker",
+    default: "교안메이커 | AI 영어 교안 자동 생성기",
+    template: "%s | 교안메이커",
   },
   description:
-    "Enter English passages and AI automatically generates sentence analysis, core vocabulary, and summaries. Export as printable PDF.",
+    "영어 지문을 입력하면 AI가 문장 분석, 핵심 어휘, 요약을 자동 생성합니다. 학원·과외용 PDF 교안을 원클릭으로 제작하세요.",
   keywords: [
-    "English handout",
-    "AI handout generator",
-    "English passage analysis",
-    "academy handout",
-    "PDF handout",
-    "vocabulary analysis",
+    "영어 교안",
+    "AI 교안 생성기",
+    "영어 지문 분석",
+    "영어 학원 교안",
+    "영어 핸드아웃",
+    "PDF 교안",
+    "어휘 분석",
+    "영어 수업 자료",
+    "English handout generator",
   ],
   metadataBase: new URL(SITE_URL),
   openGraph: {
-    title: "GyoanMaker | AI-Powered English Handout Generator",
+    title: "교안메이커 | AI 영어 교안 자동 생성기",
     description:
-      "From passage analysis to handout export, all in one step. AI generates sentence analysis, vocabulary, and summaries automatically.",
+      "영어 지문 분석부터 교안 출력까지 한 번에. AI가 문장 분석, 어휘, 요약을 자동 생성합니다.",
     url: SITE_URL,
-    siteName: "GyoanMaker",
-    locale: "en_US",
+    siteName: "교안메이커",
+    locale: "ko_KR",
     type: "website",
   },
   robots: {
@@ -48,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
