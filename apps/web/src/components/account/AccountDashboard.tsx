@@ -120,8 +120,36 @@ export default function AccountDashboard() {
 
   if (isLoading || !data) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
-        <div className="h-28 animate-pulse rounded-2xl bg-gray-100" />
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-10">
+        {/* Profile skeleton */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 animate-pulse rounded-full bg-gray-100" />
+            <div className="space-y-2">
+              <div className="h-5 w-32 animate-pulse rounded bg-gray-100" />
+              <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+            </div>
+          </div>
+        </div>
+        {/* Quota skeleton */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-4">
+          <div className="h-5 w-24 animate-pulse rounded bg-gray-100" />
+          <div className="h-8 w-full animate-pulse rounded-lg bg-gray-100" />
+          <div className="h-8 w-full animate-pulse rounded-lg bg-gray-100" />
+        </div>
+        {/* Subscription skeleton */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-3">
+          <div className="h-5 w-32 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-64 animate-pulse rounded bg-gray-100" />
+          <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+        </div>
+        {/* History skeleton */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-3">
+          <div className="h-5 w-28 animate-pulse rounded bg-gray-100" />
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-100" />
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-100" />
+          <div className="h-10 w-full animate-pulse rounded-lg bg-gray-100" />
+        </div>
       </div>
     );
   }

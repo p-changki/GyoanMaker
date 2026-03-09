@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { IllustrationSample } from "@gyoanmaker/shared/types";
 
 interface SampleCardProps {
@@ -36,12 +37,13 @@ export default function SampleCard({
         </div>
       )}
 
-      <div className="aspect-[4/3] overflow-hidden bg-gray-50">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
+        <Image
           src={sample.imageUrl}
           alt={sample.prompt}
-          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+          fill
+          sizes="(max-width: 640px) 50vw, 33vw"
+          className="object-cover transition-transform group-hover:scale-105"
         />
       </div>
 

@@ -42,6 +42,24 @@ const SAMPLES: Sample[] = [
     image: "/images/samples/sample-5.png",
     color: "from-rose-500/20 to-pink-500/20",
   },
+  {
+    label: "Illustrated Handout (1)",
+    category: "HANDOUT",
+    image: "/images/samples/sample-6.png",
+    color: "from-purple-500/20 to-violet-500/20",
+  },
+  {
+    label: "Illustrated Handout (2)",
+    category: "HANDOUT",
+    image: "/images/samples/sample-7.png",
+    color: "from-sky-500/20 to-blue-500/20",
+  },
+  {
+    label: "Style Gallery",
+    category: "ILLUSTRATION",
+    image: "/images/samples/sample-8.png",
+    color: "from-fuchsia-500/20 to-pink-500/20",
+  },
 ];
 
 const ITEMS = [...SAMPLES, ...SAMPLES];

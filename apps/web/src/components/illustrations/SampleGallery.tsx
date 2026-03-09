@@ -63,9 +63,20 @@ export default function SampleGallery() {
 
   if (isLoading) {
     return (
-      <section className="rounded-2xl border border-gray-200 bg-white p-6">
+      <section className="space-y-5">
         <h2 className="text-sm font-bold text-gray-900">샘플 갤러리</h2>
-        <p className="mt-3 text-sm text-gray-400">불러오는 중...</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="overflow-hidden rounded-xl border-2 border-gray-200 bg-white">
+              <div className="aspect-4/3 animate-pulse bg-gray-100" />
+              <div className="p-3 space-y-2">
+                <div className="h-3 w-3/4 animate-pulse rounded bg-gray-100" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                <div className="h-7 animate-pulse rounded-lg bg-gray-100" />
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
     );
   }
