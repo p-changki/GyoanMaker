@@ -92,9 +92,6 @@ export default function AccountDashboard() {
   const topUpTypeParam = searchParams.get("topup");
   const autoOpenTopUpModal = isTopUpCreditType(topUpTypeParam);
   const isTopUpModalOpen = showTopUpModal || autoOpenTopUpModal;
-  const defaultTopUpType: TopUpCreditType = isTopUpCreditType(topUpTypeParam)
-    ? topUpTypeParam
-    : "flash";
 
   const clearTargetPlanQuery = () => {
     if (!searchParams.get("targetPlan")) {
@@ -367,7 +364,6 @@ export default function AccountDashboard() {
       {/* Modals */}
       <TopUpModal
         open={isTopUpModalOpen}
-        defaultType={defaultTopUpType}
         onClose={() => {
           setShowTopUpModal(false);
           clearTopUpQuery();

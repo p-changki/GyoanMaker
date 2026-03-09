@@ -9,6 +9,7 @@ import {
   PLANS,
   TOP_UP_PACKAGES,
   type TopUpPackageId,
+  toVatInclusiveAmount,
 } from "@gyoanmaker/shared/plans";
 
 interface InitCheckoutBody {
@@ -23,13 +24,12 @@ function isPlanId(value: unknown): value is PlanId {
 
 function isTopUpPackageId(value: unknown): value is TopUpPackageId {
   return (
-    value === "flash_50" ||
-    value === "flash_100" ||
+    value === "illu_20" ||
+    value === "illu_50" ||
+    value === "illu_100" ||
     value === "pro_20" ||
-    value === "pro_50" ||
-    value === "illu_30" ||
-    value === "illu_60" ||
-    value === "illu_120"
+    value === "pro_60" ||
+    value === "flash_100"
   );
 }
 
@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
   }
 
   let amount = 0;
+  let supplyAmount = 0;
+  let vatAmount = 0;
   let orderName = "";
   let planId: PlanId | undefined;
   let packageId: TopUpPackageId | undefined;
@@ -115,7 +117,10 @@ export async function POST(req: NextRequest) {
     }
 
     planId = body.planId;
-    amount = targetPrice;
+    const vatBreakdown = toVatInclusiveAmount(targetPrice);
+    supplyAmount = vatBreakdown.supplyAmount;
+    vatAmount = vatBreakdown.vatAmount;
+    amount = vatBreakdown.totalAmount;
     orderName = `GyoanMaker ${planId.toUpperCase()} Plan`;
   }
 
@@ -146,8 +151,11 @@ export async function POST(req: NextRequest) {
     }
 
     packageId = selectedPackage.id;
-    amount = selectedPackage.price;
-    orderName = `GyoanMaker ${selectedPackage.type.toUpperCase()} ${selectedPackage.amount} Top-up`;
+    const vatBreakdown = toVatInclusiveAmount(selectedPackage.price);
+    supplyAmount = vatBreakdown.supplyAmount;
+    vatAmount = vatBreakdown.vatAmount;
+    amount = vatBreakdown.totalAmount;
+    orderName = `GyoanMaker ${selectedPackage.label}`;
   }
 
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -168,6 +176,8 @@ export async function POST(req: NextRequest) {
     orderId,
     email,
     type: body.type,
+    supplyAmount,
+    vatAmount,
     amount,
     orderName,
     status: "pending",
@@ -182,6 +192,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     orderId,
+    supplyAmount,
+    vatAmount,
     amount,
     orderName,
   });
