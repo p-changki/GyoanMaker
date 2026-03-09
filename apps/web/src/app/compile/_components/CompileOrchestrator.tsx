@@ -4,14 +4,50 @@ import { useRouter } from "next/navigation";
 import CompileLayout from "@/components/compile/CompileLayout";
 import { useCompileData } from "../_hooks/useCompileData";
 
-function LoadingState() {
+function SkeletonBlock({ className }: { className?: string }) {
+  return <div className={`animate-pulse rounded bg-gray-100 ${className ?? ""}`} />;
+}
+
+function LoadingSkeleton() {
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-white">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-[#5E35B1] border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-black text-[#5E35B1] animate-pulse uppercase tracking-widest">
-          Loading Layout...
-        </p>
+    <div className="h-screen flex flex-col bg-white overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Center: Preview area */}
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-start pt-12 px-8 gap-6 overflow-auto bg-gray-50/50">
+          {/* Simulated A4 page */}
+          <div className="w-full max-w-[595px] bg-white rounded-lg shadow-sm border border-gray-200 p-8 space-y-5">
+            <SkeletonBlock className="h-5 w-48" />
+            <SkeletonBlock className="h-3 w-full" />
+            <SkeletonBlock className="h-3 w-5/6" />
+            <SkeletonBlock className="h-3 w-4/6" />
+            <div className="pt-4 space-y-3">
+              <SkeletonBlock className="h-3 w-full" />
+              <SkeletonBlock className="h-3 w-5/6" />
+              <SkeletonBlock className="h-3 w-3/4" />
+            </div>
+            <div className="pt-4 space-y-3">
+              <SkeletonBlock className="h-4 w-32" />
+              <SkeletonBlock className="h-3 w-full" />
+              <SkeletonBlock className="h-3 w-4/5" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Control panel */}
+        <div className="w-[320px] shrink-0 border-l border-gray-200 p-5 space-y-6">
+          <SkeletonBlock className="h-8 w-full rounded-lg" />
+          <div className="space-y-3">
+            <SkeletonBlock className="h-3 w-24" />
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+          </div>
+          <div className="space-y-3">
+            <SkeletonBlock className="h-3 w-20" />
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+            <SkeletonBlock className="h-10 w-full rounded-lg" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -51,7 +87,7 @@ export default function CompileOrchestrator() {
   } = useCompileData();
 
   if (isLoading) {
-    return <LoadingState />;
+    return <LoadingSkeleton />;
   }
 
   if (errorMessage) {
