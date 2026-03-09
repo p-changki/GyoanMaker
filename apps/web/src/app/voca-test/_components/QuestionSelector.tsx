@@ -62,16 +62,6 @@ export default function QuestionSelector() {
   }, [questionPool]);
 
   const [collapsedPassages, setCollapsedPassages] = useState<Set<string>>(new Set());
-  const prevGroupCountRef = useRef(0);
-
-  // Collapse all by default when question groups first load
-  if (groupedQuestions.length > 0 && prevGroupCountRef.current === 0) {
-    prevGroupCountRef.current = groupedQuestions.length;
-    const allIds = new Set(groupedQuestions.map(([id]) => id));
-    if (collapsedPassages.size !== allIds.size) {
-      setCollapsedPassages(allIds);
-    }
-  }
 
   const toggleCollapse = useCallback((passageId: string) => {
     setCollapsedPassages((prev) => {

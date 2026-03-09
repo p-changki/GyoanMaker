@@ -37,10 +37,12 @@ export async function GET(
     // Secret post: admin sees content directly; others must verify password
     if (post.type === "secret") {
       if (isAdminUser) {
-        const { passwordHash: _ph, ...detail } = post;
+        const { passwordHash, ...detail } = post;
+        void passwordHash;
         return NextResponse.json(detail);
       }
-      const { passwordHash: _ph, content: _c, ...meta } = post;
+      const { passwordHash, ...meta } = post;
+      void passwordHash;
       return NextResponse.json({
         ...meta,
         content: null,
@@ -50,7 +52,8 @@ export async function GET(
     }
 
     // Notice: return full content (strip passwordHash from response)
-    const { passwordHash: _ph, ...detail } = post;
+    const { passwordHash, ...detail } = post;
+    void passwordHash;
     return NextResponse.json(detail);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

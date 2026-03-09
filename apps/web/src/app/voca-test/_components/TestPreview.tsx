@@ -18,7 +18,18 @@ export default function TestPreview() {
 
   const { isExporting, exportPDF } = useTestExport();
 
-  const shuffleSeed = useMemo(() => Date.now(), [shuffleQuestions]);
+  const shuffleSeed = useMemo(() => {
+    if (!shuffleQuestions) return 0;
+
+    let hash = 0x9e3779b9;
+    for (const question of questionPool) {
+      if (!selectedQuestionIds.has(question.id)) continue;
+      for (const char of question.id) {
+        hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+      }
+    }
+    return hash || 1;
+  }, [shuffleQuestions, questionPool, selectedQuestionIds]);
 
   const selectedQuestions = useMemo(() => {
     const filtered = questionPool.filter((question) => selectedQuestionIds.has(question.id));
