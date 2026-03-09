@@ -59,7 +59,7 @@ function getAdminEmails(): Set<string> {
  * 라우트 보호 Proxy
  * Next.js Proxy 런타임에서 실행되므로 Node 전용 모듈을 직접 사용하지 않습니다.
  */
-export const proxy = auth((req) => {
+export const middleware = auth((req) => {
   // CSRF Origin 검증
   if (!validateOrigin(req)) {
     return new NextResponse(JSON.stringify({ error: "Forbidden" }), {
