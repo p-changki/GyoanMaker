@@ -88,8 +88,10 @@ export const middleware = auth((req) => {
     "/_next",
     "/favicon.ico",
     "/icon",
+    "/robots.txt",
     "/sitemap.xml",
     "/opengraph-image",
+    "/monitoring",
   ];
   if (publicPaths.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
