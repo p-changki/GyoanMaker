@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { HandoutIllustrations } from "@gyoanmaker/shared/types";
 import { auth } from "@/auth";
 import {
   getHandout,
   deleteHandout,
   updateHandoutTitle,
+  updateHandout,
 } from "@/lib/handouts";
 import { incrementStorageUsed } from "@/lib/quota";
 
@@ -44,8 +46,9 @@ export async function GET(
 }
 
 /**
- * PATCH /api/handouts/[id] — Update handout title
- * Body: { title: string }
+ * PATCH /api/handouts/[id] — Update handout
+ * Body: { title?, sections?, illustrations?, customTexts? }
+ * At least one field must be provided.
  */
 export async function PATCH(
   req: NextRequest,
@@ -61,27 +64,61 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const { title } = body as { title?: string };
+  const { title, sections, illustrations, customTexts } = body as {
+    title?: string;
+    sections?: Record<string, string>;
+    illustrations?: HandoutIllustrations;
+    customTexts?: { headerText?: string; analysisTitleText?: string; summaryTitleText?: string };
+  };
 
-  if (!title || title.trim().length === 0) {
-    return NextResponse.json(
-      { error: { code: "INVALID_BODY", message: "title field is required." } },
-      { status: 400 }
-    );
+  // Title-only update (legacy path from dashboard rename)
+  const isFullUpdate = sections !== undefined || illustrations !== undefined || customTexts !== undefined;
+
+  if (!isFullUpdate) {
+    if (!title || title.trim().length === 0) {
+      return NextResponse.json(
+        { error: { code: "INVALID_BODY", message: "At least one field is required." } },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const ok = await updateHandoutTitle(id, session.user.email, title.trim());
+      if (!ok) {
+        return NextResponse.json(
+          { error: { code: "NOT_FOUND", message: "Handout not found." } },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ ok: true, id, title: title.trim() });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error(`[api/handouts/${id}] Update failed: ${message}`);
+      return NextResponse.json(
+        { error: { code: "UPDATE_ERROR", message: "Failed to update handout." } },
+        { status: 500 }
+      );
+    }
   }
 
+  // Full update (sections, illustrations, customTexts, title)
   try {
-    const ok = await updateHandoutTitle(id, session.user.email, title.trim());
+    const ok = await updateHandout(id, session.user.email, {
+      title: title?.trim(),
+      sections,
+      illustrations,
+      customTexts,
+    });
     if (!ok) {
       return NextResponse.json(
         { error: { code: "NOT_FOUND", message: "Handout not found." } },
         { status: 404 }
       );
     }
-    return NextResponse.json({ ok: true, id, title: title.trim() });
+    return NextResponse.json({ ok: true, id });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error(`[api/handouts/${id}] Update failed: ${message}`);
+    console.error(`[api/handouts/${id}] Full update failed: ${message}`);
     return NextResponse.json(
       { error: { code: "UPDATE_ERROR", message: "Failed to update handout." } },
       { status: 500 }

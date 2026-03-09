@@ -66,6 +66,22 @@ export function buildIllustrationStoragePrefix(email: string, handoutId: string)
   return `illustrations/${hashOwnerKey(email)}/${sanitizeSegment(handoutId)}`;
 }
 
+/**
+ * Validates that a storagePath belongs to the given user.
+ * Prevents path traversal and cross-user file access/deletion.
+ */
+export function isOwnedStoragePath(email: string, storagePath: string): boolean {
+  if (!storagePath || typeof storagePath !== "string") return false;
+
+  const trimmed = storagePath.trim();
+
+  // Block path traversal
+  if (trimmed.includes("..") || trimmed.includes("//")) return false;
+
+  const ownerPrefix = `illustrations/${hashOwnerKey(email)}/`;
+  return trimmed.startsWith(ownerPrefix);
+}
+
 function buildLegacyIllustrationStoragePrefix(email: string, handoutId: string): string {
   return `illustrations/${sanitizeSegment(normalizeEmail(email))}/${sanitizeSegment(handoutId)}`;
 }

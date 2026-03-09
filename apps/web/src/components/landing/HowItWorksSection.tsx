@@ -31,6 +31,13 @@ const STEPS = [
       "템플릿 스튜디오로 세부 조정 후 인쇄용 PDF로 다운로드하세요.",
     color: { bg: "bg-emerald-100", text: "text-emerald-700" },
   },
+  {
+    number: 5,
+    title: "단어 테스트 생성",
+    description:
+      "교안의 핵심 어휘로 유의어 5지선다 시험지를 자동 생성하고 PDF로 인쇄하세요.",
+    color: { bg: "bg-teal-100", text: "text-teal-700" },
+  },
 ] as const;
 
 const container = {
@@ -71,7 +78,7 @@ export default function HowItWorksSection() {
             이용 방법
           </h2>
           <p className="mt-4 text-lg text-gray-500">
-            4단계로 완성하는 영어 교안
+            5단계로 완성하는 영어 교안
           </p>
         </motion.div>
 
@@ -80,7 +87,7 @@ export default function HowItWorksSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 gap-8 md:grid-cols-4"
+          className="grid grid-cols-1 gap-8 md:grid-cols-5"
         >
           {STEPS.map((step) => (
             <motion.div

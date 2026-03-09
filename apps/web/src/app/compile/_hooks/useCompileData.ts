@@ -24,7 +24,7 @@ export function useCompileData() {
   const setProgress = useHandoutStore((state) => state.setProgress);
   const updateSection = useHandoutStore((state) => state.updateSection);
 
-  const { handoutId, inputQuery, compileQuery, isLoading } = useHandoutLoader();
+  const { handoutId, handoutQuery, inputQuery, compileQuery, isLoading } = useHandoutLoader();
 
   const illustration = useIllustrationManager(handoutId);
 
@@ -55,6 +55,31 @@ export function useCompileData() {
         sections[id] = section.rawText;
       }
 
+      const existingId = searchParams.get("handoutId");
+
+      // If handout already saved, update instead of creating duplicate
+      if (existingId) {
+        const body = {
+          title: saveTitle.trim() || undefined,
+          sections,
+          illustrations: state.illustrations,
+          customTexts: {
+            headerText: state.customHeaderText,
+            analysisTitleText: state.analysisTitleText,
+            summaryTitleText: state.summaryTitleText,
+          },
+        };
+
+        const res = await fetch(`/api/handouts/${existingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error("Failed to update handout.");
+        return { id: existingId, updated: true };
+      }
+
+      // New handout — create
       let inputHash: string | undefined;
       try {
         const stored = sessionStorage.getItem(INPUT_STORAGE_KEY);
@@ -103,7 +128,7 @@ export function useCompileData() {
       if (!res.ok) throw new Error("Failed to save handout.");
       return res.json();
     },
-    onSuccess: (data: { id?: string }) => {
+    onSuccess: (data: { id?: string; updated?: boolean }) => {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
       // Add handoutId to URL so illustration apply becomes active
@@ -125,6 +150,9 @@ export function useCompileData() {
   }, [saveMutation]);
 
   const errorMessage = useMemo(() => {
+    if (handoutQuery.error) {
+      return handoutQuery.error.message;
+    }
     if (inputQuery.error) {
       return inputQuery.error.message;
     }
@@ -132,7 +160,7 @@ export function useCompileData() {
       return compileQuery.error.message;
     }
     return null;
-  }, [compileQuery.error, inputQuery.error]);
+  }, [handoutQuery.error, compileQuery.error, inputQuery.error]);
 
   return {
     handoutId,

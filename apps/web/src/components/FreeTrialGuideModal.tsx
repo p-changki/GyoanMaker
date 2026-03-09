@@ -21,8 +21,8 @@ const STEPS = [
     ),
     color: "blue",
     items: [
-      "Speed 모드로 2~3개 지문을 빠르게 생성해보세요 (10~20초)",
-      "Precision 모드로 1~2개 지문을 정밀 생성해서 품질 차이를 비교해보세요 (30초~2분)",
+      "속도 모드로 2~3개 지문을 빠르게 생성해보세요 (10~20초)",
+      "정밀 모드로 1~2개 지문을 정밀 생성해서 품질 차이를 비교해보세요 (30초~2분)",
       "다양한 난이도(고급/기초)를 조합해보세요",
     ],
     tip: "난이도(고급/기초)는 쿼타에 영향 없어요! 자유롭게 바꿔보세요.",
@@ -82,8 +82,8 @@ const COLOR_MAP: Record<string, { text: string; iconBg: string; tipBg: string; t
 
 function QuotaOverview() {
   const quotaItems = [
-    { label: "Speed 생성", value: "10회 / 월", icon: "⚡" },
-    { label: "Precision 생성", value: "5회 / 월", icon: "🎯" },
+    { label: "속도 생성", value: "10회 / 월", icon: "⚡" },
+    { label: "정밀 생성", value: "5회 / 월", icon: "🎯" },
     { label: "일러스트 크레딧", value: "5건 / 월", icon: "🖼" },
     { label: "일러스트 테스트", value: "3회 / 일", icon: "🎨" },
     { label: "저장 공간", value: "3개", icon: "💾" },

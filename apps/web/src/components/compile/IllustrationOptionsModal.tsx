@@ -83,6 +83,8 @@ export default function IllustrationOptionsModal({
     return () => document.removeEventListener("mousedown", handler);
   }, [openDropdown]);
 
+  const [showTimeNotice, setShowTimeNotice] = useState(false);
+
   const canStartIllustrationJob =
     !isApplyingIllustrations &&
     (illustrationScope !== "passages" || selectedPassageIds.length > 0);
@@ -106,7 +108,7 @@ export default function IllustrationOptionsModal({
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-black text-gray-900">일러스트 생성</h3>
@@ -619,12 +621,51 @@ export default function IllustrationOptionsModal({
           <button
             type="button"
             disabled={!canStartIllustrationJob}
-            onClick={handleConfirm}
+            onClick={() => setShowTimeNotice(true)}
             className="rounded-xl bg-[#F59E0B] px-5 py-2.5 text-sm font-black text-white hover:bg-[#D97706] disabled:opacity-50 transition-colors"
           >
             일러스트 생성 시작
           </button>
         </div>
+
+        {/* Time notice overlay */}
+        {showTimeNotice && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 backdrop-blur-sm p-6">
+            <div className="text-center max-w-xs space-y-4">
+              <div className="text-5xl">☕</div>
+              <h4 className="text-lg font-black text-gray-900">
+                잠깐, 커피 한 잔 어때요?
+              </h4>
+              <div className="space-y-2 text-sm text-gray-600 leading-relaxed">
+                <p>
+                  AI가 각 지문을 분석하고 어울리는 일러스트를 그리는 데
+                  <strong className="text-amber-600"> 지문당 약 30초~1분</strong> 정도 걸려요.
+                </p>
+                <p className="text-gray-400 text-xs">
+                  생성이 시작되면 다른 작업을 하다 돌아와도 괜찮아요.
+                  <br />
+                  진행 상황은 화면에 계속 표시됩니다.
+                </p>
+              </div>
+              <div className="flex justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTimeNotice(false)}
+                  className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  돌아가기
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  className="rounded-xl bg-[#F59E0B] px-5 py-2 text-sm font-black text-white hover:bg-[#D97706] transition-colors"
+                >
+                  알겠어요, 시작!
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

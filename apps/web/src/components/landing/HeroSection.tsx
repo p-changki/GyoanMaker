@@ -39,7 +39,7 @@ export default function HeroSection() {
         >
           영어 지문을 입력하면 문장 분석, 어휘, 요약을 자동 생성합니다.
           <br className="hidden sm:block" />
-          난이도별 맞춤 교안을 PDF로 바로 내보내세요.
+          맞춤 교안을 PDF로 내보내고 단어 테스트까지 한번에.
         </motion.p>
 
         {/* Dual CTA */}

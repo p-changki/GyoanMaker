@@ -24,9 +24,15 @@ interface FeatureGroup {
   items: FeatureItem[];
 }
 
+interface BookEstimate {
+  precision: string;
+  speed: string;
+}
+
 interface PlanMeta {
   label: string;
   description: string;
+  bookEstimate?: BookEstimate;
   features: FeatureGroup[];
 }
 
@@ -38,7 +44,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
       {
         category: "교안 생성",
         items: [
-          { label: "빠른 모드 지문 10개 / 월", tooltip: "지문당 10~20초" },
+          { label: "속도 모드 지문 10개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 5개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
         ],
@@ -56,28 +62,31 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
         items: [
           { label: "교안 저장 최대 3개" },
           { label: "PDF 다운로드" },
+          { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
         ],
       },
     ],
   },
   basic: {
     label: "베이직",
-    description: "개인 과외·소규모 학원용",
+    description: "개인 과외 · 소규모 학원용",
+    bookEstimate: { precision: "5권", speed: "15권" },
     features: [
       {
         category: "교안 생성",
         items: [
-          { label: "빠른 모드 지문 250개 / 월", tooltip: "지문당 10~20초" },
-          { label: "정밀 모드 지문 30개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
+          { label: "속도 모드 지문 300개 / 월", tooltip: "지문당 10~20초" },
+          { label: "정밀 모드 지문 100개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
         ],
       },
       {
         category: "일러스트",
         items: [
-          { label: "교안 일러스트 삽입 10회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "교안 일러스트 삽입 20회 / 월", tooltip: "교안에 AI 일러스트 추가" },
           { label: "일러스트 샘플 저장 20개", tooltip: "마음에 드는 화풍을 저장" },
           { label: "일러스트 미리보기 5회 / 일", tooltip: "화풍을 미리 테스트" },
+          { label: "추가 일러스트 팩 구매", tooltip: "초과 시 일러스트 크레딧으로 추가 생성" },
         ],
       },
       {
@@ -85,6 +94,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
         items: [
           { label: "무제한 저장" },
           { label: "PDF 다운로드" },
+          { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
           { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
         ],
       },
@@ -93,21 +103,23 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
   standard: {
     label: "스탠다드",
     description: "중형 학원용",
+    bookEstimate: { precision: "10권", speed: "40권" },
     features: [
       {
         category: "교안 생성",
         items: [
-          { label: "빠른 모드 지문 500개 / 월", tooltip: "지문당 10~20초" },
-          { label: "정밀 모드 지문 120개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
+          { label: "속도 모드 지문 800개 / 월", tooltip: "지문당 10~20초" },
+          { label: "정밀 모드 지문 200개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
         ],
       },
       {
         category: "일러스트",
         items: [
-          { label: "교안 일러스트 삽입 30회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "교안 일러스트 삽입 50회 / 월", tooltip: "교안에 AI 일러스트 추가" },
           { label: "일러스트 샘플 저장 30개", tooltip: "마음에 드는 화풍을 저장" },
           { label: "일러스트 미리보기 10회 / 일", tooltip: "화풍을 미리 테스트" },
+          { label: "추가 일러스트 팩 구매", tooltip: "초과 시 일러스트 크레딧으로 추가 생성" },
         ],
       },
       {
@@ -115,6 +127,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
         items: [
           { label: "무제한 저장" },
           { label: "PDF 다운로드" },
+          { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
           { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
           { label: "우선 처리", tooltip: "생성 요청이 우선 큐에서 처리" },
         ],
@@ -123,12 +136,13 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
   },
   pro: {
     label: "프로",
-    description: "대형 학원·프랜차이즈용",
+    description: "대형 학원 · 프랜차이즈용",
+    bookEstimate: { precision: "20권", speed: "100권" },
     features: [
       {
         category: "교안 생성",
         items: [
-          { label: "빠른 모드 지문 1,000개 / 월", tooltip: "지문당 10~20초" },
+          { label: "속도 모드 지문 2,000개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 400개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
         ],
@@ -136,9 +150,10 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
       {
         category: "일러스트",
         items: [
-          { label: "교안 일러스트 삽입 60회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "교안 일러스트 삽입 100회 / 월", tooltip: "교안에 AI 일러스트 추가" },
           { label: "일러스트 샘플 저장 30개", tooltip: "마음에 드는 화풍을 저장" },
           { label: "일러스트 미리보기 10회 / 일", tooltip: "화풍을 미리 테스트" },
+          { label: "추가 일러스트 팩 구매", tooltip: "초과 시 일러스트 크레딧으로 추가 생성" },
         ],
       },
       {
@@ -146,6 +161,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
         items: [
           { label: "무제한 저장" },
           { label: "PDF 다운로드" },
+          { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
           { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
           { label: "우선 처리", tooltip: "생성 요청이 우선 큐에서 처리" },
         ],
@@ -317,7 +333,17 @@ export default function PricingCard({
           {isCurrent ? "현재 플랜" : "시작하기"}
         </button>
 
-        <p className="mt-3 text-[11px] leading-4 text-gray-400">
+        {meta.bookEstimate && (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-600">
+              정밀 모드 {meta.bookEstimate.precision}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500">
+              속도 모드 {meta.bookEstimate.speed}
+            </span>
+          </div>
+        )}
+        <p className="mt-2 text-[11px] leading-4 text-gray-400">
           {meta.description}
         </p>
       </div>

@@ -1,6 +1,33 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+// Content-Security-Policy directives
+// Next.js requires 'unsafe-inline' for scripts (hydration) and styles (CSS-in-JS).
+// Nonce-based CSP is possible but requires custom server config.
+const cspDirectives = [
+  "default-src 'self'",
+  // Scripts: self + Google Analytics + unsafe-inline/eval (Next.js hydration)
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+  // Styles: self + trusted font stylesheet CDNs + unsafe-inline (Next.js CSS)
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hangeul.pstatic.net https://spoqa.github.io https://cdn.jsdelivr.net",
+  // Images: self + data/blob (PDF) + Google/Firebase storage + OAuth avatars
+  "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com",
+  // Fonts: self + trusted font CDNs used by template/font loader
+  "font-src 'self' https://fonts.gstatic.com https://fastly.jsdelivr.net https://cdn.jsdelivr.net https://hangeul.pstatic.net https://spoqa.github.io data:",
+  // Connect: self + Google Analytics + Sentry tunnel (/monitoring covers it via 'self')
+  "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com",
+  // Workers: self + blob (html2canvas, ONNX background removal)
+  "worker-src 'self' blob:",
+  // Frame: none (no iframes needed)
+  "frame-src 'none'",
+  // Object: none
+  "object-src 'none'",
+  // Base: self
+  "base-uri 'self'",
+  // Form: self
+  "form-action 'self'",
+].join("; ");
+
 const securityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
@@ -25,6 +52,10 @@ const securityHeaders = [
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
+  },
+  {
+    key: "Content-Security-Policy",
+    value: cspDirectives,
   },
 ];
 

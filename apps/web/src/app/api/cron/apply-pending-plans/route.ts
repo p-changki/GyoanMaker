@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase-admin";
 import { changePlan, renewSubscription, markPlanPastDue } from "@/lib/subscription";
 import { getBillingKey, chargeBillingKey } from "@/lib/billing-key";
-import { type PlanId, PLANS } from "@gyoanmaker/shared/plans";
+import {
+  type PlanId,
+  PLANS,
+  toVatInclusiveAmount,
+} from "@gyoanmaker/shared/plans";
 
 function verifyCronSecret(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
@@ -124,12 +128,13 @@ async function processAutoRenewals(now: Date): Promise<RenewalResult[]> {
     const plan = PLANS[tier];
     const orderId = generateOrderId(doc.id);
     const orderName = `${tier.toUpperCase()} Plan Auto-Renewal`;
+    const vatBreakdown = toVatInclusiveAmount(plan.price);
 
     try {
       const chargeResult = await chargeBillingKey(
         billingKeyInfo.key,
         billingKeyInfo.customerKey,
-        plan.price,
+        vatBreakdown.totalAmount,
         orderId,
         orderName
       );
@@ -142,7 +147,9 @@ async function processAutoRenewals(now: Date): Promise<RenewalResult[]> {
         type: "subscription",
         planId: tier,
         orderName,
-        amount: plan.price,
+        supplyAmount: vatBreakdown.supplyAmount,
+        vatAmount: vatBreakdown.vatAmount,
+        amount: vatBreakdown.totalAmount,
         status: "confirmed",
         createdAt: confirmedAt,
         confirmedAt,

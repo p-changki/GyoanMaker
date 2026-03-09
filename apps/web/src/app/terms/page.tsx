@@ -79,8 +79,8 @@ export default function TermsPage() {
             제4조 (이용 자격 및 계약 체결)
           </h2>
           <p>
-            서비스는 Google 계정으로 로그인한 후 관리자 승인을 받은 사용자만
-            이용할 수 있습니다.
+            서비스는 Google 계정으로 로그인하여 가입한 사용자가 이용할 수
+            있습니다.
           </p>
           <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>
@@ -171,30 +171,30 @@ export default function TermsPage() {
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">베이직</td>
-                  <td className="border border-gray-200 px-3 py-2">14,900원</td>
-                  <td className="border border-gray-200 px-3 py-2">250개</td>
-                  <td className="border border-gray-200 px-3 py-2">30개</td>
-                  <td className="border border-gray-200 px-3 py-2">10회</td>
+                  <td className="border border-gray-200 px-3 py-2">24,900원</td>
+                  <td className="border border-gray-200 px-3 py-2">300개</td>
+                  <td className="border border-gray-200 px-3 py-2">100개</td>
+                  <td className="border border-gray-200 px-3 py-2">20회</td>
                   <td className="border border-gray-200 px-3 py-2">20개</td>
                   <td className="border border-gray-200 px-3 py-2">5회</td>
                   <td className="border border-gray-200 px-3 py-2">무제한</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">스탠다드</td>
-                  <td className="border border-gray-200 px-3 py-2">34,900원</td>
-                  <td className="border border-gray-200 px-3 py-2">500개</td>
-                  <td className="border border-gray-200 px-3 py-2">120개</td>
-                  <td className="border border-gray-200 px-3 py-2">30회</td>
+                  <td className="border border-gray-200 px-3 py-2">49,900원</td>
+                  <td className="border border-gray-200 px-3 py-2">800개</td>
+                  <td className="border border-gray-200 px-3 py-2">200개</td>
+                  <td className="border border-gray-200 px-3 py-2">50회</td>
                   <td className="border border-gray-200 px-3 py-2">30개</td>
                   <td className="border border-gray-200 px-3 py-2">10회</td>
                   <td className="border border-gray-200 px-3 py-2">무제한</td>
                 </tr>
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">프로</td>
-                  <td className="border border-gray-200 px-3 py-2">89,000원</td>
-                  <td className="border border-gray-200 px-3 py-2">1,000개</td>
+                  <td className="border border-gray-200 px-3 py-2">99,000원</td>
+                  <td className="border border-gray-200 px-3 py-2">2,000개</td>
                   <td className="border border-gray-200 px-3 py-2">400개</td>
-                  <td className="border border-gray-200 px-3 py-2">60회</td>
+                  <td className="border border-gray-200 px-3 py-2">100회</td>
                   <td className="border border-gray-200 px-3 py-2">30개</td>
                   <td className="border border-gray-200 px-3 py-2">10회</td>
                   <td className="border border-gray-200 px-3 py-2">무제한</td>
@@ -244,8 +244,7 @@ export default function TermsPage() {
               크레딧을 회수할 수 있습니다.
             </li>
             <li>
-              회원 탈퇴 시 잔여 크레딧은 소멸되며, 탈퇴 전 환불을 신청하지
-              않은 경우 환불하지 않습니다.
+              회원 탈퇴 시 잔여 크레딧은 즉시 소멸되며 환불되지 않습니다.
             </li>
           </ul>
         </section>
@@ -263,9 +262,8 @@ export default function TermsPage() {
               전액 환불됩니다.
             </li>
             <li>
-              결제 후 7일이 경과하였거나 서비스를 이용한 경우, 이용 기간에
-              해당하는 금액을 차감한 후 잔여 금액의 80%를 환불합니다
-              (위약금 20%).
+              결제 후 7일이 경과하였거나 서비스를 이용한 경우, 환불이
+              불가합니다.
             </li>
           </ul>
           <h3 className="text-base font-semibold text-gray-800 mt-3 mb-2">
@@ -276,8 +274,7 @@ export default function TermsPage() {
               크레딧 충전 후 7일 이내이며 사용하지 않은 경우, 전액 환불됩니다.
             </li>
             <li>
-              충전 후 7일이 경과하였거나 일부 사용한 경우, 사용분을 차감한
-              잔여 금액의 80%를 환불합니다.
+              충전 후 7일이 경과하였거나 일부 사용한 경우, 환불이 불가합니다.
             </li>
             <li>유효기간이 만료된 크레딧은 환불 대상이 아닙니다.</li>
           </ul>
@@ -289,7 +286,7 @@ export default function TermsPage() {
               환불 요청은 관리자 이메일
               (dnsxj12345aa@gmail.com)을 통해 접수할 수 있습니다.
             </li>
-            <li>환불은 요청일로부터 영업일 기준 7일 이내에 처리됩니다.</li>
+            <li>환불은 요청일로부터 영업일 기준 7~14일 이내에 처리됩니다.</li>
           </ul>
         </section>
 
@@ -572,6 +569,7 @@ export default function TermsPage() {
         <p className="font-semibold text-gray-600">사업자 정보</p>
         <p>운영자: 박창기</p>
         <p>서비스명: GyoanMaker</p>
+        <p>사업자등록번호: 885-51-00965</p>
         <p>문의: dnsxj12345aa@gmail.com</p>
       </div>
     </div>

@@ -5,7 +5,7 @@ import {
   getIllustrationProfile,
   updateIllustrationProfile,
 } from "@/lib/illustrations";
-import { uploadIllustrationReferenceImageBase64 } from "@/lib/firebase-storage";
+import { isOwnedStoragePath, uploadIllustrationReferenceImageBase64 } from "@/lib/firebase-storage";
 import type {
   IllustrationAspectRatio,
   IllustrationProfile,
@@ -237,6 +237,17 @@ export async function PATCH(req: NextRequest) {
             },
           },
           { status: 400 }
+        );
+      }
+      if (!isOwnedStoragePath(email, normalized.storagePath)) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "FORBIDDEN",
+              message: "Invalid storage path.",
+            },
+          },
+          { status: 403 }
         );
       }
       patch.referenceImage = normalized;

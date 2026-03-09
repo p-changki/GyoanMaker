@@ -4,13 +4,12 @@ export type PaymentMethod = "mock" | "toss";
 export type QuotaModel = "flash" | "pro";
 export type TopUpCreditType = QuotaModel | "illustration";
 export type TopUpPackageId =
-  | "flash_50"
-  | "flash_100"
+  | "illu_20"
+  | "illu_50"
+  | "illu_100"
   | "pro_20"
-  | "pro_50"
-  | "illu_30"
-  | "illu_60"
-  | "illu_120";
+  | "pro_60"
+  | "flash_100";
 export type OrderType = "subscription" | "topup";
 export type OrderStatus = "pending" | "confirmed" | "failed" | "paid_not_applied";
 export type RefundStatus = "none" | "requested" | "processed" | "rejected";
@@ -21,6 +20,14 @@ export interface PendingOrder {
   type: OrderType;
   planId?: PlanId;
   packageId?: TopUpPackageId;
+  /**
+   * 공급가(부가세 제외)
+   */
+  supplyAmount?: number;
+  /**
+   * 부가세 금액
+   */
+  vatAmount?: number;
   amount: number;
   orderName: string;
   status: OrderStatus;
@@ -58,6 +65,32 @@ export interface TopUpPackageDefinition {
   price: number;
 }
 
+export interface VatAmountBreakdown {
+  supplyAmount: number;
+  vatAmount: number;
+  totalAmount: number;
+}
+
+export const VAT_RATE = 0.1;
+
+/**
+ * VAT 별도 정책 기준 결제 금액(공급가 + 부가세) 계산
+ */
+export function toVatInclusiveAmount(
+  supplyAmount: number
+): VatAmountBreakdown {
+  const normalizedSupply =
+    Number.isFinite(supplyAmount) && supplyAmount > 0
+      ? Math.floor(supplyAmount)
+      : 0;
+  const vatAmount = Math.round(normalizedSupply * VAT_RATE);
+  return {
+    supplyAmount: normalizedSupply,
+    vatAmount,
+    totalAmount: normalizedSupply + vatAmount,
+  };
+}
+
 export const PLANS: Record<PlanId, PlanDefinition> = {
   free: {
     flashLimit: 10,
@@ -69,30 +102,30 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
     storageLimit: 3,
   },
   basic: {
-    flashLimit: 250,
-    proLimit: 30,
-    illustrationMonthlyLimit: 10,
+    flashLimit: 300,
+    proLimit: 100,
+    illustrationMonthlyLimit: 20,
     maxSamples: 20,
     dailySampleLimit: 5,
-    price: 14_900,
+    price: 24_900,
     storageLimit: null,
   },
   standard: {
-    flashLimit: 500,
-    proLimit: 120,
-    illustrationMonthlyLimit: 30,
+    flashLimit: 800,
+    proLimit: 200,
+    illustrationMonthlyLimit: 50,
     maxSamples: 30,
     dailySampleLimit: 10,
-    price: 34_900,
+    price: 49_900,
     storageLimit: null,
   },
   pro: {
-    flashLimit: 1_000,
+    flashLimit: 2_000,
     proLimit: 400,
-    illustrationMonthlyLimit: 60,
+    illustrationMonthlyLimit: 100,
     maxSamples: 30,
     dailySampleLimit: 10,
-    price: 89_000,
+    price: 99_000,
     storageLimit: null,
   },
 };
@@ -104,13 +137,12 @@ export const MODEL_DISPLAY_NAMES: Record<TopUpCreditType, string> = {
 };
 
 export const TOP_UP_PACKAGES: TopUpPackageDefinition[] = [
-  { id: "flash_50", type: "flash", label: "Speed 50", amount: 50, price: 3_000 },
-  { id: "flash_100", type: "flash", label: "Speed 100", amount: 100, price: 5_500 },
-  { id: "pro_20", type: "pro", label: "Precision 20", amount: 20, price: 6_900 },
-  { id: "pro_50", type: "pro", label: "Precision 50", amount: 50, price: 14_900 },
-  { id: "illu_30", type: "illustration", label: "Illustration 30", amount: 30, price: 7_900 },
-  { id: "illu_60", type: "illustration", label: "Illustration 60", amount: 60, price: 14_900 },
-  { id: "illu_120", type: "illustration", label: "Illustration 120", amount: 120, price: 27_900 },
+  { id: "illu_20", type: "illustration", label: "일러스트 20장", amount: 20, price: 3_900 },
+  { id: "illu_50", type: "illustration", label: "일러스트 50장", amount: 50, price: 8_900 },
+  { id: "illu_100", type: "illustration", label: "일러스트 100장", amount: 100, price: 15_900 },
+  { id: "pro_20", type: "pro", label: "교재 1권 팩", amount: 20, price: 5_900 },
+  { id: "pro_60", type: "pro", label: "교재 3권 팩", amount: 60, price: 15_900 },
+  { id: "flash_100", type: "flash", label: "속도 팩", amount: 100, price: 2_900 },
 ];
 
 const KST_TIME_ZONE = "Asia/Seoul";

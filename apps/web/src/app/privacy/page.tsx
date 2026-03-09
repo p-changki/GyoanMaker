@@ -485,7 +485,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <span className="font-semibold">관리적 조치:</span> 최소한의
-              접근 권한 부여 (관리자 승인 시스템), 개인정보 접근 권한 제한
+              접근 권한 부여 (역할 기반 접근 제어), 개인정보 접근 권한 제한
             </li>
           </ul>
         </section>
@@ -506,6 +506,7 @@ export default function PrivacyPage() {
             </p>
             <p>성명: 박창기</p>
             <p>직책: 운영자</p>
+            <p>사업자등록번호: 885-51-00965</p>
             <p>연락처: dnsxj12345aa@gmail.com</p>
           </div>
           <p className="mb-2">

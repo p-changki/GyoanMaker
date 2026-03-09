@@ -1,26 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   TOP_UP_PACKAGES,
-  MODEL_DISPLAY_NAMES,
   type TopUpCreditType,
 } from "@gyoanmaker/shared/plans";
 import TossPaymentButton from "@/components/billing/TossPaymentButton";
 
+const CREDIT_TYPE_LABELS: Record<TopUpCreditType, string> = {
+  flash: "속도",
+  pro: "정밀",
+  illustration: "일러스트",
+};
+
 interface TopUpModalProps {
   open: boolean;
   onClose: () => void;
-  defaultType?: TopUpCreditType;
 }
+
+const ILLUSTRATION_PACKAGES = TOP_UP_PACKAGES.filter((pkg) => pkg.type === "illustration");
+const LESSON_PACKAGES = TOP_UP_PACKAGES.filter((pkg) => pkg.type === "pro" || pkg.type === "flash");
 
 export default function TopUpModal({
   open,
   onClose,
-  defaultType = "flash",
 }: TopUpModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [activeType, setActiveType] = useState<TopUpCreditType>(defaultType);
 
   useEffect(() => {
     const el = dialogRef.current;
@@ -48,11 +53,6 @@ export default function TopUpModal({
     }
   };
 
-  const filteredPackages = useMemo(
-    () => TOP_UP_PACKAGES.filter((pkg) => pkg.type === activeType),
-    [activeType]
-  );
-
   return (
     <dialog
       ref={dialogRef}
@@ -73,46 +73,65 @@ export default function TopUpModal({
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="sm:col-span-2 flex gap-2 rounded-xl border border-gray-100 bg-gray-50 p-1">
-            {(["flash", "pro", "illustration"] as TopUpCreditType[]).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setActiveType(type)}
-                className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
-                  activeType === type
-                    ? "bg-white text-[#5E35B1] shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+        <p className="mt-1 text-xs text-gray-400">90일 유효 · VAT 별도</p>
+
+        {/* Illustration packs */}
+        <div className="mt-5">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+            일러스트 추가 팩
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {ILLUSTRATION_PACKAGES.map((pkg) => (
+              <div
+                key={pkg.id}
+                className="rounded-xl border border-gray-100 bg-gray-50 p-4"
               >
-                {MODEL_DISPLAY_NAMES[type]}
-              </button>
+                <p className="text-sm font-semibold text-gray-900">{pkg.label}</p>
+                <p className="mt-1 text-base font-bold text-gray-900">
+                  ₩{pkg.price.toLocaleString()}
+                </p>
+                <div className="mt-3">
+                  <TossPaymentButton
+                    type="topup"
+                    packageId={pkg.id}
+                    label="충전하기"
+                    className="w-full"
+                  />
+                </div>
+              </div>
             ))}
           </div>
+        </div>
 
-          {filteredPackages.map((pkg) => (
-            <div
-              key={pkg.id}
-              className="rounded-xl border border-gray-100 bg-gray-50 p-4"
-            >
-              <p className="text-sm font-semibold text-gray-900">{pkg.label}</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {MODEL_DISPLAY_NAMES[pkg.type]} {pkg.amount} 크레딧
-              </p>
-              <p className="mt-1 text-base font-bold text-gray-900">
-                ₩{pkg.price.toLocaleString()}
-              </p>
-              <div className="mt-3">
-                <TossPaymentButton
-                  type="topup"
-                  packageId={pkg.id}
-                  label="충전하기"
-                  className="w-full"
-                />
+        {/* Lesson credit packs */}
+        <div className="mt-5">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+            교안 크레딧 팩
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {LESSON_PACKAGES.map((pkg) => (
+              <div
+                key={pkg.id}
+                className="rounded-xl border border-gray-100 bg-gray-50 p-4"
+              >
+                <p className="text-sm font-semibold text-gray-900">{pkg.label}</p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {CREDIT_TYPE_LABELS[pkg.type]} {pkg.amount}회
+                </p>
+                <p className="mt-1 text-base font-bold text-gray-900">
+                  ₩{pkg.price.toLocaleString()}
+                </p>
+                <div className="mt-3">
+                  <TossPaymentButton
+                    type="topup"
+                    packageId={pkg.id}
+                    label="충전하기"
+                    className="w-full"
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </dialog>
