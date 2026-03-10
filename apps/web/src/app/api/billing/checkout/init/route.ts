@@ -2,7 +2,9 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
+import { createTossPayment, TossPaymentError } from "@/lib/payment";
 import {
+  type CheckoutFlow,
   type PendingOrder,
   type PlanId,
   PLANS,
@@ -15,6 +17,58 @@ interface InitCheckoutBody {
   type?: "plan" | "topup";
   planId?: PlanId;
   packageId?: TopUpPackageId;
+  checkoutFlow?: CheckoutFlow;
+}
+
+function isCheckoutFlow(value: unknown): value is CheckoutFlow {
+  return value === "widget" || value === "paylink";
+}
+
+function resolveCheckoutFlow(requested: unknown): CheckoutFlow {
+  if (isCheckoutFlow(requested)) {
+    return requested;
+  }
+
+  const raw = process.env.TOSS_CHECKOUT_FLOW?.trim().toLowerCase();
+  return raw === "paylink" ? "paylink" : "widget";
+}
+
+function trimTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+function resolveAppOrigin(req: NextRequest): string | null {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (configured) {
+    return trimTrailingSlash(configured);
+  }
+
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  if (!host) {
+    return null;
+  }
+
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const protocol = forwardedProto ?? (host.includes("localhost") ? "http" : "https");
+  return `${protocol}://${host}`;
+}
+
+function resolvePaylinkResultCallback(origin: string): string {
+  const configured = process.env.TOSS_PAYLINK_RESULT_CALLBACK_URL?.trim();
+  if (configured) {
+    return configured;
+  }
+
+  return `${origin}/api/billing/paylink/callback`;
+}
+
+function isLocalOrigin(origin: string): boolean {
+  return (
+    origin.startsWith("http://localhost") ||
+    origin.startsWith("http://127.0.0.1") ||
+    origin.includes("://localhost") ||
+    origin.includes("://127.0.0.1")
+  );
 }
 
 function isPlanId(value: unknown): value is PlanId {
@@ -143,6 +197,7 @@ export async function POST(req: NextRequest) {
 
   const orderId = createOrderId();
   const createdAt = new Date().toISOString();
+  const checkoutFlow = resolveCheckoutFlow(body.checkoutFlow);
   const pendingOrder: PendingOrder = {
     orderId,
     email,
@@ -153,13 +208,150 @@ export async function POST(req: NextRequest) {
     orderName,
     status: "pending",
     createdAt,
+    checkoutFlow,
     refundStatus: "none",
     refundAmount: 0,
     ...(planId ? { planId } : {}),
     ...(packageId ? { packageId } : {}),
   };
 
-  await getDb().collection("pending_orders").doc(orderId).set(pendingOrder);
+  const pendingOrderRef = getDb().collection("pending_orders").doc(orderId);
+  await pendingOrderRef.set(pendingOrder);
+
+  if (checkoutFlow === "paylink") {
+    const origin = resolveAppOrigin(req);
+    if (!origin) {
+      await pendingOrderRef.set(
+        {
+          status: "failed",
+          failedAt: new Date().toISOString(),
+          errorMessage: "APP_ORIGIN_MISSING",
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      return NextResponse.json(
+        {
+          error: {
+            code: "APP_ORIGIN_MISSING",
+            message: "App origin is not configured for paylink checkout.",
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!process.env.TOSS_PAYLINK_API_KEY?.trim()) {
+      await pendingOrderRef.set(
+        {
+          status: "failed",
+          failedAt: new Date().toISOString(),
+          errorMessage: "PAYLINK_API_KEY_MISSING",
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      return NextResponse.json(
+        {
+          error: {
+            code: "PAYLINK_API_KEY_MISSING",
+            message: "TOSS_PAYLINK_API_KEY is required for paylink checkout.",
+          },
+        },
+        { status: 500 }
+      );
+    }
+
+    if (isLocalOrigin(origin)) {
+      await pendingOrderRef.set(
+        {
+          status: "failed",
+          failedAt: new Date().toISOString(),
+          errorMessage: "PAYLINK_PUBLIC_URL_REQUIRED",
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      return NextResponse.json(
+        {
+          error: {
+            code: "PAYLINK_PUBLIC_URL_REQUIRED",
+            message:
+              "Paylink requires a public domain URL. Set NEXT_PUBLIC_APP_URL to your deployed HTTPS domain.",
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const createdPayment = await createTossPayment({
+        orderNo: orderId,
+        amount,
+        amountTaxFree: 0,
+        productDesc: orderName.slice(0, 255),
+        retUrl: `${origin}/billing/success`,
+        retCancelUrl: `${origin}/billing/fail`,
+        autoExecute: true,
+        resultCallback: resolvePaylinkResultCallback(origin),
+      });
+
+      await pendingOrderRef.set(
+        {
+          checkoutUrl: createdPayment.checkoutUrl,
+          payToken: createdPayment.payToken,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      return NextResponse.json({
+        orderId,
+        supplyAmount,
+        vatAmount,
+        amount,
+        orderName,
+        checkoutFlow,
+        checkoutUrl: createdPayment.checkoutUrl,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      await pendingOrderRef.set(
+        {
+          status: "failed",
+          failedAt: new Date().toISOString(),
+          errorMessage: message,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+
+      if (error instanceof TossPaymentError) {
+        return NextResponse.json(
+          {
+            error: {
+              code: error.code ?? "PAYLINK_CREATE_FAILED",
+              message: error.message || "Failed to create Toss paylink checkout.",
+            },
+          },
+          { status: error.statusCode ?? 502 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          error: {
+            code: "PAYLINK_CREATE_FAILED",
+            message: "Failed to create Toss paylink checkout.",
+          },
+        },
+        { status: 500 }
+      );
+    }
+  }
 
   return NextResponse.json({
     orderId,
@@ -167,5 +359,6 @@ export async function POST(req: NextRequest) {
     vatAmount,
     amount,
     orderName,
+    checkoutFlow,
   });
 }
