@@ -43,23 +43,23 @@ const POLICY_CONTENT = `<h2>요금제 안내 및 환불 정책</h2>
 <h3>환불 정책 요약</h3>
 <p>아래는 환불 규정의 핵심 내용입니다. 전문은 <a href="/terms" target="_blank"><strong>이용약관 제8조</strong></a>를 참고해 주세요.</p>
 
-<h4>1. 구독 환불</h4>
+<h4>1. 플랜 이용권 환불</h4>
 <ul>
 <li>결제 후 <strong>7일 이내</strong> + 서비스 미이용 → <strong>전액 환불</strong></li>
-<li>결제 후 7일 경과 또는 서비스 이용 시 → 이용 기간 차감 후 <strong>잔여 금액의 80% 환불</strong></li>
+<li>결제 후 7일 경과 또는 서비스 이용 시 → <strong>환불 불가</strong></li>
 </ul>
 
 <h4>2. 크레딧 환불</h4>
 <ul>
 <li>충전 후 <strong>7일 이내</strong> + 미사용 → <strong>전액 환불</strong></li>
-<li>7일 경과 또는 일부 사용 시 → <strong>잔여 금액의 80% 환불</strong></li>
+<li>7일 경과 또는 일부 사용 시 → <strong>환불 불가</strong></li>
 <li>유효기간 만료 크레딧은 환불 불가</li>
 </ul>
 
-<h4>3. 구독 해지</h4>
+<h4>3. 플랜 만료 안내</h4>
 <ul>
-<li>해지 시 현재 결제 기간이 끝날 때까지 서비스 이용 가능</li>
-<li>해지 후 다음 결제일부터 자동 갱신 중단</li>
+<li>유료 플랜은 결제일 기준 <strong>30일 이용권</strong>으로 제공됩니다.</li>
+<li>이용권 만료 후 재결제하지 않으면 <strong>무료 플랜으로 자동 전환</strong>됩니다.</li>
 </ul>
 
 <hr>
