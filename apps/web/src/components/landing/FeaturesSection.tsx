@@ -60,6 +60,13 @@ const FEATURES = [
     color: { bg: "bg-cyan-50", text: "text-cyan-600" },
   },
   {
+    title: "워크북 자동 생성",
+    description:
+      "어법·어휘 선택형(STEP2)과 문단 순서 배열(STEP3)을 AI가 자동 생성하고 PDF로 출력합니다.",
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+    color: { bg: "bg-orange-50", text: "text-orange-600" },
+  },
+  {
     title: "단어 테스트",
     description:
       "교안의 핵심 어휘로 유의어 5지선다 시험지를 자동 생성하고 PDF로 인쇄합니다.",
