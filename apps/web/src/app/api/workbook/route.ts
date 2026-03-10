@@ -325,83 +325,124 @@ export async function POST(req: NextRequest) {
       model: parsed.model,
     };
 
-    const response = await fetch(`${baseUrl}/workbook`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": apiKey,
-        "X-Request-ID": requestId,
+    // SSE stream with heartbeat — keeps Cloudflare connection alive beyond 100s
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const heartbeatInterval = setInterval(() => {
+          try {
+            controller.enqueue(encoder.encode(": heartbeat\n\n"));
+          } catch {
+            // stream already closed
+          }
+        }, 5000);
+
+        const cleanup = () => clearInterval(heartbeatInterval);
+
+        const sendData = (payload: unknown) => {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)
+          );
+          controller.close();
+        };
+
+        try {
+          const response = await fetch(`${baseUrl}/workbook`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-API-KEY": apiKey,
+              "X-Request-ID": requestId,
+            },
+            body: JSON.stringify(upstreamBody),
+            signal: AbortSignal.timeout(timeoutMs),
+          });
+
+          const duration = Date.now() - startedAt;
+          console.log(
+            `[api/workbook][${requestId}] upstream status=${response.status} duration=${duration}ms timeout=${timeoutMs}ms`
+          );
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            cleanup();
+            sendData({ __status: response.status, ...errorData });
+            return;
+          }
+
+          const data = await response.json();
+          const totalUsage = data?.totalUsage;
+          const successCount = Array.isArray(data?.passages)
+            ? data.passages.length
+            : passageCount;
+
+          try {
+            await Promise.all([
+              incrementUsage(userEmail, parsed.model, successCount),
+              totalUsage
+                ? logUsage({
+                    email: userEmail,
+                    requestId,
+                    passageCount: successCount,
+                    model: parsed.model,
+                    level: "workbook",
+                    inputTokens: totalUsage.inputTokens ?? 0,
+                    outputTokens: totalUsage.outputTokens ?? 0,
+                    totalTokens: totalUsage.totalTokens ?? 0,
+                  })
+                : Promise.resolve(),
+            ]);
+          } catch (quotaErr) {
+            if (quotaErr instanceof QuotaExceededError) {
+              console.warn(
+                `[api/workbook][${requestId}] Post-success quota apply failed model=${quotaErr.model} needed=${quotaErr.needed} available=${quotaErr.available}`
+              );
+            }
+            console.error(
+              `[api/workbook][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
+            );
+          }
+
+          cleanup();
+          sendData(data);
+        } catch (error) {
+          cleanup();
+          const isTimeout =
+            error instanceof Error && error.name === "TimeoutError";
+          const errName = error instanceof Error ? error.name : "UnknownError";
+          const errMsg = error instanceof Error ? error.message : String(error);
+          if (!isTimeout) {
+            console.error(
+              `[api/workbook][${requestId}] Proxy error: [${errName}] ${errMsg}`
+            );
+          }
+          sendData({
+            __status: isTimeout ? 504 : 502,
+            error: {
+              code: isTimeout ? "PROXY_TIMEOUT" : "PROXY_ERROR",
+              message: isTimeout
+                ? `Backend request timed out after ${Math.floor(timeoutMs / 1000)}s.`
+                : "Failed to connect to backend server.",
+            },
+          });
+        }
       },
-      body: JSON.stringify(upstreamBody),
-      signal: AbortSignal.timeout(timeoutMs),
     });
 
-    const duration = Date.now() - startedAt;
-    console.log(
-      `[api/workbook][${requestId}] upstream status=${response.status} duration=${duration}ms timeout=${timeoutMs}ms`
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return jsonWithRequestId(requestId, errorData, {
-        status: response.status,
-      });
-    }
-
-    const data = await response.json();
-    const totalUsage = data?.totalUsage;
-    const successCount = Array.isArray(data?.passages)
-      ? data.passages.length
-      : passageCount;
-
-    try {
-      await Promise.all([
-        incrementUsage(userEmail, parsed.model, successCount),
-        totalUsage
-          ? logUsage({
-              email: userEmail,
-              requestId,
-              passageCount: successCount,
-              model: parsed.model,
-              level: "workbook",
-              inputTokens: totalUsage.inputTokens ?? 0,
-              outputTokens: totalUsage.outputTokens ?? 0,
-              totalTokens: totalUsage.totalTokens ?? 0,
-            })
-          : Promise.resolve(),
-      ]);
-    } catch (quotaErr) {
-      if (quotaErr instanceof QuotaExceededError) {
-        console.warn(
-          `[api/workbook][${requestId}] Post-success quota apply failed model=${quotaErr.model} needed=${quotaErr.needed} available=${quotaErr.available}`
-        );
-      }
-      console.error(
-        `[api/workbook][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
-      );
-    }
-
-    return jsonWithRequestId(requestId, data);
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+        "X-Request-ID": requestId,
+      },
+    });
   } catch (error) {
-    if (error instanceof Error && error.name === "TimeoutError") {
-      return jsonWithRequestId(
-        requestId,
-        {
-          error: {
-            code: "PROXY_TIMEOUT",
-            message: `Backend request timed out after ${Math.floor(
-              timeoutMs / 1000
-            )}s.`,
-          },
-        },
-        { status: 504 }
-      );
-    }
-
     const errName = error instanceof Error ? error.name : "UnknownError";
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error(
-      `[api/workbook][${requestId}] Proxy error: [${errName}] ${errMsg}`
+      `[api/workbook][${requestId}] Unexpected error: [${errName}] ${errMsg}`
     );
     return jsonWithRequestId(
       requestId,
