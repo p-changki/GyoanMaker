@@ -506,6 +506,8 @@ export default function PrivacyPage() {
             </p>
             <p>성명: 박창기</p>
             <p>직책: 운영자</p>
+            <p>상호명: 창랩</p>
+            <p>사업장소재지: 충청남도 천안시 서북구 불당31길 17, 401호</p>
             <p>사업자등록번호: 885-51-00965</p>
             <p>연락처: dnsxj12345aa@gmail.com</p>
           </div>
