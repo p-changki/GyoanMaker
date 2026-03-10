@@ -14,8 +14,8 @@ const cspDirectives = [
   "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com",
   // Fonts: self + trusted font CDNs used by template/font loader
   "font-src 'self' https://fonts.gstatic.com https://fastly.jsdelivr.net https://cdn.jsdelivr.net https://hangeul.pstatic.net https://spoqa.github.io data:",
-  // Connect: self + analytics + Toss SDK logging endpoint
-  "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://log.tosspayments.com",
+  // Connect: self + analytics + Toss SDK endpoints (log/event/apigw sandbox+prod)
+  "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://*.tosspayments.com",
   // Workers: self + blob (html2canvas, ONNX background removal)
   "worker-src 'self' blob:",
   // Frame: none (no iframes needed)
