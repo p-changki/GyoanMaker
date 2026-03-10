@@ -6,6 +6,7 @@ import express, { type Request, type Response } from "express";
 import { createRateLimitMiddleware } from "./middleware/rateLimit";
 import { createGenerateRouter } from "./routes/generate";
 import { createMetaRouter } from "./routes/meta";
+import { createWorkbookRouter } from "./routes/workbook";
 import { getSystemPrompt } from "./services/prompt";
 
 dotenv.config({
@@ -58,6 +59,14 @@ const META_RATE_LIMIT_WINDOW_MS = toPositiveInt(
   60_000
 );
 const META_RATE_LIMIT_MAX = toPositiveInt(process.env.META_RATE_LIMIT_MAX, 5);
+const WORKBOOK_RATE_LIMIT_WINDOW_MS = toPositiveInt(
+  process.env.WORKBOOK_RATE_LIMIT_WINDOW_MS,
+  60_000
+);
+const WORKBOOK_RATE_LIMIT_MAX = toPositiveInt(
+  process.env.WORKBOOK_RATE_LIMIT_MAX,
+  20
+);
 
 const generateRateLimit = createRateLimitMiddleware({
   windowMs: GENERATE_RATE_LIMIT_WINDOW_MS,
@@ -69,6 +78,12 @@ const metaRateLimit = createRateLimitMiddleware({
   windowMs: META_RATE_LIMIT_WINDOW_MS,
   max: META_RATE_LIMIT_MAX,
   scope: "meta",
+});
+
+const workbookRateLimit = createRateLimitMiddleware({
+  windowMs: WORKBOOK_RATE_LIMIT_WINDOW_MS,
+  max: WORKBOOK_RATE_LIMIT_MAX,
+  scope: "workbook",
 });
 
 function sendError(res: Response, status: number, code: string, message: string): void {
@@ -165,6 +180,7 @@ app.use(
   })
 );
 app.use("/meta", createMetaRouter(metaRateLimit));
+app.use("/workbook", createWorkbookRouter(workbookRateLimit));
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -187,6 +203,11 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(
     `[api] rate limit /meta: ${META_RATE_LIMIT_MAX}/${Math.floor(
       META_RATE_LIMIT_WINDOW_MS / 1000
+    )}s`
+  );
+  console.log(
+    `[api] rate limit /workbook: ${WORKBOOK_RATE_LIMIT_MAX}/${Math.floor(
+      WORKBOOK_RATE_LIMIT_WINDOW_MS / 1000
     )}s`
   );
 });

@@ -1,7 +1,9 @@
 "use client";
 
 import { memo, useEffect, useMemo } from "react";
+import type { HandoutSection } from "@gyoanmaker/shared/types";
 import { useHandoutStore, useSection } from "@/stores/useHandoutStore";
+import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import EditableHintBanner from "./EditableHintBanner";
 import {
   ANALYSIS_TITLE_STORAGE_KEY,
@@ -13,6 +15,7 @@ import {
 } from "./EditableFields";
 import EmptyHandoutView from "./EmptyHandoutView";
 import { ParsedHandoutViewPage1, ParsedHandoutViewPage2 } from "./HandoutViews";
+import WorkbookSheetsForCompile from "./WorkbookSheetsForCompile";
 
 export default function PreviewCanvas() {
   const setCustomHeaderText = useHandoutStore((state) => state.setCustomHeaderText);
@@ -37,6 +40,8 @@ export default function PreviewCanvas() {
   }, [setCustomHeaderText, setAnalysisTitleText, setSummaryTitleText]);
 
   const sections = useHandoutStore((state) => state.sections);
+  const workbookData = useWorkbookStore((state) => state.workbookData);
+  const includeInCompile = useWorkbookStore((state) => state.includeInCompile);
   const activeIds = useMemo(
     () =>
       Object.keys(sections)
@@ -48,6 +53,28 @@ export default function PreviewCanvas() {
     [sections]
   );
 
+  const parsedSections = useMemo<Record<string, HandoutSection>>(
+    () =>
+      activeIds.reduce<Record<string, HandoutSection>>((acc, id) => {
+        const section = sections[id];
+        if (section?.isParsed) {
+          acc[id] = section;
+        }
+        return acc;
+      }, {}),
+    [activeIds, sections]
+  );
+
+  const handoutPageCount = useMemo(
+    () =>
+      Object.values(parsedSections).reduce((count, section) => {
+        const sentenceCount = section.sentences.length;
+        const page1Count = Math.max(1, Math.ceil(sentenceCount / 7));
+        return count + page1Count + 1;
+      }, 0),
+    [parsedSections]
+  );
+
   return (
     <div id="preview-canvas-root" className="h-full overflow-auto bg-[#F9FAFB] px-8 py-6">
       <EditableHintBanner />
@@ -55,6 +82,13 @@ export default function PreviewCanvas() {
         {activeIds.map((id) => (
           <SectionCanvasItem key={id} id={id} />
         ))}
+        {workbookData && includeInCompile && (
+          <WorkbookSheetsForCompile
+            workbookData={workbookData}
+            parsedSections={parsedSections}
+            startOrder={handoutPageCount}
+          />
+        )}
       </div>
     </div>
   );

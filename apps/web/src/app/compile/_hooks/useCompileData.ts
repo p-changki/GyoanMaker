@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { hashPassages } from "@/services/cache";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { INPUT_STORAGE_KEY } from "./compileData.constants";
 import { useCompileActions } from "./useCompileActions";
 import { useHandoutLoader } from "./useHandoutLoader";
@@ -59,6 +60,7 @@ export function useCompileData() {
 
       // If handout already saved, update instead of creating duplicate
       if (existingId) {
+        const workbookState = useWorkbookStore.getState();
         const body = {
           title: saveTitle.trim() || undefined,
           sections,
@@ -68,6 +70,7 @@ export function useCompileData() {
             analysisTitleText: state.analysisTitleText,
             summaryTitleText: state.summaryTitleText,
           },
+          workbook: workbookState.workbookData ?? undefined,
         };
 
         const res = await fetch(`/api/handouts/${existingId}`, {
@@ -106,6 +109,7 @@ export function useCompileData() {
         // fallback to defaults
       }
 
+      const workbookStateNew = useWorkbookStore.getState();
       const body = {
         title: saveTitle.trim() || `Handout ${new Date().toLocaleDateString("en-US")}`,
         sections,
@@ -118,6 +122,7 @@ export function useCompileData() {
           analysisTitleText: state.analysisTitleText,
           summaryTitleText: state.summaryTitleText,
         },
+        workbook: workbookStateNew.workbookData ?? undefined,
       };
 
       const res = await fetch("/api/handouts", {

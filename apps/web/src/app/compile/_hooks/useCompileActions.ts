@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useCallback, useRef } from "react";
 import { parseHandoutSection } from "@/lib/parseHandout";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { useToast } from "@/components/ui/Toast";
 import {
   COMPILED_PREFIX,
@@ -144,7 +145,15 @@ export function useCompileActions({
       }
 
       setIsExportingPdf(true);
-      setExportProgress({ current: 0, total: exportIds.length });
+
+      // Count workbook pages for accurate progress total
+      const workbookStateForCount = useWorkbookStore.getState();
+      const workbookPageCount =
+        workbookStateForCount.includeInCompile && workbookStateForCount.workbookData
+          ? document.querySelectorAll('[data-pdf-part^="workbook-"]').length
+          : 0;
+      const totalPages = exportIds.length + workbookPageCount;
+      setExportProgress({ current: 0, total: totalPages });
 
       try {
         if (document.fonts?.ready) {
@@ -260,8 +269,107 @@ export function useCompileActions({
 
           setExportProgress({
             current: exportIds.indexOf(id) + 1,
-            total: exportIds.length,
+            total: totalPages,
           });
+        }
+
+        const workbookState = useWorkbookStore.getState();
+        if (workbookState.includeInCompile && workbookState.workbookData) {
+          const workbookParts = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-pdf-part^="workbook-"]')
+          ).sort((a, b) => {
+            const aOrder = Number.parseInt(a.dataset.pdfOrder ?? "0", 10);
+            const bOrder = Number.parseInt(b.dataset.pdfOrder ?? "0", 10);
+            return aOrder - bOrder;
+          });
+
+          for (const element of workbookParts) {
+            const styles = element.style;
+            const oWidth = styles.width;
+            const oMinWidth = styles.minWidth;
+            const oMaxWidth = styles.maxWidth;
+            const oFlexShrink = styles.flexShrink;
+
+            styles.width = "794px";
+            styles.minWidth = "794px";
+            styles.maxWidth = "794px";
+            styles.flexShrink = "0";
+
+            // Auto-fit: scale down content that exceeds A4 height (1123px)
+            const a4HeightPxWb = 1123;
+            const naturalHeight = element.scrollHeight;
+            const oTransformWb = styles.transform;
+            const oTransformOriginWb = styles.transformOrigin;
+            const oHeightWb = styles.height;
+            let fitScaleWb = 1;
+            if (naturalHeight > a4HeightPxWb) {
+              fitScaleWb = a4HeightPxWb / naturalHeight;
+              styles.transform = `scale(${fitScaleWb})`;
+              styles.transformOrigin = "top left";
+              styles.height = `${a4HeightPxWb}px`;
+            }
+
+            const canvas = await html2canvas(element, {
+              scale,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: "#ffffff",
+              windowWidth: 794,
+              windowHeight: fitScaleWb < 1 ? a4HeightPxWb : naturalHeight,
+              ignoreElements: (el) => {
+                const tag = el.tagName?.toLowerCase();
+                if (tag === "script" || tag === "link") {
+                  const src = el.getAttribute("src") || el.getAttribute("href") || "";
+                  if (src.includes("query-devtools") || src.includes("react-devtools")) return true;
+                }
+                return false;
+              },
+            });
+
+            const imageData = canvas.toDataURL("image/png");
+            styles.width = oWidth;
+            styles.minWidth = oMinWidth;
+            styles.maxWidth = oMaxWidth;
+            styles.flexShrink = oFlexShrink;
+            styles.transform = oTransformWb;
+            styles.transformOrigin = oTransformOriginWb;
+            styles.height = oHeightWb;
+
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const imageWidth = a4WidthMm;
+            const imageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
+
+            if (!pdf) {
+              pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: [imageWidth, Math.max(297, imageHeight)],
+              });
+            } else {
+              pdf.addPage([imageWidth, Math.max(297, imageHeight)]);
+            }
+
+            pdf.addImage(
+              imageData,
+              "PNG",
+              0,
+              0,
+              imageWidth,
+              imageHeight,
+              undefined,
+              "FAST"
+            );
+
+            capturedCount += 1;
+            setExportProgress({ current: capturedCount, total: totalPages });
+
+            const ctx = canvas.getContext("2d");
+            ctx?.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = 1;
+            canvas.height = 1;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
         }
 
         if (capturedCount === 0 || !pdf) {

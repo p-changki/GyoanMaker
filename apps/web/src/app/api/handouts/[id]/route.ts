@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { HandoutIllustrations } from "@gyoanmaker/shared/types";
+import type { HandoutIllustrations, WorkbookData } from "@gyoanmaker/shared/types";
 import { auth } from "@/auth";
 import {
   getHandout,
@@ -64,15 +64,20 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const { title, sections, illustrations, customTexts } = body as {
+  const { title, sections, illustrations, customTexts, workbook } = body as {
     title?: string;
     sections?: Record<string, string>;
     illustrations?: HandoutIllustrations;
     customTexts?: { headerText?: string; analysisTitleText?: string; summaryTitleText?: string };
+    workbook?: WorkbookData | null;
   };
 
   // Title-only update (legacy path from dashboard rename)
-  const isFullUpdate = sections !== undefined || illustrations !== undefined || customTexts !== undefined;
+  const isFullUpdate =
+    sections !== undefined ||
+    illustrations !== undefined ||
+    customTexts !== undefined ||
+    workbook !== undefined;
 
   if (!isFullUpdate) {
     if (!title || title.trim().length === 0) {
@@ -108,6 +113,7 @@ export async function PATCH(
       sections,
       illustrations,
       customTexts,
+      workbook,
     });
     if (!ok) {
       return NextResponse.json(
@@ -118,9 +124,14 @@ export async function PATCH(
     return NextResponse.json({ ok: true, id });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    const stack = error instanceof Error ? error.stack : "";
     console.error(`[api/handouts/${id}] Full update failed: ${message}`);
+    console.error(`[api/handouts/${id}] Stack: ${stack}`);
+    if (workbook) {
+      console.error(`[api/handouts/${id}] Workbook passages: ${workbook.passages?.length}, model: ${workbook.model}`);
+    }
     return NextResponse.json(
-      { error: { code: "UPDATE_ERROR", message: "Failed to update handout." } },
+      { error: { code: "UPDATE_ERROR", message: `Failed to update handout: ${message}` } },
       { status: 500 }
     );
   }

@@ -16,7 +16,7 @@ export default function Footer() {
               사업자등록번호: 885-51-00965 | 통신판매업 신고번호:
               xxxx-xxxx-xxxx
             </p>
-            <p>문의: dnsxj12345aa@gmail.com</p>
+            <p>대표전화: 010-8345-5501 | 문의: dnsxj12345aa@gmail.com</p>
           </div>
 
           {/* Links */}

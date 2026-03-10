@@ -1,101 +1,129 @@
 "use client";
 
 import type { WorkbookStep3Item } from "@gyoanmaker/shared/types";
-import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
+import { THEME_PRESETS, FONT_FAMILY_MAP } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { EditableText } from "@/components/compile/EditableText";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
 
 const CIRCLE_NUMBERS = ["①", "②", "③", "④", "⑤"];
 
-interface CompileStep3ContentProps {
+/** Flat step3 item with passageId attached for store updates */
+export interface FlatStep3Item extends WorkbookStep3Item {
   passageId: string;
-  passageTitle: string;
-  items: WorkbookStep3Item[];
+}
+
+interface CompileStep3ContentProps {
+  items: FlatStep3Item[];
+  /** Global starting index (0-based) for continuous numbering */
+  startIndex: number;
 }
 
 export default function CompileStep3Content({
-  passageId,
-  passageTitle,
   items,
+  startIndex,
 }: CompileStep3ContentProps) {
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
   const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
   const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
-  const titleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
+  const page1BodyStyle = useTemplateSettingsStore((s) => s.page1BodyStyle);
 
   const base = THEME_PRESETS[preset];
   const colors = useCustom && customColors ? { ...base, ...customColors } : base;
-  const fontCss = FONT_FAMILY_MAP[fontFamily].css;
-  const weightValue = TITLE_WEIGHT_MAP[titleWeight].value;
+  const fontCss = page1BodyStyle?.fontFamily
+    ? FONT_FAMILY_MAP[page1BodyStyle.fontFamily].css
+    : FONT_FAMILY_MAP[fontFamily].css;
 
-  const bodyFontSize = fontSizes.analysisEn ?? 10;
+  // Match handout analysisEn: same pt unit, same line-height 2.1
+  const bodyFontPt = fontSizes.analysisEn ?? 10;
 
   const updateStep3Item = useWorkbookStore((state) => state.updateStep3Item);
 
   return (
     <div style={{ fontFamily: fontCss }}>
-      {/* Passage title bar */}
-      <div
-        className="mb-4"
-        style={{
-          borderLeft: `4px solid ${colors.primary}`,
-          paddingLeft: "10px",
-        }}
-      >
-        <p style={{ margin: 0, fontSize: `${bodyFontSize - 2}px`, color: "#6B7280", fontWeight: 700 }}>
-          {passageId}
+      {/* Instruction (only on first page) */}
+      {startIndex === 0 && (
+        <p
+          style={{
+            fontSize: `${bodyFontPt + 1}pt`,
+            color: "#6B7280",
+            fontWeight: 700,
+            marginBottom: "20px",
+          }}
+        >
+          ▶ 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.
         </p>
-        <p style={{ margin: "4px 0 0", fontSize: `${bodyFontSize + 3}px`, fontWeight: weightValue, color: "#111827" }}>
-          {passageTitle || passageId}
-        </p>
-      </div>
+      )}
 
-      {/* Question list */}
+      {/* Items with consistent spacing */}
       <ol style={{ margin: 0, padding: 0, listStyle: "none" }}>
-        {items.map((item) => (
-          <li key={`${passageId}-${item.questionNumber}`} className="mb-6">
+        {items.map((item, idx) => (
+          <li
+            key={`s3-${startIndex + idx}`}
+            style={{ marginBottom: "40px" }}
+          >
             {/* Question number */}
-            <p style={{ margin: "0 0 4px", fontSize: `${bodyFontSize}px`, fontWeight: 700, color: colors.primary }}>
-              {String(item.questionNumber).padStart(2, "0")}. {item.passageNumber})
-            </p>
+            <div
+              style={{
+                fontSize: `${bodyFontPt + 1}pt`,
+                fontWeight: 900,
+                color: colors.primary,
+                marginBottom: "8px",
+              }}
+            >
+              {startIndex + idx + 1}.
+            </div>
 
-            {/* Intro */}
+            {/* Intro (lead sentence) */}
             <EditableText
               value={item.intro}
-              label="STEP 3 Intro"
+              label="STEP 3 도입문 수정"
               multiline
               maxLength={2000}
               as="p"
               themeColor={colors.primary}
-              style={{ margin: "0 0 8px", fontSize: `${bodyFontSize}px`, lineHeight: 1.8 }}
+              style={{
+                margin: "0 0 12px",
+                fontSize: `${bodyFontPt}pt`,
+                lineHeight: 2.1,
+                textAlign: "justify",
+                color: "#111827",
+              }}
               onConfirm={(next) =>
-                updateStep3Item(passageId, item.questionNumber, (prev) => ({
+                updateStep3Item(item.passageId, item.questionNumber, (prev) => ({
                   ...prev,
                   intro: next,
                 }))
               }
             />
 
-            {/* Paragraphs */}
-            <div className="mb-2">
+            {/* Paragraphs (A), (B), (C), (D) */}
+            <div style={{ marginBottom: "10px" }}>
               {item.paragraphs.map((paragraph, paragraphIndex) => (
                 <EditableText
-                  key={`${item.questionNumber}-${paragraph.label}`}
+                  key={`${startIndex + idx}-${paragraph.label}`}
                   value={`(${paragraph.label}) ${paragraph.text}`}
-                  label={`Paragraph ${paragraph.label}`}
+                  label={`블록 ${paragraph.label} 수정`}
                   multiline
                   maxLength={3000}
                   as="p"
                   themeColor={colors.primary}
-                  style={{ margin: "0 0 2px", fontSize: `${bodyFontSize}px`, lineHeight: 1.8 }}
+                  style={{
+                    margin: "0 0 6px",
+                    fontSize: `${bodyFontPt}pt`,
+                    lineHeight: 2.1,
+                    textAlign: "justify",
+                    textIndent: "-1.6em",
+                    paddingLeft: "1.6em",
+                    color: "#111827",
+                  }}
                   onConfirm={(next) =>
-                    updateStep3Item(passageId, item.questionNumber, (prev) => ({
+                    updateStep3Item(item.passageId, item.questionNumber, (prev) => ({
                       ...prev,
-                      paragraphs: prev.paragraphs.map((p, idx) =>
-                        idx !== paragraphIndex
+                      paragraphs: prev.paragraphs.map((p, i) =>
+                        i !== paragraphIndex
                           ? p
                           : { ...p, text: next.replace(/^\([A-D]\)\s*/, "") }
                       ),
@@ -105,11 +133,21 @@ export default function CompileStep3Content({
               ))}
             </div>
 
-            {/* Options */}
-            <p style={{ margin: "6px 0 4px", fontSize: `${bodyFontSize}px`, lineHeight: 1.7 }}>
+            {/* Options ①~⑤ */}
+            <p
+              style={{
+                margin: 0,
+                fontSize: `${bodyFontPt}pt`,
+                lineHeight: 2.0,
+                color: "#111827",
+              }}
+            >
               {item.options.map((option, optionIndex) => (
-                <span key={`${item.questionNumber}-option-${optionIndex}`} style={{ marginRight: "12px" }}>
-                  {CIRCLE_NUMBERS[optionIndex]} ({option.join(")-(")})
+                <span
+                  key={`${startIndex + idx}-opt-${optionIndex}`}
+                  style={{ marginRight: "14px" }}
+                >
+                  {CIRCLE_NUMBERS[optionIndex]} ({option.join(")-(")}){" "}
                 </span>
               ))}
             </p>

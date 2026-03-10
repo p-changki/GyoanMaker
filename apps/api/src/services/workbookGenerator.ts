@@ -284,16 +284,6 @@ function permutations(items: string[]): string[][] {
   return result;
 }
 
-function isValidOptionLabels(option: string[], labels: string[]): boolean {
-  if (option.length !== labels.length) return false;
-
-  const normalized = option.map((value) => value.toUpperCase());
-  const unique = new Set(normalized);
-  if (unique.size !== labels.length) return false;
-
-  return labels.every((label) => unique.has(label));
-}
-
 function createParagraphTexts(
   sentences: string[],
   desiredCount: number,
@@ -330,65 +320,73 @@ function normalizeStep3Item(
   const desiredCount = inferredType === "4p" ? 4 : 3;
   const paragraphTexts = createParagraphTexts(sentences, desiredCount, intro);
 
-  const paragraphs = Array.from({ length: desiredCount }, (_, index) => {
+  // Build paragraphs from AI output (in original/correct content order)
+  const orderedParagraphs = Array.from({ length: desiredCount }, (_, index) => {
     const candidate = isRecord(rawParagraphs[index]) ? rawParagraphs[index] : null;
     const text = isNonEmptyString(candidate?.text)
       ? candidate.text.trim()
       : paragraphTexts[index];
-
-    return {
-      label: labels[index],
-      text,
-    };
+    return text;
   });
 
+  // Shuffle label assignment so the correct order isn't always A-B-C.
+  // AI tends to output segments in natural (correct) order, so without
+  // shuffling, the answer is almost always the alphabetical sequence.
   const activeLabels = labels.slice(0, desiredCount);
-  const rawOptions = Array.isArray(source.options) ? source.options : [];
-  const validRawOptions = rawOptions
-    .map((option) => {
-      if (!Array.isArray(option)) return null;
-      const normalized = option
-        .map((token) => (typeof token === "string" ? token.toUpperCase() : ""))
-        .filter(Boolean);
-      return isValidOptionLabels(normalized, activeLabels) ? normalized : null;
-    })
-    .filter((option): option is string[] => option !== null);
+  const shuffledLabels = [...activeLabels].sort(() => Math.random() - 0.5);
 
-  const rawAnswerIndex =
-    Number.isInteger(source.answerIndex) &&
-    (source.answerIndex as number) >= 0 &&
-    (source.answerIndex as number) < validRawOptions.length
-      ? (source.answerIndex as number)
-      : 0;
+  // Map: shuffled label → original content index
+  // e.g. if shuffledLabels = ["C","A","B"], then label "C" gets content[0], "A" gets content[1], "B" gets content[2]
+  const paragraphs = shuffledLabels.map((label, idx) => ({
+    label,
+    text: orderedParagraphs[idx],
+  }));
 
-  const correctOrder = validRawOptions[rawAnswerIndex] ?? [...activeLabels];
-  const optionPool = [...validRawOptions];
-  const fallbackOptions = permutations([...activeLabels]);
-  const options: string[][] = [];
+  // The correct reading order maps back from content order → shuffled labels
+  // Content[0] got shuffledLabels[0], Content[1] got shuffledLabels[1], etc.
+  // So the correct display order is: shuffledLabels in original content order = shuffledLabels as-is
+  const correctOrder = [...shuffledLabels];
+
+  // Sort paragraphs alphabetically for display (A, B, C, D)
+  paragraphs.sort((a, b) => a.label.localeCompare(b.label));
+
+  // Generate distractors using adjacent-swap strategy (more plausible than random permutations)
+  const allPerms = permutations([...activeLabels]);
+  const correctKey = correctOrder.join("-");
+
+  // Prefer adjacent swaps as distractors (swap neighbors in the correct order)
+  const adjacentSwaps: string[][] = [];
+  for (let i = 0; i < correctOrder.length - 1; i++) {
+    const swapped = [...correctOrder];
+    [swapped[i], swapped[i + 1]] = [swapped[i + 1], swapped[i]];
+    if (swapped.join("-") !== correctKey) {
+      adjacentSwaps.push(swapped);
+    }
+  }
+
+  const distractorPool: string[][] = [];
   const seen = new Set<string>();
+  seen.add(correctKey);
 
-  const pushOption = (value: string[]) => {
+  const pushDistractor = (value: string[]) => {
     const key = value.join("-");
     if (seen.has(key)) return;
     seen.add(key);
-    options.push(value);
+    distractorPool.push(value);
   };
 
-  // Build distractors (excluding correctOrder), then insert correctOrder at random position
-  optionPool.forEach(pushOption);
-  fallbackOptions.forEach(pushOption);
+  // Priority: adjacent swaps first, then remaining permutations
+  adjacentSwaps.forEach(pushDistractor);
+  allPerms.forEach(pushDistractor);
 
-  // Remove correctOrder if it ended up in the pool (seen check handles dedup)
-  const distractors = options.filter(
-    (o) => o.join("-") !== correctOrder.join("-")
-  ).slice(0, 4);
-
-  const insertPos = Math.floor(Math.random() * (distractors.length + 1));
-  distractors.splice(insertPos, 0, correctOrder);
-  const finalOptions = distractors.slice(0, 5);
+  // Pick 4 distractors, insert correct at random position
+  const chosen = distractorPool.slice(0, 4);
+  const insertPos = Math.floor(Math.random() * (chosen.length + 1));
+  chosen.splice(insertPos, 0, correctOrder);
+  const finalOptions = chosen.slice(0, 5);
 
   const answerIndex = finalOptions.findIndex(
-    (option) => option.join("-") === correctOrder.join("-")
+    (option) => option.join("-") === correctKey
   );
 
   return {
@@ -415,7 +413,7 @@ function normalizeStep3Items(
     .filter((item): item is Record<string, unknown> => isRecord(item))
     .slice(0, 3);
 
-  while (candidates.length < 2) {
+  while (candidates.length < 1) {
     candidates.push({
       type: candidates.length % 2 === 0 ? "3p" : "4p",
       intro: sentences.slice(0, 2).join(" "),

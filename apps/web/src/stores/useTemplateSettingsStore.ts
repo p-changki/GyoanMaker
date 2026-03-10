@@ -55,6 +55,7 @@ interface TemplateSettingsActions {
   setSectionTitle: (key: Page2SectionKey, title: string) => void;
   setSubSectionTitle: (key: string, title: string) => void;
   setSubSectionColor: (key: string, color: string) => void;
+  setSectionBadgeConfig: (key: "handout" | "workbook", partial: Partial<import("@gyoanmaker/shared/types").SectionBadgeConfig>) => void;
 }
 
 type TemplateSettingsStore = TemplateSettingsState & TemplateSettingsActions;
@@ -324,6 +325,14 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
       set((state) => ({
         subSectionColors: { ...state.subSectionColors, [key]: color },
       })),
+
+    setSectionBadgeConfig: (key, partial) =>
+      set((state) => ({
+        sectionBadgeConfig: {
+          ...state.sectionBadgeConfig,
+          [key]: { ...state.sectionBadgeConfig?.[key], ...partial },
+        },
+      })),
   })
 );
 
@@ -358,6 +367,7 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     sectionTitles: state.sectionTitles,
     subSectionTitles: state.subSectionTitles,
     subSectionColors: state.subSectionColors,
+    sectionBadgeConfig: state.sectionBadgeConfig,
   };
 }
 

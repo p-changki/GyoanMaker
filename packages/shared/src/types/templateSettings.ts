@@ -365,6 +365,19 @@ export interface TemplateSettings {
   subSectionTitles?: Partial<Record<string, string>>;
   // Sub-section color overrides (e.g. background knowledge header/body bg)
   subSectionColors?: Partial<Record<string, string>>;
+  // Section number badge config (text, colors, font)
+  sectionBadgeConfig?: {
+    handout?: SectionBadgeConfig;
+    workbook?: SectionBadgeConfig;
+  };
+}
+
+export interface SectionBadgeConfig {
+  label?: string;         // default "01" / "02"
+  textColor?: string;     // default "#FFFFFF"
+  bgColor?: string;       // default theme primary (empty = theme)
+  fontFamily?: FontFamily | "";  // "" = use default Impact
+  fontSize?: number;      // px, default = fontSizes.passageNumber + 18
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {
