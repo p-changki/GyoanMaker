@@ -202,6 +202,20 @@ export default function TermsPage() {
               </tbody>
             </table>
           </div>
+          <h3 className="text-base font-semibold text-gray-800 mt-4 mb-2">
+            서비스 제공 기간
+          </h3>
+          <ul className="list-disc pl-6 space-y-1">
+            <li>
+              <strong>월 정기 구독</strong> — 결제일로부터 1개월(30일) 이용 후
+              자동 갱신됩니다. 매월 동일한 날짜에 자동 결제되며, 갱신일 전까지
+              해지하지 않으면 동일 조건으로 연장됩니다.
+            </li>
+            <li>
+              <strong>크레딧(추가 이용권)</strong> — 결제일로부터 90일간
+              유효합니다. 기간 만료 시 자동 소멸되며, 자동 갱신되지 않습니다.
+            </li>
+          </ul>
           <ul className="list-disc pl-6 mt-3 space-y-1">
             <li>
               월간 한도 소진 후에도 별도의 크레딧을 충전하여 추가 이용이
@@ -209,10 +223,6 @@ export default function TermsPage() {
             </li>
             <li>
               결제는 토스페이먼츠(TossPayments)를 통해 처리됩니다.
-            </li>
-            <li>
-              정기 구독은 매월 결제일에 자동으로 갱신되며, 갱신일 전까지
-              해지하지 않으면 동일 조건으로 연장됩니다.
             </li>
             <li>
               결제 과정에서 발생하는 오류 또는 이용자의 결제 수단 문제로 인한
