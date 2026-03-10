@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 
 /**
@@ -13,6 +14,26 @@ export const authConfig = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+    Credentials({
+      credentials: {
+        email: { label: "이메일", type: "email" },
+        password: { label: "비밀번호", type: "password" },
+      },
+      authorize(credentials) {
+        const raw = process.env.TEMP_ACCOUNTS ?? "";
+        const pairs = raw.split(",").map((s) => s.trim()).filter(Boolean);
+        for (const pair of pairs) {
+          const colonIdx = pair.indexOf(":");
+          if (colonIdx === -1) continue;
+          const email = pair.slice(0, colonIdx).trim();
+          const password = pair.slice(colonIdx + 1).trim();
+          if (credentials?.email === email && credentials?.password === password) {
+            return { id: email, email, name: email.split("@")[0] };
+          }
+        }
+        return null;
+      },
     }),
   ],
   pages: {
