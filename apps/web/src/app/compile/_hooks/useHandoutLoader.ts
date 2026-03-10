@@ -102,13 +102,17 @@ export function useHandoutLoader() {
       return (await res.json()) as CompileInitResponse;
     },
   });
+  const compileInitData = compileInitQuery.data;
+  const isCompileInitSuccess = compileInitQuery.isSuccess;
+  const isCompileInitFetching = compileInitQuery.isFetching;
+  const refetchCompileInit = compileInitQuery.refetch;
 
   useEffect(() => {
-    if (!compileInitQuery.isSuccess || compileInitQuery.isFetching) return;
+    if (!isCompileInitSuccess || isCompileInitFetching) return;
 
-    const initData = compileInitQuery.data;
+    const initData = compileInitData;
     if (!isCompileInitResponse(initData)) {
-      void compileInitQuery.refetch();
+      void refetchCompileInit();
       return;
     }
 
@@ -139,10 +143,10 @@ export function useHandoutLoader() {
     }
     useWorkbookStore.setState({ workbookData: null });
   }, [
-    compileInitQuery.data,
-    compileInitQuery.isSuccess,
-    compileInitQuery.isFetching,
-    compileInitQuery.refetch,
+    compileInitData,
+    isCompileInitSuccess,
+    isCompileInitFetching,
+    refetchCompileInit,
     setCompiledData,
     setWorkbookData,
   ]);
