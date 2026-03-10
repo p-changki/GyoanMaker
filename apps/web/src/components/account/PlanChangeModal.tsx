@@ -58,22 +58,22 @@ export default function PlanChangeModal({
                     ₩{plan.price.toLocaleString()} / 30일
                   </p>
 
-                  <div className="mt-3">
-                    {isCurrent ? (
-                      <TossPaymentButton
-                        type="plan"
-                        planId={planId}
-                        label="기간 연장"
-                        className="w-full"
-                      />
-                    ) : (
-                      <TossPaymentButton
-                        type="plan"
-                        planId={planId}
-                        label={`${planId.toUpperCase()} 구매`}
-                        className="w-full"
-                      />
-                    )}
+                  <p className="mt-2 text-xs text-gray-500">결제 방식 선택</p>
+                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <TossPaymentButton
+                      type="plan"
+                      planId={planId}
+                      checkoutFlow="widget"
+                      label={isCurrent ? "위젯 연장" : "위젯 구매"}
+                      className="w-full"
+                    />
+                    <TossPaymentButton
+                      type="plan"
+                      planId={planId}
+                      checkoutFlow="paylink"
+                      label={isCurrent ? "페이링크 연장" : "페이링크 구매"}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700"
+                    />
                   </div>
                 </div>
               );

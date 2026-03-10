@@ -27,6 +27,38 @@ export interface TossConfirmResult {
   raw: unknown;
 }
 
+export interface TossCreatePaymentRequest {
+  orderNo: string;
+  amount: number;
+  amountTaxFree: number;
+  productDesc: string;
+  retUrl: string;
+  retCancelUrl: string;
+  autoExecute: boolean;
+  resultCallback?: string;
+  callbackVersion?: "V1" | "V2";
+}
+
+export interface TossCreatePaymentResult {
+  checkoutUrl: string;
+  payToken: string;
+  raw: unknown;
+}
+
+export interface TossPaylinkStatusRequest {
+  orderNo: string;
+  payToken?: string;
+}
+
+export interface TossPaylinkStatusResult {
+  orderNo: string;
+  amount: number;
+  payStatus: string;
+  payToken: string | null;
+  payMethod: string | null;
+  raw: unknown;
+}
+
 interface TossErrorBody {
   code?: string;
   message?: string;
@@ -37,6 +69,9 @@ interface TossPaymentErrorOptions {
   statusCode?: number;
   raw?: unknown;
 }
+
+const TOSS_PAYLINK_BASE_URL =
+  process.env.TOSS_PAYLINK_BASE_URL?.trim() ?? "https://pay.toss.im/api/v2";
 
 export class TossPaymentError extends Error {
   code?: string;
@@ -75,8 +110,6 @@ export async function processPayment(
   return mockPayment(req);
 }
 
-
-
 function parseTossErrorBody(payload: unknown): TossErrorBody {
   if (!payload || typeof payload !== "object") {
     return {};
@@ -85,10 +118,30 @@ function parseTossErrorBody(payload: unknown): TossErrorBody {
   const asRecord = payload as Record<string, unknown>;
   return {
     code:
-      typeof asRecord.code === "string" ? asRecord.code : undefined,
+      typeof asRecord.code === "string"
+        ? asRecord.code
+        : typeof asRecord.code === "number"
+          ? String(asRecord.code)
+          : undefined,
     message:
-      typeof asRecord.message === "string" ? asRecord.message : undefined,
+      typeof asRecord.message === "string"
+        ? asRecord.message
+        : typeof asRecord.msg === "string"
+          ? asRecord.msg
+          : undefined,
   };
+}
+
+function requirePaylinkApiKey(): string {
+  const apiKey = process.env.TOSS_PAYLINK_API_KEY?.trim();
+  if (apiKey) {
+    return apiKey;
+  }
+
+  throw new TossPaymentError(
+    "TOSS_PAYLINK_API_KEY is not configured — paylink operation rejected (fail-closed).",
+    { code: "PAYLINK_API_KEY_MISSING", statusCode: 500 }
+  );
 }
 
 export async function confirmTossPayment(
@@ -158,6 +211,179 @@ export async function confirmTossPayment(
     status,
     method,
     approvedAt,
+    raw: payload,
+  };
+}
+
+export async function createTossPayment(
+  req: TossCreatePaymentRequest
+): Promise<TossCreatePaymentResult> {
+  if (req.autoExecute && !req.resultCallback) {
+    throw new TossPaymentError(
+      "resultCallback is required when autoExecute=true for paylink.",
+      { code: "PAYLINK_RESULT_CALLBACK_MISSING", statusCode: 400 }
+    );
+  }
+
+  const apiKey = requirePaylinkApiKey();
+  const res = await fetch(`${TOSS_PAYLINK_BASE_URL}/payments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      apiKey,
+      orderNo: req.orderNo,
+      amount: req.amount,
+      amountTaxFree: req.amountTaxFree,
+      productDesc: req.productDesc,
+      retUrl: req.retUrl,
+      retCancelUrl: req.retCancelUrl,
+      autoExecute: req.autoExecute,
+      ...(req.resultCallback ? { resultCallback: req.resultCallback } : {}),
+      ...(req.callbackVersion ? { callbackVersion: req.callbackVersion } : {}),
+    }),
+  });
+
+  const payload = (await res.json().catch(() => null)) as unknown;
+  if (!res.ok) {
+    const parsed = parseTossErrorBody(payload);
+    throw new TossPaymentError(
+      parsed.message ?? "Failed to create Toss paylink payment.",
+      {
+        code: parsed.code,
+        statusCode: res.status,
+        raw: payload,
+      }
+    );
+  }
+
+  if (!payload || typeof payload !== "object") {
+    throw new TossPaymentError("Invalid Toss paylink create response.", {
+      statusCode: res.status,
+      raw: payload,
+    });
+  }
+
+  const record = payload as Record<string, unknown>;
+  const code = typeof record.code === "number" ? record.code : 0;
+  if (code !== 0) {
+    throw new TossPaymentError(
+      typeof record.msg === "string"
+        ? record.msg
+        : "Toss paylink create response returned non-zero code.",
+      {
+        code: String(code),
+        statusCode: 400,
+        raw: payload,
+      }
+    );
+  }
+
+  const checkoutUrl =
+    typeof record.checkoutPage === "string"
+      ? record.checkoutPage
+      : typeof record.checkoutUrl === "string"
+        ? record.checkoutUrl
+        : null;
+  const payToken = typeof record.payToken === "string" ? record.payToken : null;
+
+  if (!checkoutUrl || !payToken) {
+    throw new TossPaymentError(
+      "Toss paylink create response missing checkoutPage/payToken.",
+      {
+        statusCode: res.status,
+        raw: payload,
+      }
+    );
+  }
+
+  return {
+    checkoutUrl,
+    payToken,
+    raw: payload,
+  };
+}
+
+export async function fetchTossPaylinkStatus(
+  req: TossPaylinkStatusRequest
+): Promise<TossPaylinkStatusResult> {
+  const apiKey = requirePaylinkApiKey();
+  const res = await fetch(`${TOSS_PAYLINK_BASE_URL}/status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      apiKey,
+      ...(req.payToken ? { payToken: req.payToken } : { orderNo: req.orderNo }),
+    }),
+  });
+
+  const payload = (await res.json().catch(() => null)) as unknown;
+  if (!res.ok) {
+    const parsed = parseTossErrorBody(payload);
+    throw new TossPaymentError(
+      parsed.message ?? "Failed to fetch Toss paylink status.",
+      {
+        code: parsed.code,
+        statusCode: res.status,
+        raw: payload,
+      }
+    );
+  }
+
+  if (!payload || typeof payload !== "object") {
+    throw new TossPaymentError("Invalid Toss paylink status response.", {
+      statusCode: res.status,
+      raw: payload,
+    });
+  }
+
+  const record = payload as Record<string, unknown>;
+  const code = typeof record.code === "number" ? record.code : 0;
+  if (code !== 0) {
+    throw new TossPaymentError(
+      typeof record.msg === "string"
+        ? record.msg
+        : "Toss paylink status response returned non-zero code.",
+      {
+        code: String(code),
+        statusCode: 400,
+        raw: payload,
+      }
+    );
+  }
+
+  const orderNo =
+    typeof record.orderNo === "string" ? record.orderNo : req.orderNo;
+  const amountRaw = record.amount;
+  const amount =
+    typeof amountRaw === "number"
+      ? amountRaw
+      : typeof amountRaw === "string"
+        ? Number(amountRaw)
+        : NaN;
+  const payStatus =
+    typeof record.payStatus === "string"
+      ? record.payStatus
+      : typeof record.status === "string"
+        ? record.status
+        : "UNKNOWN";
+
+  if (!Number.isFinite(amount)) {
+    throw new TossPaymentError("Toss paylink status missing amount.", {
+      statusCode: res.status,
+      raw: payload,
+    });
+  }
+
+  return {
+    orderNo,
+    amount,
+    payStatus,
+    payToken: typeof record.payToken === "string" ? record.payToken : null,
+    payMethod: typeof record.payMethod === "string" ? record.payMethod : null,
     raw: payload,
   };
 }

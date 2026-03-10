@@ -33,12 +33,20 @@ export default function TopUpPanel() {
               <p className="mt-1 text-base font-bold text-gray-900">
                 ₩{pkg.price.toLocaleString()}
               </p>
-              <div className="mt-3">
+              <div className="mt-3 grid grid-cols-1 gap-2">
                 <TossPaymentButton
                   type="topup"
                   packageId={pkg.id}
-                  label="충전하기"
+                  checkoutFlow="widget"
+                  label="위젯 결제"
                   className="w-full"
+                />
+                <TossPaymentButton
+                  type="topup"
+                  packageId={pkg.id}
+                  checkoutFlow="paylink"
+                  label="페이링크 결제"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
                 />
               </div>
             </div>
@@ -64,12 +72,20 @@ export default function TopUpPanel() {
               <p className="mt-1 text-base font-bold text-gray-900">
                 ₩{pkg.price.toLocaleString()}
               </p>
-              <div className="mt-3">
+              <div className="mt-3 grid grid-cols-1 gap-2">
                 <TossPaymentButton
                   type="topup"
                   packageId={pkg.id}
-                  label="충전하기"
+                  checkoutFlow="widget"
+                  label="위젯 결제"
                   className="w-full"
+                />
+                <TossPaymentButton
+                  type="topup"
+                  packageId={pkg.id}
+                  checkoutFlow="paylink"
+                  label="페이링크 결제"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
                 />
               </div>
             </div>

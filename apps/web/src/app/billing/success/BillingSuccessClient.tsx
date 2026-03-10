@@ -8,6 +8,8 @@ interface BillingSuccessClientProps {
   paymentKey: string | null;
   orderId: string | null;
   amount: number;
+  paylinkOrderNo: string | null;
+  paylinkStatus: string | null;
 }
 
 interface ConfirmErrorPayload {
@@ -20,13 +22,17 @@ export default function BillingSuccessClient({
   paymentKey,
   orderId,
   amount,
+  paylinkOrderNo,
+  paylinkStatus,
 }: BillingSuccessClientProps) {
   const router = useRouter();
   const requestedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
-  const hasInvalidParams =
-    !paymentKey || !orderId || !Number.isFinite(amount) || amount <= 0;
+  const isWidgetFlow =
+    !!paymentKey && !!orderId && Number.isFinite(amount) && amount > 0;
+  const isPaylinkFlow = !!paylinkOrderNo;
+  const hasInvalidParams = !isWidgetFlow && !isPaylinkFlow;
 
   useEffect(() => {
     if (requestedRef.current || hasInvalidParams) {
@@ -36,21 +42,42 @@ export default function BillingSuccessClient({
     requestedRef.current = true;
 
     const confirmPayment = async () => {
-      const res = await fetch("/api/billing/confirm", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          paymentKey,
-          orderId,
-          amount,
-        }),
-      });
+      if (isWidgetFlow) {
+        const res = await fetch("/api/billing/confirm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            paymentKey,
+            orderId,
+            amount,
+          }),
+        });
 
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => null)) as ConfirmErrorPayload | null;
-        throw new Error(payload?.error?.message ?? "결제 승인에 실패했습니다.");
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as ConfirmErrorPayload | null;
+          throw new Error(payload?.error?.message ?? "결제 승인에 실패했습니다.");
+        }
+      } else if (isPaylinkFlow) {
+        if (paylinkStatus && paylinkStatus !== "PAY_COMPLETE") {
+          throw new Error(`결제 상태가 완료가 아닙니다. (${paylinkStatus})`);
+        }
+
+        const res = await fetch("/api/billing/paylink/confirm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderId: paylinkOrderNo,
+          }),
+        });
+
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => null)) as ConfirmErrorPayload | null;
+          throw new Error(payload?.error?.message ?? "페이링크 결제 승인에 실패했습니다.");
+        }
       }
 
       router.replace("/account");
@@ -60,7 +87,17 @@ export default function BillingSuccessClient({
       const message = err instanceof Error ? err.message : "결제 승인에 실패했습니다.";
       setError(message);
     });
-  }, [amount, hasInvalidParams, orderId, paymentKey, router]);
+  }, [
+    amount,
+    hasInvalidParams,
+    isPaylinkFlow,
+    isWidgetFlow,
+    orderId,
+    paymentKey,
+    paylinkOrderNo,
+    paylinkStatus,
+    router,
+  ]);
 
   if (hasInvalidParams) {
     return (
