@@ -4,25 +4,22 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type PlanId, type TopUpCreditType, PLANS } from "@gyoanmaker/shared/plans";
 import type { CreditEntry } from "@gyoanmaker/shared/types";
 import UsageBar from "./UsageBar";
 import DeleteAccountModal from "./DeleteAccountModal";
-import CancelSubscriptionModal from "./CancelSubscriptionModal";
 import PlanChangeModal from "./PlanChangeModal";
 import TopUpModal from "./TopUpModal";
 import SubscriptionInfoSection from "./SubscriptionInfoSection";
 import HistoryTabs from "./HistoryTabs";
-import BillingKeySection from "./BillingKeySection";
 
 interface BillingStatusResponse {
   subscription: {
     tier: PlanId;
-    status: "active" | "past_due" | "canceled";
+    status: "active" | "expired";
     currentPeriodStartAt: string;
     currentPeriodEndAt: string | null;
-    paymentMethod: string | null;
   };
   quota: {
     plan: PlanId;
@@ -32,7 +29,6 @@ interface BillingStatusResponse {
     illustration: { limit: number; used: number; remaining: number; credits: number };
     storage: { limit: number | null; used: number; remaining: number | null };
   };
-  planPendingTier: PlanId | null;
   account: { createdAt: string | null };
   credits: { flash: CreditEntry[]; pro: CreditEntry[]; illustration: CreditEntry[] };
   illustrationSamples: { count: number };
@@ -47,11 +43,6 @@ function isTopUpCreditType(value: string | null): value is TopUpCreditType {
   return value === "flash" || value === "pro" || value === "illustration";
 }
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
-}
 
 async function fetchBillingStatus(): Promise<BillingStatusResponse> {
   const res = await fetch("/api/billing/status");
@@ -64,10 +55,8 @@ export default function AccountDashboard() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showTopUpModal, setShowTopUpModal] = useState(false);
 
@@ -77,11 +66,7 @@ export default function AccountDashboard() {
   });
 
   const currentPlan = data?.subscription?.tier ?? "free";
-  const subscriptionStatus = data?.subscription?.status ?? "active";
   const periodEndAt = data?.subscription?.currentPeriodEndAt ?? null;
-  const isCanceled = subscriptionStatus === "canceled";
-  const planPendingTier = data?.planPendingTier ?? null;
-  const showCancelButton = currentPlan !== "free" && !isCanceled;
 
   const targetPlan = useMemo(() => {
     const value = searchParams.get("targetPlan");
@@ -180,14 +165,9 @@ export default function AccountDashboard() {
                 <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-600">
                   {currentPlan.toUpperCase()}
                 </span>
-                {isCanceled && (
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-[10px] font-semibold text-yellow-800">
-                    {periodEndAt ? `해지 예정 (~${formatDate(periodEndAt)})` : "해지 예정"}
-                  </span>
-                )}
-                {planPendingTier && !isCanceled && (
-                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800">
-                    → {planPendingTier.toUpperCase()} 전환 예정
+                {currentPlan !== "free" && periodEndAt && new Date(periodEndAt) < new Date() && (
+                  <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                    만료됨
                   </span>
                 )}
               </div>
@@ -222,19 +202,13 @@ export default function AccountDashboard() {
         </div>
       </section>
 
-      {/* Subscription Info */}
+      {/* Plan Info */}
       <SubscriptionInfoSection
         tier={currentPlan}
         currentPeriodStartAt={data.subscription.currentPeriodStartAt}
         currentPeriodEndAt={periodEndAt}
-        paymentMethod={data.subscription.paymentMethod}
-        planPendingTier={planPendingTier}
         createdAt={data.account.createdAt}
-        monthKeyKst={data.quota.monthKeyKst}
       />
-
-      {/* Payment Method */}
-      <BillingKeySection />
 
       {/* Quota */}
       <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -342,15 +316,6 @@ export default function AccountDashboard() {
           계정을 삭제하면 모든 데이터가 영구적으로 제거되며 되돌릴 수 없습니다.
         </p>
         <div className="mt-4 flex gap-3">
-          {showCancelButton && (
-            <button
-              type="button"
-              onClick={() => setShowCancelModal(true)}
-              className="rounded-xl border border-yellow-400 px-4 py-2 text-sm font-bold text-yellow-700 transition-colors hover:bg-yellow-50"
-            >
-              구독 취소
-            </button>
-          )}
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
@@ -376,25 +341,6 @@ export default function AccountDashboard() {
         onClose={() => {
           setShowPlanModal(false);
           clearTargetPlanQuery();
-        }}
-        onChanged={async () => {
-          await queryClient.invalidateQueries({ queryKey: ["billing-status"] });
-        }}
-      />
-
-      <CancelSubscriptionModal
-        open={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        periodEndAt={periodEndAt}
-        onConfirm={async () => {
-          const res = await fetch("/api/billing/cancel-subscription", {
-            method: "POST",
-          });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body?.error?.message ?? "Cancellation failed");
-          }
-          await queryClient.invalidateQueries({ queryKey: ["billing-status"] });
         }}
       />
 

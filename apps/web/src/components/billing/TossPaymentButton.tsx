@@ -21,7 +21,7 @@ interface CheckoutErrorResponse {
 }
 
 interface TossPaymentButtonProps {
-  type: "subscription" | "topup";
+  type: "plan" | "topup";
   planId?: PlanId;
   packageId?: TopUpPackageId;
   label: string;

@@ -6,6 +6,10 @@ import { getDb } from "@/lib/firebase-admin";
 import { addTopUpCredits, changePlan } from "@/lib/subscription";
 import { TOP_UP_PACKAGES, type PendingOrder } from "@gyoanmaker/shared/plans";
 
+function normalizeOrderType(value: unknown): "plan" | "topup" {
+  return value === "topup" ? "topup" : "plan";
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!isAdmin(session?.user?.email)) {
@@ -34,9 +38,11 @@ export async function POST(req: NextRequest) {
   }
 
   const order = snap.data() as PendingOrder & {
+    type?: string;
     paymentKey?: string;
     confirmedAmount?: number;
   };
+  const orderType = normalizeOrderType(order.type);
 
   if (order.status !== "paid_not_applied") {
     return NextResponse.json(
@@ -62,20 +68,17 @@ export async function POST(req: NextRequest) {
     let subscriptionResult: unknown;
     let creditsResult: unknown;
 
-    if (order.type === "subscription") {
+    if (orderType === "plan") {
       if (!order.planId) {
         return NextResponse.json(
           { error: { code: "INVALID_ORDER", message: "Missing planId." } },
           { status: 400 }
         );
       }
-      subscriptionResult = await changePlan(email, order.planId, {
-        forceImmediate: true,
-        paymentMethod: "toss",
-      });
+      subscriptionResult = await changePlan(email, order.planId);
     }
 
-    if (order.type === "topup") {
+    if (orderType === "topup") {
       if (!order.packageId) {
         return NextResponse.json(
           { error: { code: "INVALID_ORDER", message: "Missing packageId." } },
@@ -108,6 +111,7 @@ export async function POST(req: NextRequest) {
       db.collection("billing_orders").doc(orderId).set(
         {
           ...order,
+          type: orderType,
           ...payload,
           confirmingAt: FieldValue.delete(),
           errorMessage: FieldValue.delete(),
@@ -119,7 +123,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       orderId,
-      type: order.type,
+      type: orderType,
       subscription: subscriptionResult,
       credits: creditsResult,
     });

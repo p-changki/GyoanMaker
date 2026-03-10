@@ -6,7 +6,7 @@ import Pagination from "./Pagination";
 
 interface OrderRow {
   orderId: string;
-  type: "subscription" | "topup";
+  type: "plan" | "topup";
   orderName: string;
   amount: number;
   status: string;

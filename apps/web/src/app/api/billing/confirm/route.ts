@@ -15,6 +15,10 @@ interface ConfirmBody {
   amount?: number;
 }
 
+function normalizeOrderType(value: unknown): "plan" | "topup" {
+  return value === "topup" ? "topup" : "plan";
+}
+
 type AcquireOrderResult =
   | { kind: "acquired"; order: PendingOrder }
   | { kind: "not_found" }
@@ -269,6 +273,7 @@ export async function POST(req: NextRequest) {
 
   const order = acquireResult.order;
   const orderRef = getDb().collection("pending_orders").doc(orderId);
+  const orderType = normalizeOrderType((order as { type?: unknown }).type);
   const isRetry = order.status === "paid_not_applied";
 
   let confirmed;
@@ -333,9 +338,9 @@ export async function POST(req: NextRequest) {
     let subscriptionResult: unknown;
     let creditsResult: unknown;
 
-    if (order.type === "subscription") {
+    if (orderType === "plan") {
       if (!order.planId) {
-        await markOrderPaidNotApplied(orderId, "Missing planId for subscription order.", paymentKey, confirmed.totalAmount);
+        await markOrderPaidNotApplied(orderId, "Missing planId for plan order.", paymentKey, confirmed.totalAmount);
         return NextResponse.json(
           {
             error: {
@@ -347,13 +352,10 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      subscriptionResult = await changePlan(email, order.planId, {
-        forceImmediate: true,
-        paymentMethod: "toss",
-      });
+      subscriptionResult = await changePlan(email, order.planId);
     }
 
-    if (order.type === "topup") {
+    if (orderType === "topup") {
       if (!order.packageId) {
         await markOrderPaidNotApplied(orderId, "Missing packageId for top-up order.", paymentKey, confirmed.totalAmount);
         return NextResponse.json(
@@ -392,6 +394,7 @@ export async function POST(req: NextRequest) {
     const confirmedAt = new Date().toISOString();
     const billingOrderPayload = {
       ...order,
+      type: orderType,
       status: "confirmed" as const,
       confirmedAt,
       paymentKey,
@@ -418,7 +421,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       orderId,
-      type: order.type,
+      type: orderType,
       subscription: subscriptionResult,
       credits: creditsResult,
     });

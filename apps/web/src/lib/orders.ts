@@ -2,7 +2,7 @@ import { getDb } from "./firebase-admin";
 
 export interface OrderRow {
   orderId: string;
-  type: "subscription" | "topup";
+  type: "plan" | "topup";
   orderName: string;
   amount: number;
   status: string;
@@ -35,13 +35,13 @@ function toIsoString(value: string | { toDate?: () => Date } | null | undefined)
 function toOrderRow(data: RawOrder): OrderRow {
   const orderName =
     data.orderName ??
-    (data.type === "subscription"
-      ? `${(data.planId ?? "plan").toUpperCase()} 구독`
+    (data.type === "plan"
+      ? `${(data.planId ?? "plan").toUpperCase()} 이용권`
       : `${(data.packageId ?? "topup").toUpperCase()} 충전`);
 
   return {
     orderId: data.orderId ?? "",
-    type: data.type === "topup" ? "topup" : "subscription",
+    type: data.type === "topup" ? "topup" : "plan",
     orderName,
     amount: typeof data.amount === "number" ? data.amount : 0,
     status: typeof data.status === "string" ? data.status : "pending",

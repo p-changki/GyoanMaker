@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       return {
         orderId: doc.id,
         email: d.email ?? "",
-        type: d.type ?? "subscription",
+        type: d.type === "topup" ? "topup" : "plan",
         planId: d.planId ?? null,
         packageId: d.packageId ?? null,
         amount: typeof d.amount === "number" ? d.amount : 0,

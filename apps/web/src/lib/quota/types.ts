@@ -51,7 +51,6 @@ export interface UserDocLike {
     status?: string;
     currentPeriodStartAt?: string;
     currentPeriodEndAt?: string | null;
-    paymentMethod?: string | null;
   };
   quota?: {
     dailyLimit?: number;
