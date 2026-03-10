@@ -1,5 +1,5 @@
 export type PlanId = "free" | "basic" | "standard" | "pro";
-export type PlanStatus = "active" | "past_due" | "canceled";
+export type PlanStatus = "active" | "expired";
 export type PaymentMethod = "mock" | "toss";
 export type QuotaModel = "flash" | "pro";
 export type TopUpCreditType = QuotaModel | "illustration";
@@ -10,7 +10,7 @@ export type TopUpPackageId =
   | "pro_20"
   | "pro_60"
   | "flash_100";
-export type OrderType = "subscription" | "topup";
+export type OrderType = "plan" | "topup";
 export type OrderStatus = "pending" | "confirmed" | "failed" | "paid_not_applied";
 export type RefundStatus = "none" | "requested" | "processed" | "rejected";
 

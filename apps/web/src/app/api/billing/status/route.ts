@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getQuotaStatus } from "@/lib/quota";
 import { countIllustrationSamples } from "@/lib/illustration-samples";
-import { getSubscriptionExtended } from "@/lib/subscription";
+import { expirePlanIfNeeded, getSubscriptionExtended } from "@/lib/subscription";
 import { getDb } from "@/lib/firebase-admin";
 import { type PlanId, PLANS } from "@gyoanmaker/shared/plans";
 
@@ -18,6 +18,9 @@ export async function GET() {
   }
 
   try {
+    // Lazy expiry: downgrade if plan has expired
+    await expirePlanIfNeeded(email);
+
     const [extended, quota, sampleCount] = await Promise.all([
       getSubscriptionExtended(email),
       getQuotaStatus(email),
@@ -47,7 +50,6 @@ export async function GET() {
     return NextResponse.json({
       subscription: extended.subscription,
       quota,
-      planPendingTier: extended.planPendingTier,
       account: { createdAt: extended.createdAt },
       credits: extended.credits,
       illustrationSamples: { count: sampleCount },

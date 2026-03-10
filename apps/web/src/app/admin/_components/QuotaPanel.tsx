@@ -20,7 +20,7 @@ interface QuotaInfo {
 
 interface SubscriptionInfo {
   tier: "free" | "basic" | "standard" | "pro";
-  status: "active" | "past_due" | "canceled";
+  status: "active" | "expired";
 }
 
 export default function QuotaPanel({ email }: { email: string }) {

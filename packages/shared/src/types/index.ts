@@ -1,11 +1,10 @@
-import type { PaymentMethod, PlanId, PlanStatus } from "../plans";
+import type { PlanId, PlanStatus } from "../plans";
 import type { SentencePair, TopicSentence } from "./handout";
 
 export type {
   PlanDefinition,
   PlanId,
   PlanStatus,
-  PaymentMethod,
   QuotaModel,
   TopUpCreditType,
   TopUpPackageDefinition,
@@ -103,7 +102,6 @@ export interface UserPlan {
   status: PlanStatus;
   currentPeriodStartAt: string;
   currentPeriodEndAt: string | null;
-  paymentMethod: PaymentMethod | null;
 }
 
 export interface ModelQuota {

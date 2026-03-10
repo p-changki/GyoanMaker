@@ -49,7 +49,7 @@ export default function TermsPage() {
               분석 결과, 어휘 자료 등 일체의 콘텐츠를 의미합니다.
             </li>
             <li>
-              &quot;구독&quot;이라 함은 월 단위 정기 결제를 통해 이용하는
+              &quot;플랜 이용권&quot;이라 함은 30일 단위로 결제하여 이용하는
               유료 서비스를 의미합니다.
             </li>
             <li>
@@ -126,7 +126,7 @@ export default function TermsPage() {
             제6조 (유료 서비스 및 결제)
           </h2>
           <p className="mb-3">
-            서비스는 다음과 같은 월간 구독 요금제를 제공합니다.
+            서비스는 다음과 같은 30일 이용권 요금제를 제공합니다.
           </p>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-200 text-sm">
@@ -136,7 +136,7 @@ export default function TermsPage() {
                     요금제
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
-                    월 요금
+                    30일 요금
                   </th>
                   <th className="border border-gray-200 px-3 py-2 text-left font-semibold">
                     빠른 모드 지문/월
@@ -207,12 +207,12 @@ export default function TermsPage() {
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              <strong>월 정기 구독</strong> — 결제일로부터 1개월(30일) 이용 후
-              자동 갱신됩니다. 매월 동일한 날짜에 자동 결제되며, 갱신일 전까지
-              해지하지 않으면 동일 조건으로 연장됩니다.
+              <strong>플랜 이용권</strong> — 결제일로부터 30일간 이용할 수
+              있으며, 자동 갱신되지 않습니다. 이용 기간 만료 후 계속 이용하려면
+              이용권을 다시 결제해야 합니다.
             </li>
             <li>
-              <strong>크레딧(추가 이용권)</strong> — 결제일로부터 90일간
+              <strong>크레딧(추가 이용권)</strong> — 구매일로부터 90일간
               유효합니다. 기간 만료 시 자동 소멸되며, 자동 갱신되지 않습니다.
             </li>
           </ul>
@@ -264,11 +264,11 @@ export default function TermsPage() {
             제8조 (환불 정책)
           </h2>
           <h3 className="text-base font-semibold text-gray-800 mt-3 mb-2">
-            1. 구독 환불
+            1. 플랜 이용권 환불
           </h3>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              구독 결제 후 7일 이내이며 서비스를 이용(교안 생성)하지 않은 경우,
+              이용권 결제 후 7일 이내이며 서비스를 이용(교안 생성)하지 않은 경우,
               전액 환불됩니다.
             </li>
             <li>
@@ -302,18 +302,18 @@ export default function TermsPage() {
 
         <section>
           <h2 className="text-xl font-bold text-gray-900 mb-3">
-            제9조 (구독 해지)
+            제9조 (플랜 만료 및 이용 종료)
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              이용자는 계정 설정 페이지에서 언제든지 구독을 해지할 수 있습니다.
+              유료 플랜은 결제일 기준 30일 이용권으로 제공되며, 이용권 만료 후
+              재결제하지 않으면 무료 요금제로 자동 전환됩니다.
             </li>
             <li>
-              해지 시 현재 결제 기간이 종료될 때까지 서비스를 계속 이용할 수
-              있으며, 이후 Free 요금제로 전환됩니다.
+              이용권 유효기간 내에는 해당 플랜의 기능을 계속 이용할 수 있습니다.
             </li>
             <li>
-              해지 후에도 저장된 교안은 Free 요금제의 저장 한도 내에서
+              만료 후에도 저장된 교안은 Free 요금제의 저장 한도 내에서
               유지됩니다. 한도를 초과하는 교안은 최신순으로 보존되며, 초과분에
               대해서는 다운로드만 가능하고 신규 저장이 제한될 수 있습니다.
             </li>
@@ -350,7 +350,7 @@ export default function TermsPage() {
             </li>
             <li>
               <strong>영구 이용 정지</strong> — 계정을 영구적으로 정지하며,
-              잔여 크레딧 및 구독 혜택은 소멸됩니다.
+              잔여 크레딧 및 유료 플랜 혜택은 소멸됩니다.
             </li>
           </ul>
           <p className="mt-2">
@@ -524,7 +524,7 @@ export default function TermsPage() {
               동안 보관됩니다.
             </li>
             <li>
-              탈퇴 전 환불 가능한 잔여 구독료 또는 크레딧이 있는 경우,
+              탈퇴 전 환불 가능한 미사용 이용권 결제금 또는 크레딧이 있는 경우,
               제8조(환불 정책)에 따라 환불을 신청할 수 있습니다.
             </li>
           </ul>

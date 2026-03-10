@@ -2,8 +2,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "./firebase-admin";
 import {
   getCreditExpiryIso,
+  getMonthKeyKst,
   getNowIso,
-  type PaymentMethod,
   type PlanId,
   PLANS,
   type QuotaModel,
@@ -14,8 +14,7 @@ const COLLECTION = "users";
 const PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface UserDocLike {
-  plan?: UserPlan;
-  planPendingTier?: PlanId;
+  plan?: UserPlan & { status?: string };
   quota?: {
     flash?: { monthlyLimit?: number; used?: number; monthKeyKst?: string };
     pro?: { monthlyLimit?: number; used?: number; monthKeyKst?: string };
@@ -29,10 +28,9 @@ interface UserDocLike {
 function normalizePlan(doc: UserDocLike): UserPlan {
   const now = getNowIso();
   const tier = doc.plan?.tier ?? "free";
-  const status =
-    doc.plan?.status === "past_due" || doc.plan?.status === "canceled"
-      ? doc.plan.status
-      : "active";
+  // Handle legacy Firestore values: past_due / canceled → active
+  const rawStatus = doc.plan?.status;
+  const status = rawStatus === "active" || rawStatus === "expired" ? rawStatus : "active";
 
   return {
     tier,
@@ -40,13 +38,7 @@ function normalizePlan(doc: UserDocLike): UserPlan {
     currentPeriodStartAt: doc.plan?.currentPeriodStartAt ?? now,
     currentPeriodEndAt:
       doc.plan?.currentPeriodEndAt === undefined ? null : doc.plan.currentPeriodEndAt,
-    paymentMethod: doc.plan?.paymentMethod ?? null,
   };
-}
-
-export interface ChangePlanOptions {
-  forceImmediate?: boolean;
-  paymentMethod?: PaymentMethod | null;
 }
 
 function normalizeCredits(doc: UserDocLike): UserCredits {
@@ -59,6 +51,25 @@ function normalizeCredits(doc: UserDocLike): UserCredits {
 
 function buildPeriodEnd(startIso: string): string {
   return new Date(new Date(startIso).getTime() + PERIOD_MS).toISOString();
+}
+
+function resolveNextPeriodEnd(
+  currentPlan: UserPlan,
+  targetPlan: PlanId,
+  nowIso: string
+): string | null {
+  if (targetPlan === "free") {
+    return null;
+  }
+
+  if (currentPlan.tier === targetPlan && currentPlan.currentPeriodEndAt) {
+    const currentEndMs = new Date(currentPlan.currentPeriodEndAt).getTime();
+    if (Number.isFinite(currentEndMs) && currentEndMs > Date.now()) {
+      return new Date(currentEndMs + PERIOD_MS).toISOString();
+    }
+  }
+
+  return buildPeriodEnd(nowIso);
 }
 
 function upsertPlanLimits(
@@ -95,10 +106,13 @@ export async function getSubscription(email: string): Promise<UserPlan> {
   return normalizePlan(data);
 }
 
+/**
+ * Activate a plan immediately (always forceImmediate).
+ * Same tier = period extension (new 30-day window from now).
+ */
 export async function changePlan(
   email: string,
-  targetPlan: PlanId,
-  options: ChangePlanOptions = {}
+  targetPlan: PlanId
 ): Promise<UserPlan> {
   const key = email.toLowerCase();
   const docRef = getDb().collection(COLLECTION).doc(key);
@@ -108,62 +122,51 @@ export async function changePlan(
     const data = (snap.data() ?? {}) as UserDocLike;
     const currentPlan = normalizePlan(data);
 
-    if (currentPlan.tier === targetPlan) {
-      return currentPlan;
-    }
-
-    const currentPrice = PLANS[currentPlan.tier].price;
-    const targetPrice = PLANS[targetPlan].price;
     const now = getNowIso();
-    const periodKey = now.slice(0, 10);
+    const periodKey = targetPlan === "free" ? getMonthKeyKst() : now.slice(0, 10);
 
-    if (options.forceImmediate || targetPrice >= currentPrice) {
-      const resolvedPaymentMethod =
-        options.paymentMethod !== undefined
-          ? options.paymentMethod
-          : targetPlan === "free"
-            ? null
-            : currentPlan.paymentMethod ?? "mock";
-      const nextPlan: UserPlan = {
-        tier: targetPlan,
-        status: "active",
-        currentPeriodStartAt: now,
-        currentPeriodEndAt: targetPlan === "free" ? null : buildPeriodEnd(now),
-        paymentMethod: resolvedPaymentMethod,
-      };
-
-      tx.set(
-        docRef,
-        {
-          plan: nextPlan,
-          planPendingTier: FieldValue.delete(),
-          quota: upsertPlanLimits(data, targetPlan, periodKey),
-          updatedAt: FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-      return nextPlan;
-    }
-
-    const nextPeriodEnd =
-      currentPlan.currentPeriodEndAt ?? buildPeriodEnd(currentPlan.currentPeriodStartAt);
-    const scheduledPlan: UserPlan = {
-      ...currentPlan,
-      currentPeriodEndAt: nextPeriodEnd,
+    const nextPlan: UserPlan = {
+      tier: targetPlan,
+      status: "active",
+      currentPeriodStartAt: now,
+      currentPeriodEndAt: resolveNextPeriodEnd(currentPlan, targetPlan, now),
     };
 
     tx.set(
       docRef,
       {
-        plan: scheduledPlan,
-        planPendingTier: targetPlan,
+        plan: nextPlan,
+        planPendingTier: FieldValue.delete(),
+        billingKey: FieldValue.delete(),
+        quota: upsertPlanLimits(data, targetPlan, periodKey),
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
 
-    return scheduledPlan;
+    return nextPlan;
   });
+}
+
+/**
+ * Lazily expires a plan if currentPeriodEndAt is in the past.
+ * Returns true if the plan was expired and downgraded to free.
+ */
+export async function expirePlanIfNeeded(email: string): Promise<boolean> {
+  const key = email.toLowerCase();
+  const snap = await getDb().collection(COLLECTION).doc(key).get();
+  const data = (snap.data() ?? {}) as UserDocLike;
+  const plan = normalizePlan(data);
+
+  if (plan.tier === "free") return false;
+  if (!plan.currentPeriodEndAt) return false;
+
+  const now = new Date();
+  const periodEnd = new Date(plan.currentPeriodEndAt);
+  if (now <= periodEnd) return false;
+
+  await changePlan(email, "free");
+  return true;
 }
 
 export async function addTopUpCredits(
@@ -212,119 +215,8 @@ export async function addTopUpCredits(
   });
 }
 
-export async function cancelSubscription(email: string): Promise<UserPlan> {
-  const key = email.toLowerCase();
-  const docRef = getDb().collection(COLLECTION).doc(key);
-
-  return getDb().runTransaction(async (tx) => {
-    const snap = await tx.get(docRef);
-    const data = (snap.data() ?? {}) as UserDocLike;
-    const currentPlan = normalizePlan(data);
-
-    if (currentPlan.tier === "free") {
-      return currentPlan;
-    }
-
-    if (currentPlan.status === "canceled") {
-      return currentPlan;
-    }
-
-    const periodEnd =
-      currentPlan.currentPeriodEndAt ?? buildPeriodEnd(currentPlan.currentPeriodStartAt);
-
-    const canceledPlan: UserPlan = {
-      ...currentPlan,
-      status: "canceled",
-      currentPeriodEndAt: periodEnd,
-    };
-
-    tx.set(
-      docRef,
-      {
-        plan: canceledPlan,
-        planPendingTier: "free",
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return canceledPlan;
-  });
-}
-
-
-export async function renewSubscription(email: string): Promise<UserPlan> {
-  const key = email.toLowerCase();
-  const docRef = getDb().collection(COLLECTION).doc(key);
-
-  return getDb().runTransaction(async (tx) => {
-    const snap = await tx.get(docRef);
-    const data = (snap.data() ?? {}) as UserDocLike;
-    const currentPlan = normalizePlan(data);
-
-    if (currentPlan.tier === "free") {
-      return currentPlan;
-    }
-
-    const now = getNowIso();
-    const periodKey = now.slice(0, 10);
-
-    const renewedPlan: UserPlan = {
-      tier: currentPlan.tier,
-      status: "active",
-      currentPeriodStartAt: now,
-      currentPeriodEndAt: buildPeriodEnd(now),
-      paymentMethod: currentPlan.paymentMethod,
-    };
-
-    tx.set(
-      docRef,
-      {
-        plan: renewedPlan,
-        quota: upsertPlanLimits(data, currentPlan.tier, periodKey),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return renewedPlan;
-  });
-}
-
-export async function markPlanPastDue(email: string): Promise<UserPlan> {
-  const key = email.toLowerCase();
-  const docRef = getDb().collection(COLLECTION).doc(key);
-
-  return getDb().runTransaction(async (tx) => {
-    const snap = await tx.get(docRef);
-    const data = (snap.data() ?? {}) as UserDocLike;
-    const currentPlan = normalizePlan(data);
-
-    if (currentPlan.tier === "free") {
-      return currentPlan;
-    }
-
-    const pastDuePlan: UserPlan = {
-      ...currentPlan,
-      status: "past_due",
-    };
-
-    tx.set(
-      docRef,
-      {
-        plan: pastDuePlan,
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    return pastDuePlan;
-  });
-}
-
 export interface SubscriptionExtended {
   subscription: UserPlan;
-  planPendingTier: PlanId | null;
   createdAt: string | null;
   credits: { flash: CreditEntry[]; pro: CreditEntry[]; illustration: CreditEntry[] };
 }
@@ -335,18 +227,13 @@ export async function getSubscriptionExtended(
   const key = email.toLowerCase();
   const snap = await getDb().collection(COLLECTION).doc(key).get();
   const data = (snap.data() ?? {}) as UserDocLike & {
-    planPendingTier?: PlanId;
     createdAt?: string;
   };
 
   const subscription = normalizePlan(data);
   const credits = normalizeCredits(data);
-  const planPendingTier =
-    typeof data.planPendingTier === "string" && data.planPendingTier in PLANS
-      ? (data.planPendingTier as PlanId)
-      : null;
   const createdAt =
     typeof data.createdAt === "string" ? data.createdAt : null;
 
-  return { subscription, planPendingTier, createdAt, credits };
+  return { subscription, createdAt, credits };
 }

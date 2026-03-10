@@ -30,9 +30,7 @@ export function resolveUserPlan(data: UserDocLike): UserPlan {
   const tier = data.plan?.tier;
   const safeTier = !tier || !(tier in PLANS) ? DEFAULT_PLAN : tier;
   const status =
-    data.plan?.status === "past_due" ||
-    data.plan?.status === "canceled" ||
-    data.plan?.status === "active"
+    data.plan?.status === "active" || data.plan?.status === "expired"
       ? data.plan.status
       : "active";
   const nowIso = new Date().toISOString();
@@ -48,10 +46,6 @@ export function resolveUserPlan(data: UserDocLike): UserPlan {
       typeof data.plan?.currentPeriodEndAt === "string" ||
       data.plan?.currentPeriodEndAt === null
         ? data.plan.currentPeriodEndAt
-        : null,
-    paymentMethod:
-      data.plan?.paymentMethod === "mock" || data.plan?.paymentMethod === "toss"
-        ? data.plan.paymentMethod
         : null,
   };
 }

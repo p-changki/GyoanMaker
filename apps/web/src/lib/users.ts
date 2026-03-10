@@ -116,7 +116,6 @@ export async function findOrCreateUser(
         status: "active",
         currentPeriodStartAt: now,
         currentPeriodEndAt: null,
-        paymentMethod: null,
       } satisfies UserPlan,
       quota: {
         ...DEFAULT_QUOTA,

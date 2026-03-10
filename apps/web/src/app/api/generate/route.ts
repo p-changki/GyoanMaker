@@ -6,6 +6,7 @@ import {
   QuotaExceededError,
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
+import { expirePlanIfNeeded } from "@/lib/subscription";
 import type { QuotaModel } from "@gyoanmaker/shared/plans";
 
 const MAX_WORDS_PER_PASSAGE = 400;
@@ -233,6 +234,7 @@ export async function POST(req: NextRequest) {
     const passageCount = Array.isArray(passages) ? passages.length : 1;
 
     if (userEmail) {
+      await expirePlanIfNeeded(userEmail);
       const quota = await getQuotaStatus(userEmail);
       const modelQuota = selectedModel === "flash" ? quota.flash : quota.pro;
 

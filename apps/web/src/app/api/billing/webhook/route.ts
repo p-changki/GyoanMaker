@@ -19,6 +19,10 @@ interface WebhookPayload {
   data?: WebhookPaymentData;
 }
 
+function normalizeOrderType(value: unknown): "plan" | "topup" {
+  return value === "topup" ? "topup" : "plan";
+}
+
 function isValidWebhookAuthHeader(header: string | null): boolean {
   const secret = process.env.TOSS_SECRET_KEY?.trim();
   if (!secret) {
@@ -54,20 +58,18 @@ const CANCEL_STATUSES = new Set(["ABORTED", "EXPIRED", "CANCELED"]);
 /**
  * Revert plan/credits for a confirmed order that was canceled/refunded.
  *
- * - subscription: downgrade to free
+ * - plan: downgrade to free
  * - topup: remove credits matching the orderId
  */
 async function revertConfirmedOrder(order: PendingOrder) {
   const email = order.email.toLowerCase();
+  const orderType = normalizeOrderType((order as { type?: unknown }).type);
 
-  if (order.type === "subscription") {
-    await changePlan(email, "free", {
-      forceImmediate: true,
-      paymentMethod: null,
-    });
+  if (orderType === "plan") {
+    await changePlan(email, "free");
   }
 
-  if (order.type === "topup" && order.orderId) {
+  if (orderType === "topup" && order.orderId) {
     const userRef = getDb().collection("users").doc(email);
     await getDb().runTransaction(async (tx) => {
       const snap = await tx.get(userRef);

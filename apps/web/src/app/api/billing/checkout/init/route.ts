@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
-import { getSubscription } from "@/lib/subscription";
 import {
   type PendingOrder,
   type PlanId,
@@ -13,7 +12,7 @@ import {
 } from "@gyoanmaker/shared/plans";
 
 interface InitCheckoutBody {
-  type?: "subscription" | "topup";
+  type?: "plan" | "topup";
   planId?: PlanId;
   packageId?: TopUpPackageId;
 }
@@ -49,12 +48,12 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json().catch(() => ({}))) as InitCheckoutBody;
-  if (body.type !== "subscription" && body.type !== "topup") {
+  if (body.type !== "plan" && body.type !== "topup") {
     return NextResponse.json(
       {
         error: {
           code: "INVALID_BODY",
-          message: "Valid type is required. (subscription | topup)",
+          message: "Valid type is required. (plan | topup)",
         },
       },
       { status: 400 }
@@ -68,7 +67,7 @@ export async function POST(req: NextRequest) {
   let planId: PlanId | undefined;
   let packageId: TopUpPackageId | undefined;
 
-  if (body.type === "subscription") {
+  if (body.type === "plan") {
     if (!isPlanId(body.planId)) {
       return NextResponse.json(
         { error: { code: "INVALID_PLAN", message: "Valid planId is required." } },
@@ -88,40 +87,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const currentPlan = (await getSubscription(email)).tier;
-    if (currentPlan === body.planId) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "SAME_PLAN",
-            message: "You are already on this plan.",
-          },
-        },
-        { status: 400 }
-      );
-    }
-
-    const currentPrice = PLANS[currentPlan].price;
-    const targetPrice = PLANS[body.planId].price;
-
-    if (targetPrice <= currentPrice) {
-      return NextResponse.json(
-        {
-          error: {
-            code: "DOWNGRADE_NO_PAYMENT",
-            message: "Downgrade does not require payment. Use downgrade API.",
-          },
-        },
-        { status: 400 }
-      );
-    }
-
     planId = body.planId;
-    const vatBreakdown = toVatInclusiveAmount(targetPrice);
+    const vatBreakdown = toVatInclusiveAmount(PLANS[planId].price);
     supplyAmount = vatBreakdown.supplyAmount;
     vatAmount = vatBreakdown.vatAmount;
     amount = vatBreakdown.totalAmount;
-    orderName = `GyoanMaker ${planId.toUpperCase()} Plan`;
+    orderName = `GyoanMaker ${planId.toUpperCase()} 이용권`;
   }
 
   if (body.type === "topup") {
