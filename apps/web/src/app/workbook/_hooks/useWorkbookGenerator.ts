@@ -45,7 +45,42 @@ export function useWorkbookGenerator() {
           throw new Error(error?.error?.message ?? "워크북 생성에 실패했습니다.");
         }
 
-        const data = (await res.json()) as { passages?: PassageWorkbook[] };
+        // Read SSE stream (heartbeats keep Cloudflare connection alive)
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("스트림을 읽을 수 없습니다.");
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finalPayload: Record<string, unknown> | null = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                finalPayload = JSON.parse(line.slice(6)) as Record<string, unknown>;
+              } catch {
+                // ignore malformed SSE data line
+              }
+            }
+            // lines starting with ":" are heartbeat comments — ignore
+          }
+        }
+
+        if (!finalPayload) {
+          throw new Error("워크북 응답 데이터가 올바르지 않습니다.");
+        }
+
+        if (finalPayload.__status || finalPayload.error) {
+          const errMsg = (finalPayload.error as { message?: string } | undefined)?.message;
+          throw new Error(errMsg ?? "워크북 생성에 실패했습니다.");
+        }
+
+        const data = finalPayload as { passages?: PassageWorkbook[] };
 
         if (!Array.isArray(data.passages)) {
           throw new Error("워크북 응답 데이터가 올바르지 않습니다.");
