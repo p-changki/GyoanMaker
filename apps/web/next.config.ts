@@ -7,7 +7,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 const cspDirectives = [
   "default-src 'self'",
   // Scripts: self + Google Analytics + unsafe-inline/eval (Next.js hydration)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://vercel.live https://static.cloudflareinsights.com",
   // Styles: self + trusted font stylesheet CDNs + unsafe-inline (Next.js CSS)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hangeul.pstatic.net https://spoqa.github.io https://cdn.jsdelivr.net",
   // Images: self + data/blob (PDF) + Google/Firebase storage + OAuth avatars
