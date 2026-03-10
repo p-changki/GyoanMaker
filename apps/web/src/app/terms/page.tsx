@@ -567,7 +567,9 @@ export default function TermsPage() {
       {/* 사업자 정보 */}
       <div className="mt-16 pt-8 border-t border-gray-200 text-sm text-gray-500 space-y-1">
         <p className="font-semibold text-gray-600">사업자 정보</p>
-        <p>운영자: 박창기</p>
+        <p>상호명: 창랩</p>
+        <p>대표: 박창기</p>
+        <p>사업장소재지: 충청남도 천안시 서북구 불당31길 17, 401호</p>
         <p>서비스명: GyoanMaker</p>
         <p>사업자등록번호: 885-51-00965</p>
         <p>문의: dnsxj12345aa@gmail.com</p>
