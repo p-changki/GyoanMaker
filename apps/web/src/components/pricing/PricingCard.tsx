@@ -276,7 +276,7 @@ export default function PricingCard({
               <span className="text-3xl font-bold tracking-tight text-gray-900">
                 {formatPrice(plan.price)}
               </span>
-              <span className="text-xs font-medium text-gray-400">/월</span>
+              <span className="text-xs font-medium text-gray-400">/30일</span>
             </>
           )}
         </div>

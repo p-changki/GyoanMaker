@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { PLANS, type PlanId } from "@gyoanmaker/shared/plans";
 import TossPaymentButton from "@/components/billing/TossPaymentButton";
 
@@ -8,59 +7,22 @@ interface PlanChangeModalProps {
   open: boolean;
   currentPlan: PlanId;
   onClose: () => void;
-  onChanged: () => Promise<void> | void;
 }
 
 export default function PlanChangeModal({
   open,
   currentPlan,
   onClose,
-  onChanged,
 }: PlanChangeModalProps) {
-  const [isDowngradingPlan, setIsDowngradingPlan] = useState<PlanId | null>(null);
-  const [downgradeError, setDowngradeError] = useState<string | null>(null);
-
-  const currentPrice = useMemo(() => PLANS[currentPlan].price, [currentPlan]);
-
   if (!open) {
     return null;
   }
-
-  const handleDowngrade = async (planId: PlanId) => {
-    setIsDowngradingPlan(planId);
-    setDowngradeError(null);
-
-    try {
-      const res = await fetch("/api/billing/downgrade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-
-      const payload = (await res.json().catch(() => null)) as
-        | { error?: { message?: string } }
-        | null;
-
-      if (!res.ok) {
-        throw new Error(payload?.error?.message ?? "플랜 다운그레이드에 실패했습니다.");
-      }
-
-      await onChanged();
-      onClose();
-    } catch (error) {
-      setDowngradeError(
-        error instanceof Error ? error.message : "플랜 다운그레이드에 실패했습니다."
-      );
-    } finally {
-      setIsDowngradingPlan(null);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[70] bg-black/40 px-4 py-8">
       <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">플랜 변경</h3>
+          <h3 className="text-lg font-bold text-gray-900">이용권 구매</h3>
           <button
             type="button"
             onClick={onClose}
@@ -69,13 +31,15 @@ export default function PlanChangeModal({
             닫기
           </button>
         </div>
+        <p className="mt-1 text-xs text-gray-400">
+          구매 즉시 적용되며, 30일 이용권입니다.
+        </p>
 
         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           {(Object.entries(PLANS) as Array<[PlanId, (typeof PLANS)[PlanId]]>).map(
             ([planId, plan]) => {
+              if (planId === "free") return null;
               const isCurrent = planId === currentPlan;
-              const isUpgrade = plan.price > currentPrice;
-              const isDowngrade = !isCurrent && !isUpgrade;
 
               return (
                 <div
@@ -91,47 +55,31 @@ export default function PlanChangeModal({
                     속도 {plan.flashLimit} / 정밀 {plan.proLimit}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-gray-900">
-                    ₩{plan.price.toLocaleString()} /월
+                    ₩{plan.price.toLocaleString()} / 30일
                   </p>
 
                   <div className="mt-3">
                     {isCurrent ? (
-                      <span className="inline-flex rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-500">
-                        현재 요금제
-                      </span>
-                    ) : null}
-
-                    {isUpgrade ? (
                       <TossPaymentButton
-                        type="subscription"
+                        type="plan"
                         planId={planId}
-                        label={`${planId.toUpperCase()} 업그레이드`}
+                        label="기간 연장"
                         className="w-full"
                       />
-                    ) : null}
-
-                    {isDowngrade ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDowngrade(planId)}
-                        disabled={isDowngradingPlan !== null}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isDowngradingPlan === planId
-                          ? "적용 중..."
-                          : `${planId.toUpperCase()}(으)로 변경`}
-                      </button>
-                    ) : null}
+                    ) : (
+                      <TossPaymentButton
+                        type="plan"
+                        planId={planId}
+                        label={`${planId.toUpperCase()} 구매`}
+                        className="w-full"
+                      />
+                    )}
                   </div>
                 </div>
               );
             }
           )}
         </div>
-
-        {downgradeError ? (
-          <p className="mt-3 text-sm text-red-600">{downgradeError}</p>
-        ) : null}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import type { TopUpCreditType } from "@gyoanmaker/shared/plans";
 interface OrderRow {
   orderId: string;
   email: string;
-  type: "subscription" | "topup";
+  type: "plan" | "topup";
   planId: string | null;
   packageId: string | null;
   amount: number;
@@ -46,8 +46,8 @@ const PLAN_LABELS: Record<string, string> = {
 const PAGE_SIZE = 15;
 
 function getOrderLabel(order: OrderRow): string {
-  if (order.type === "subscription") {
-    return PLAN_LABELS[order.planId ?? ""] ?? order.planId ?? "구독";
+  if (order.type === "plan") {
+    return PLAN_LABELS[order.planId ?? ""] ?? order.planId ?? "이용권";
   }
   // topup: extract model from packageId (e.g. "flash_50" → "Speed 50")
   const pkgId = order.packageId ?? "";
@@ -227,7 +227,7 @@ export default function OrdersTable() {
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Type:</span>{" "}
-                        {order.type === "subscription" ? "구독" : "크레딧 충전"}
+                        {order.type === "plan" ? "이용권" : "크레딧 충전"}
                       </div>
                       <div>
                         <span className="font-medium text-gray-600">Created:</span>{" "}

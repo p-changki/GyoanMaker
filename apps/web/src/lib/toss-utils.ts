@@ -1,7 +1,7 @@
 /**
  * Shared Toss Payments utilities.
  * Extracted from TossPaymentButton.tsx and payment.ts for reuse
- * across billing-key registration, one-time payments, and cron auto-renewal.
+ * across one-time payment workflows.
  */
 
 /**

@@ -6,6 +6,7 @@ import {
   QuotaExceededError,
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
+import { expirePlanIfNeeded } from "@/lib/subscription";
 import type { QuotaModel } from "@gyoanmaker/shared/plans";
 
 // Vercel serverless function max duration (seconds). Must match CLOUDRUN_API_TIMEOUT_MS.
@@ -301,6 +302,7 @@ export async function POST(req: NextRequest) {
     }
 
     const passageCount = parsed.passages.length;
+    await expirePlanIfNeeded(userEmail);
     const quota = await getQuotaStatus(userEmail);
     const modelQuota = parsed.model === "flash" ? quota.flash : quota.pro;
 

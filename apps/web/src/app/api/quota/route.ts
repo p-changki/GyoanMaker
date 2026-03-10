@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getQuotaStatus } from "@/lib/quota";
+import { expirePlanIfNeeded } from "@/lib/subscription";
 
 export async function GET() {
   const session = await auth();
@@ -13,6 +14,7 @@ export async function GET() {
   }
 
   try {
+    await expirePlanIfNeeded(session.user.email);
     const status = await getQuotaStatus(session.user.email);
     return NextResponse.json({
       plan: status.plan,

@@ -2,7 +2,7 @@ import type { PlanId, PaymentMethod, TopUpPackageId } from "@gyoanmaker/shared/p
 import { buildTossBasicAuth } from "./toss-utils";
 
 export interface PaymentRequest {
-  type: "subscription" | "topup";
+  type: "plan" | "topup";
   planId?: PlanId;
   packageId?: TopUpPackageId;
   amount: number;
