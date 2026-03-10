@@ -5,9 +5,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { generatePassages } from "@/services/api";
 import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/types/handout";
-import type { HandoutIllustrations, TemplateSettings } from "@gyoanmaker/shared/types";
+import type {
+  HandoutIllustrations,
+  TemplateSettings,
+  WorkbookData,
+} from "@gyoanmaker/shared/types";
 import { getCachedResult, hashPassages, setCachedResult } from "@/services/cache";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { DEFAULT_TEMPLATE_SETTINGS } from "@gyoanmaker/shared/types";
 import {
@@ -26,6 +31,7 @@ interface CompileInitResponse {
     model: string;
     sections: Record<string, string>;
     illustrations?: HandoutIllustrations;
+    workbook?: WorkbookData | null;
     customTexts?: {
       headerText?: string;
       analysisTitleText?: string;
@@ -51,6 +57,7 @@ export function useHandoutLoader() {
   }, [queryClient]);
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
+  const setWorkbookData = useWorkbookStore((state) => state.setWorkbookData);
 
   // ── Saved handout: combined endpoint (handout + template in one request) ──
 
@@ -103,9 +110,23 @@ export function useHandoutLoader() {
         title: data.handout.title,
         level: data.handout.level,
         model: data.handout.model,
+        workbook: data.handout.workbook ?? null,
       };
     },
   });
+
+  useEffect(() => {
+    // While the query is refetching stale cache (isSuccess=true, isFetching=true),
+    // do NOT clear the store — the workbook page may have already populated it.
+    // Only update the store once the fetch has settled.
+    if (!compileInitQuery.isSuccess || compileInitQuery.isFetching) return;
+    const workbook = compileInitQuery.data?.workbook;
+    if (workbook) {
+      setWorkbookData(workbook);
+      return;
+    }
+    useWorkbookStore.setState({ workbookData: null });
+  }, [compileInitQuery.data?.workbook, compileInitQuery.isSuccess, compileInitQuery.isFetching, setWorkbookData]);
 
   // ── New handout: standalone template query ──
 

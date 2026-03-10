@@ -9,7 +9,7 @@ import { getSubscription } from "@/lib/subscription";
 export const metadata: Metadata = {
   title: "요금제 안내",
   description:
-    "교안메이커 요금제를 비교하고 학원 규모에 맞는 플랜을 선택하세요. 무료 체험부터 프로 플랜까지, AI 교안 생성, PDF 출력, 단어 테스트를 지원합니다.",
+    "교안메이커 요금제를 비교하고 학원 규모에 맞는 플랜을 선택하세요. 무료 체험부터 프로 플랜까지, AI 교안 생성, PDF 출력, 워크북 자동 생성, 단어 테스트를 지원합니다.",
   alternates: {
     canonical: "/pricing",
   },
@@ -35,7 +35,7 @@ export default async function PricingPage() {
         <p className="text-lg text-gray-500">
           학원에 맞는 플랜을 선택하세요.
           <br className="hidden sm:block" />
-          모든 플랜에 PDF 내보내기, AI 교안 생성, 단어 테스트가 포함됩니다.
+          모든 플랜에 PDF 내보내기, AI 교안 생성, 워크북 자동 생성, 단어 테스트가 포함됩니다.
         </p>
       </section>
 

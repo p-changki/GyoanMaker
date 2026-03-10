@@ -6,11 +6,14 @@ import { getAuthMode } from "./gemini";
 const SECRET_PATHS = {
   advanced: "/workspace/apps/api/secrets/system-prompt/system-prompt",
   basic: "/workspace/apps/api/secrets/system-prompt-basic/system-prompt-basic",
+  workbook:
+    "/workspace/apps/api/secrets/system-prompt-workbook/system-prompt-workbook",
 } as const;
 
 const LOCAL_PATHS = {
   advanced: path.join(__dirname, "../../system-prompt.txt"),
   basic: path.join(__dirname, "../../system-prompt-basic.txt"),
+  workbook: path.join(__dirname, "../../system-prompt-workbook.txt"),
 } as const;
 
 const PROMPT_FILES = process.env.NODE_ENV === "production" ? SECRET_PATHS : LOCAL_PATHS;
@@ -40,6 +43,10 @@ function loadPromptFile(level: PromptLevel): PromptInfo | null {
 }
 
 function getPromptInfo(level: PromptLevel = "advanced"): PromptInfo | null {
+  if (level === "workbook") {
+    return loadPromptFile("workbook");
+  }
+
   if (level === "basic") {
     const basicPrompt = loadPromptFile("basic");
     if (basicPrompt) return basicPrompt;

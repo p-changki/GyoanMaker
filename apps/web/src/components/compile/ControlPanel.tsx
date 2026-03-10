@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import WorkbookGenerateModal from "./WorkbookGenerateModal";
 import type { IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { TemplateSettingsPanel } from "./template-settings";
 import TemplateGuideModal, { GUIDE_DISMISSED_KEY } from "./template-settings/TemplateGuideModal";
 import IllustrationOptionsModal from "./IllustrationOptionsModal";
@@ -95,11 +97,17 @@ export default function ControlPanel({
   const isReady = useHandoutStore((state) =>
     Object.values(state.sections).some((section) => section.isParsed)
   );
+  const workbookData = useWorkbookStore((state) => state.workbookData);
+  const includeInCompile = useWorkbookStore((state) => state.includeInCompile);
+  const setIncludeInCompile = useWorkbookStore((state) => state.setIncludeInCompile);
+  const resetWorkbook = useWorkbookStore((state) => state.resetWorkbook);
+  const hasWorkbook = Boolean(workbookData?.passages.length);
 
   const [activeTab, setActiveTab] = useState<TabKey>("actions");
   const [showGuide, setShowGuide] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [showIllustrationOptions, setShowIllustrationOptions] = useState(false);
+  const [showWorkbookModal, setShowWorkbookModal] = useState(false);
 
   const TABS: { key: TabKey; label: string }[] = [
     { key: "actions", label: "실행" },
@@ -267,6 +275,49 @@ export default function ControlPanel({
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
                 빠른 실행
               </p>
+              {hasWorkbook ? (
+                <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm space-y-3">
+                  <label className="flex items-center justify-between gap-3 text-sm font-semibold text-gray-700">
+                    <span>워크북 포함</span>
+                    <input
+                      type="checkbox"
+                      checked={includeInCompile}
+                      onChange={(event) => setIncludeInCompile(event.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 accent-[#5E35B1]"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500">합본 PDF에 워크북 시트를 추가합니다.</p>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowWorkbookModal(true)}
+                      disabled={!isReady}
+                      className="flex-1 rounded-lg border border-gray-200 py-2 text-xs font-bold text-gray-600 hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 transition-colors"
+                    >
+                      재생성
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetWorkbook();
+                        setIncludeInCompile(false);
+                      }}
+                      className="flex-1 rounded-lg border border-red-200 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowWorkbookModal(true)}
+                  disabled={!isReady}
+                  className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
+                >
+                  워크북 생성
+                </button>
+              )}
               {onSave && (
                 <button
                   type="button"
@@ -364,6 +415,14 @@ export default function ControlPanel({
       </div>
 
       <TemplateGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+      {/* Workbook Generate Modal */}
+      {showWorkbookModal && (
+        <WorkbookGenerateModal
+          onClose={() => setShowWorkbookModal(false)}
+          onSaveAfterGenerate={onSave}
+        />
+      )}
 
       {/* Illustration Options Modal */}
       {showIllustrationOptions && (

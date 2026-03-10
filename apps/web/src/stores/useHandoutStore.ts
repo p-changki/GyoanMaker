@@ -28,6 +28,7 @@ interface HandoutStoreActions {
   ) => void;
   setActiveId: (id: string) => void;
   updateSection: (id: string, section: HandoutSection) => void;
+  updateSentenceEn: (sectionId: string, sentenceIndex: number, newText: string) => void;
   setIllustrations: (illustrations: HandoutIllustrations) => void;
   upsertIllustration: (id: string, illustration: HandoutIllustration) => void;
   setApplying: (isApplying: boolean) => void;
@@ -74,6 +75,24 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
         sections: {
           ...state.sections,
           [id]: section,
+        },
+      };
+    });
+  },
+
+  updateSentenceEn: (sectionId, sentenceIndex, newText) => {
+    set((state) => {
+      const section = state.sections[sectionId];
+      if (!section) return state;
+      return {
+        sections: {
+          ...state.sections,
+          [sectionId]: {
+            ...section,
+            sentences: section.sentences.map((s, i) =>
+              i === sentenceIndex ? { ...s, en: newText } : s
+            ),
+          },
         },
       };
     });

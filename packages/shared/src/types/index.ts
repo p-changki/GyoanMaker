@@ -15,6 +15,7 @@ export type * from "./handout";
 export type * from "./illustration";
 export type * from "./illustrationSample";
 export type * from "./templateSettings";
+export type * from "./workbook";
 export {
   DEFAULT_TEMPLATE_SETTINGS,
   DEFAULT_PAGE1_LAYOUT,

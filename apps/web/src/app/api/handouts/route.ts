@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createHandout, listHandouts } from "@/lib/handouts";
 import { getQuotaStatus, incrementStorageUsed } from "@/lib/quota";
-import type { HandoutIllustrations } from "@gyoanmaker/shared/types";
+import type { HandoutIllustrations, WorkbookData } from "@gyoanmaker/shared/types";
 
 /**
  * GET /api/handouts — Get my handout list
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { title, sections, level, model, customTexts, inputHash, illustrations } = body as {
+    const { title, sections, level, model, customTexts, inputHash, illustrations, workbook } = body as {
       title?: string;
       sections?: Record<string, string>;
       level?: string;
@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
         analysisTitleText?: string;
         summaryTitleText?: string;
       };
+      workbook?: WorkbookData | null;
     };
 
     if (!sections || Object.keys(sections).length === 0) {
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
       illustrations:
         illustrations && typeof illustrations === "object" ? illustrations : undefined,
       customTexts,
+      workbook: workbook ?? undefined,
     });
 
     await incrementStorageUsed(session.user.email, 1);

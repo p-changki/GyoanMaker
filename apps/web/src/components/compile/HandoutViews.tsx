@@ -2,8 +2,18 @@
 
 import { memo, useCallback, useMemo, useState } from "react";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
-import { THEME_PRESETS, FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, DEFAULT_PAGE1_LAYOUT, DEFAULT_SECTION_STYLE, DEFAULT_IMAGE_DISPLAY } from "@gyoanmaker/shared/types";
-import { EditableAnalysisTitle, EditableSummaryTitleText } from "./EditableFields";
+import {
+  THEME_PRESETS,
+  FONT_FAMILY_MAP,
+  TITLE_WEIGHT_MAP,
+  DEFAULT_PAGE1_LAYOUT,
+  DEFAULT_SECTION_STYLE,
+  DEFAULT_IMAGE_DISPLAY,
+} from "@gyoanmaker/shared/types";
+import {
+  EditableAnalysisTitle,
+  EditableSummaryTitleText,
+} from "./EditableFields";
 import { EditableText } from "./EditableText";
 import { HandoutFooter, HandoutHeader } from "./HandoutHeader";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
@@ -21,10 +31,15 @@ function useTheme() {
   const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
   const titleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const useCustomTheme = useTemplateSettingsStore((s) => s.useCustomTheme);
-  const customThemeColors = useTemplateSettingsStore((s) => s.customThemeColors);
+  const customThemeColors = useTemplateSettingsStore(
+    (s) => s.customThemeColors
+  );
 
   const baseColors = THEME_PRESETS[themePreset];
-  const colors = useCustomTheme && customThemeColors ? { ...baseColors, ...customThemeColors } : baseColors;
+  const colors =
+    useCustomTheme && customThemeColors
+      ? { ...baseColors, ...customThemeColors }
+      : baseColors;
 
   return {
     ...colors,
@@ -51,13 +66,23 @@ const ClickZone = memo(function ClickZone({
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
   const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
-  const primary = (useCustom && customColors?.primary) ? customColors.primary : THEME_PRESETS[preset].primary;
+  const primary =
+    useCustom && customColors?.primary
+      ? customColors.primary
+      : THEME_PRESETS[preset].primary;
 
   return (
     <div
       className={`relative group/zone cursor-pointer rounded transition-all ${className}`}
-      style={isActive ? { outline: `2px solid ${primary}`, outlineOffset: "2px" } : undefined}
-      onClick={(e) => { e.stopPropagation(); setFocus(focusKey); }}
+      style={
+        isActive
+          ? { outline: `2px solid ${primary}`, outlineOffset: "2px" }
+          : undefined
+      }
+      onClick={(e) => {
+        e.stopPropagation();
+        setFocus(focusKey);
+      }}
     >
       {children}
       {/* Edit hint — hidden from PDF via data-html2canvas-ignore */}
@@ -74,7 +99,79 @@ const ClickZone = memo(function ClickZone({
   );
 });
 
-function renderSentenceNumber(index: number, pageNum: number, style: "padded" | "plain" | "circle"): React.ReactNode {
+// Small inline number chip shown before the analysis title badge.
+function PassageNumberChip({
+  passageId,
+  themeColor,
+}: {
+  passageId: string;
+  themeColor: string;
+}) {
+  const passageNumber = passageId.slice(1).padStart(2, "0");
+  return (
+    <div className="relative inline-flex flex-col items-start translate-y-0 z-10 shrink-0">
+      {/* "Number" Label */}
+      <span
+        className="absolute -top-[14px] left-0"
+        style={{
+          fontSize: "10px",
+          color: "#2C3E50", // Dark blue-grey as in image
+          fontWeight: 800,
+          letterSpacing: "0.05em",
+          lineHeight: 1,
+        }}
+      >
+        Number
+      </span>
+
+      {/* Main Number Block Box */}
+      <div className="relative">
+        <div
+          className="flex items-center justify-center relative z-10"
+          style={{
+            backgroundColor: themeColor,
+            padding: "0 10px",
+            minWidth: "42px",
+            height: "32px", // Fixed 32px height to match Pill exactly
+          }}
+        >
+          {/* Folded corner (Ribbon effect at bottom-left) */}
+          <div
+            className="absolute -bottom-1.5 left-0 w-0 h-0 border-solid"
+            style={{
+              borderWidth: "6px 6px 0 0",
+              borderColor: `${themeColor} transparent transparent transparent`,
+              filter: "brightness(0.7)", // darker shade of the theme color
+            }}
+          />
+          <span
+            className="font-black text-white"
+            style={{
+              fontSize: "20px",
+              lineHeight: 1,
+              fontFamily: '"Arial Black", "Impact", sans-serif', // Boldest sans
+              transform: "translateY(1px)",
+            }}
+          >
+            {passageNumber}
+          </span>
+        </div>
+
+        {/* Right Shadow Drop */}
+        <div
+          className="absolute top-1 -right-[3px] w-[3px] h-full z-0"
+          style={{ backgroundColor: "#D1D5DB" }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function renderSentenceNumber(
+  index: number,
+  pageNum: number,
+  style: "padded" | "plain" | "circle"
+): React.ReactNode {
   const num = (pageNum - 1) * 7 + index + 1;
   if (style === "padded") return String(num).padStart(2, "0");
   if (style === "plain") return String(num);
@@ -92,23 +189,33 @@ export function ParsedHandoutViewPage1({
   pageNum: number;
 }) {
   const theme = useTheme();
-  const page1Layout = useTemplateSettingsStore((s) => s.page1Layout) ?? DEFAULT_PAGE1_LAYOUT;
-  const page1Style = useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
+  const page1Layout =
+    useTemplateSettingsStore((s) => s.page1Layout) ?? DEFAULT_PAGE1_LAYOUT;
+  const page1Style =
+    useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
   const setFocus = useEditorFocusStore((s) => s.setFocus);
   const updateSection = useHandoutStore((s) => s.updateSection);
 
   const handleSentenceEdit = useCallback(
     (localIndex: number, field: "en" | "ko", value: string) => {
       const globalIndex = (pageNum - 1) * 7 + localIndex;
-      updateSection(section.passageId, updateSentenceText(section, globalIndex, field, value));
+      updateSection(
+        section.passageId,
+        updateSentenceText(section, globalIndex, field, value)
+      );
     },
-    [pageNum, section, updateSection],
+    [pageNum, section, updateSection]
   );
 
   const p1TitleColor = page1Style.titleColor || theme.primary;
   const p1TextColor = page1Style.textColor || "#111827";
-  const p1FontFamily = page1Style.fontFamily ? FONT_FAMILY_MAP[page1Style.fontFamily].css : theme.fontCss;
-  const p1TextAlign = (page1Style.textAlign || "left") as "left" | "center" | "right";
+  const p1FontFamily = page1Style.fontFamily
+    ? FONT_FAMILY_MAP[page1Style.fontFamily].css
+    : theme.fontCss;
+  const p1TextAlign = (page1Style.textAlign || "left") as
+    | "left"
+    | "center"
+    | "right";
   const badgeShape = page1Style.badgeShape || "rounded-full";
   const badgeBgColor = page1Style.badgeBgColor || "transparent";
   const badgeFontSize = page1Style.badgeFontSize || 14;
@@ -120,26 +227,41 @@ export function ParsedHandoutViewPage1({
   const showSentenceNumbers = page1Layout.showSentenceNumbers ?? true;
   const showKoreanColumn = page1Layout.showKoreanColumn ?? true;
 
-  const tableBorderStyle = useMemo(() => ({
-    borderTop: `${borderWidth}px solid ${p1TitleColor}`,
-    borderBottom: `${borderWidth}px solid ${p1TitleColor}`,
-    paddingTop: page1Style.paddingTop ? `${page1Style.paddingTop}px` : undefined,
-    paddingBottom: page1Style.paddingBottom ? `${page1Style.paddingBottom}px` : undefined,
-  }), [borderWidth, p1TitleColor, page1Style.paddingTop, page1Style.paddingBottom]);
+  const tableBorderStyle = useMemo(
+    () => ({
+      borderTop: `${borderWidth}px solid ${p1TitleColor}`,
+      borderBottom: `${borderWidth}px solid ${p1TitleColor}`,
+      paddingTop: page1Style.paddingTop
+        ? `${page1Style.paddingTop}px`
+        : undefined,
+      paddingBottom: page1Style.paddingBottom
+        ? `${page1Style.paddingBottom}px`
+        : undefined,
+    }),
+    [borderWidth, p1TitleColor, page1Style.paddingTop, page1Style.paddingBottom]
+  );
 
-  const enTextStyle = useMemo(() => ({
-    fontSize: `${theme.fontSizes.analysisEn}pt`,
-    fontFamily: p1FontFamily,
-    color: p1TextColor,
-    textAlign: p1TextAlign,
-  } as const), [theme.fontSizes.analysisEn, p1FontFamily, p1TextColor, p1TextAlign]);
+  const enTextStyle = useMemo(
+    () =>
+      ({
+        fontSize: `${theme.fontSizes.analysisEn}pt`,
+        fontFamily: p1FontFamily,
+        color: p1TextColor,
+        textAlign: p1TextAlign,
+      }) as const,
+    [theme.fontSizes.analysisEn, p1FontFamily, p1TextColor, p1TextAlign]
+  );
 
-  const koTextStyle = useMemo(() => ({
-    fontSize: `${theme.fontSizes.analysisKo}pt`,
-    fontFamily: p1FontFamily,
-    color: p1TextColor,
-    textAlign: p1TextAlign,
-  } as const), [theme.fontSizes.analysisKo, p1FontFamily, p1TextColor, p1TextAlign]);
+  const koTextStyle = useMemo(
+    () =>
+      ({
+        fontSize: `${theme.fontSizes.analysisKo}pt`,
+        fontFamily: p1FontFamily,
+        color: p1TextColor,
+        textAlign: p1TextAlign,
+      }) as const,
+    [theme.fontSizes.analysisKo, p1FontFamily, p1TextColor, p1TextAlign]
+  );
 
   return (
     <div
@@ -153,15 +275,29 @@ export function ParsedHandoutViewPage1({
       <section className="mb-8 relative flex-1 w-full">
         <ClickZone focusKey="page1-title" label="타이틀 편집">
           <div
-            className={`mb-3 z-10 relative ${badgeAlign === "center" ? "text-center" : badgeAlign === "right" ? "text-right" : "text-left"}`}
+            className={`mt-4 mb-4 z-10 relative flex items-center ${badgeAlign === "center" ? "justify-center" : badgeAlign === "right" ? "justify-end" : "justify-start"}`}
           >
+            {/* Passage number chip — only on first page of each passage */}
+            {pageNum === 1 && (
+              <div className="relative z-20">
+                <PassageNumberChip
+                  passageId={section.passageId}
+                  themeColor={p1TitleColor}
+                />
+              </div>
+            )}
             <div
-              className={`inline-flex items-center justify-center font-bold px-3 py-1.5 border leading-none ${badgeShape}`}
+              className={`inline-flex items-center justify-center font-bold border ${badgeShape} relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
               style={{
                 color: p1TitleColor,
                 borderColor: p1TitleColor,
-                backgroundColor: badgeBgColor === "transparent" ? "white" : badgeBgColor,
-                fontSize: `${badgeFontSize}px`,
+                backgroundColor:
+                  badgeBgColor === "transparent" ? "white" : badgeBgColor,
+                fontSize: `${badgeFontSize + 1}px`,
+                height: "32px",
+                paddingLeft: pageNum === 1 ? "24px" : "18px",
+                paddingRight: "20px",
+                letterSpacing: "0.01em",
               }}
             >
               <span className="translate-y-px">
@@ -172,31 +308,47 @@ export function ParsedHandoutViewPage1({
         </ClickZone>
 
         <ClickZone focusKey="page1-body" label="문장 테이블">
-          <div
-            className="w-full"
-            style={tableBorderStyle}
-          >
+          <div className="w-full" style={tableBorderStyle}>
             <div className="flex relative w-full">
               {showKoreanColumn && (
                 <div
                   className="absolute top-0 right-0 h-full"
-                  style={{ width: `${koRatio * 100}%`, backgroundColor: `${theme.sentenceBg}80` }}
+                  style={{
+                    width: `${koRatio * 100}%`,
+                    backgroundColor: `${theme.sentenceBg}80`,
+                  }}
                 />
               )}
               <div className="flex flex-col w-full relative z-10 divide-y divide-[#E5E7EB]">
                 {sentencesChunk.map((pair, i) => (
-                  <div key={`${pair.en}-${pair.ko}-${i}`} className="flex min-h-[80px] w-full">
-                    <div className="flex py-6 pr-6" style={{ width: `${enRatio * 100}%` }}>
+                  <div
+                    key={`${pair.en}-${pair.ko}-${i}`}
+                    className="flex min-h-[80px] w-full"
+                  >
+                    <div
+                      className="flex py-6 pr-6"
+                      style={{ width: `${enRatio * 100}%` }}
+                    >
                       {showSentenceNumbers && (
                         <div
                           className="w-8 shrink-0 font-black pt-0.5"
-                          style={{ color: p1TitleColor, fontSize: `${theme.fontSizes.sentenceNumber}px` }}
+                          style={{
+                            color: p1TitleColor,
+                            fontSize: `${theme.fontSizes.sentenceNumber}px`,
+                          }}
                         >
-                          {renderSentenceNumber(i, pageNum, page1Layout.numberStyle)}
+                          {renderSentenceNumber(
+                            i,
+                            pageNum,
+                            page1Layout.numberStyle
+                          )}
                         </div>
                       )}
                       <EditableText
-                        value={pair.en.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
+                        value={pair.en.replace(
+                          /^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/,
+                          ""
+                        )}
                         label={`영어 문장 #${(pageNum - 1) * 7 + i + 1}`}
                         multiline
                         themeColor={p1TitleColor}
@@ -207,9 +359,15 @@ export function ParsedHandoutViewPage1({
                       />
                     </div>
                     {showKoreanColumn && (
-                      <div className="py-6 pl-6 pr-4" style={{ width: `${koRatio * 100}%` }}>
+                      <div
+                        className="py-6 pl-6 pr-4"
+                        style={{ width: `${koRatio * 100}%` }}
+                      >
                         <EditableText
-                          value={pair.ko.replace(/^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/, "")}
+                          value={pair.ko.replace(
+                            /^[\u2460-\u2473\u2776-\u277F\u24EB-\u24FE\s]+/,
+                            ""
+                          )}
                           label={`한국어 번역 #${(pageNum - 1) * 7 + i + 1}`}
                           multiline
                           themeColor={p1TitleColor}
@@ -229,7 +387,8 @@ export function ParsedHandoutViewPage1({
           <div
             className="w-[95%] h-[6px] rounded-b-xl"
             style={{
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)",
+              background:
+                "linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.06) 40%, transparent 100%)",
               marginTop: "-3px",
             }}
           />
@@ -242,8 +401,10 @@ export function ParsedHandoutViewPage1({
 }
 
 function DiscoveryBanner() {
-  const [dismissed, setDismissed] = useState(() =>
-    typeof window !== "undefined" && localStorage.getItem("gyoan_hint_dismissed") === "1"
+  const [dismissed, setDismissed] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      localStorage.getItem("gyoan_hint_dismissed") === "1"
   );
 
   if (dismissed) return null;
@@ -282,17 +443,21 @@ export function ParsedHandoutViewPage2({
   const theme = useTheme();
   const page2Sections = useTemplateSettingsStore((s) => s.page2Sections);
   const avatarBase64 = useTemplateSettingsStore((s) => s.avatarBase64);
-  const avatarDisplay = useTemplateSettingsStore((s) => s.avatarDisplay) ?? DEFAULT_IMAGE_DISPLAY;
+  const avatarDisplay =
+    useTemplateSettingsStore((s) => s.avatarDisplay) ?? DEFAULT_IMAGE_DISPLAY;
   const sectionStyles = useTemplateSettingsStore((s) => s.sectionStyles);
   const page2HeaderStyle = useTemplateSettingsStore((s) => s.page2HeaderStyle);
   const setFocus = useEditorFocusStore((s) => s.setFocus);
 
-  const avatarStyle = useMemo(() => ({
-    top: `${-46 + avatarDisplay.offsetY}px`,
-    left: `${24 + avatarDisplay.offsetX}px`,
-    width: `${90 * avatarDisplay.scale}px`,
-    height: `${90 * avatarDisplay.scale}px`,
-  }), [avatarDisplay.offsetY, avatarDisplay.offsetX, avatarDisplay.scale]);
+  const avatarStyle = useMemo(
+    () => ({
+      top: `${-46 + avatarDisplay.offsetY}px`,
+      left: `${24 + avatarDisplay.offsetX}px`,
+      width: `${90 * avatarDisplay.scale}px`,
+      height: `${90 * avatarDisplay.scale}px`,
+    }),
+    [avatarDisplay.offsetY, avatarDisplay.offsetX, avatarDisplay.scale]
+  );
 
   return (
     <div
@@ -312,7 +477,10 @@ export function ParsedHandoutViewPage2({
             loading="lazy"
             alt="Teacher Avatar"
             className="w-full h-full object-contain"
-            style={{ filter: "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))" }}
+            style={{
+              filter:
+                "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))",
+            }}
           />
         </div>
 
@@ -321,18 +489,22 @@ export function ParsedHandoutViewPage2({
             className="relative z-10 mb-3 h-10 rounded-r-xl flex items-center pr-10 w-[95%] mt-1"
             style={{
               backgroundColor: page2HeaderStyle?.bgColor || theme.primary,
-              
+
               paddingTop: page2HeaderStyle?.paddingTop ?? 0,
               paddingBottom: page2HeaderStyle?.paddingBottom ?? 0,
-              borderTop: page2HeaderStyle?.borderStyle && page2HeaderStyle.borderStyle !== "none"
-                ? `1px ${page2HeaderStyle.borderStyle} ${page2HeaderStyle.borderColor || theme.primary}`
-                : undefined,
+              borderTop:
+                page2HeaderStyle?.borderStyle &&
+                page2HeaderStyle.borderStyle !== "none"
+                  ? `1px ${page2HeaderStyle.borderStyle} ${page2HeaderStyle.borderColor || theme.primary}`
+                  : undefined,
             }}
           >
             <span
               className="tracking-wide ml-32 z-30"
               style={{
-                fontFamily: page2HeaderStyle?.fontFamily ? FONT_FAMILY_MAP[page2HeaderStyle.fontFamily].css : "GmarketSans, sans-serif",
+                fontFamily: page2HeaderStyle?.fontFamily
+                  ? FONT_FAMILY_MAP[page2HeaderStyle.fontFamily].css
+                  : "GmarketSans, sans-serif",
                 fontWeight: theme.titleFontWeight,
                 fontSize: `${theme.fontSizes.summaryBarTitle}px`,
                 color: page2HeaderStyle?.titleColor || "#FFFFFF",
@@ -341,20 +513,21 @@ export function ParsedHandoutViewPage2({
               <EditableSummaryTitleText />
             </span>
           </div>
-
         </ClickZone>
 
         <div className="space-y-2 pl-2">
           {page2Sections.map((key) => {
             // Skip standalone flow when visual_summary is present (flow is embedded inside it)
-            if (key === "flow" && page2Sections.includes("visual_summary")) return null;
+            if (key === "flow" && page2Sections.includes("visual_summary"))
+              return null;
             const style = sectionStyles?.[key];
             const wrapStyle = {
               paddingTop: style?.paddingTop ?? 0,
               paddingBottom: style?.paddingBottom ?? 0,
-              borderTop: style?.borderStyle && style.borderStyle !== "none"
-                ? `1px ${style.borderStyle} ${style.borderColor || theme.primary}`
-                : undefined,
+              borderTop:
+                style?.borderStyle && style.borderStyle !== "none"
+                  ? `1px ${style.borderStyle} ${style.borderColor || theme.primary}`
+                  : undefined,
             };
             if (isCustomSectionKey(key)) {
               return (

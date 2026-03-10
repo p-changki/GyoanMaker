@@ -137,6 +137,7 @@ export const EditableText = memo(function EditableText({
   className = "",
   style,
   as: Tag = "span",
+  renderDisplay,
 }: {
   value: string;
   label: string;
@@ -147,6 +148,8 @@ export const EditableText = memo(function EditableText({
   className?: string;
   style?: React.CSSProperties;
   as?: "span" | "p" | "div";
+  /** Custom display renderer. Receives raw value, returns ReactNode. */
+  renderDisplay?: (value: string) => React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -173,7 +176,7 @@ export const EditableText = memo(function EditableText({
         className={`group/editable cursor-pointer hover:bg-gray-50/60 rounded transition-colors relative ${className}`}
         style={style}
       >
-        {value}
+        {renderDisplay ? renderDisplay(value) : value}
         <span
           className="inline-flex ml-1 opacity-0 group-hover/editable:opacity-60 transition-opacity align-middle"
           data-html2canvas-ignore="true"

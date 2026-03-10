@@ -1,8 +1,54 @@
 import crypto from "crypto";
 import { getDb } from "./firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
-import type { HandoutIllustration, HandoutIllustrations } from "@gyoanmaker/shared/types";
+import type {
+  HandoutIllustration,
+  HandoutIllustrations,
+  WorkbookData,
+} from "@gyoanmaker/shared/types";
 import { deleteIllustrationFolder } from "./firebase-storage";
+
+// ── Firestore Serialization ─────────────────────────────
+// Firestore does not support nested arrays (e.g. string[][]).
+// WorkbookStep3Item.options is string[][] — we serialize to string[]
+// using a separator before writing, and deserialize on read.
+
+const OPTIONS_SEPARATOR = "|||";
+
+/** Convert WorkbookData for Firestore (flatten string[][] → string[]) */
+function serializeWorkbookForFirestore(
+  workbook: WorkbookData
+): Record<string, unknown> {
+  const serialized = JSON.parse(JSON.stringify(workbook));
+  for (const passage of serialized.passages ?? []) {
+    for (const item of passage.step3Items ?? []) {
+      if (Array.isArray(item.options)) {
+        item.options = item.options.map((opt: string[]) =>
+          Array.isArray(opt) ? opt.join(OPTIONS_SEPARATOR) : opt
+        );
+      }
+    }
+  }
+  return serialized;
+}
+
+/** Restore WorkbookData from Firestore (unflatten string[] → string[][]) */
+function deserializeWorkbookFromFirestore(
+  raw: Record<string, unknown>
+): WorkbookData {
+  const data = raw as unknown as WorkbookData;
+  for (const passage of data.passages ?? []) {
+    for (const item of passage.step3Items ?? []) {
+      if (Array.isArray(item.options)) {
+        item.options = (item.options as unknown as (string | string[])[]).map(
+          (opt) =>
+            typeof opt === "string" ? opt.split(OPTIONS_SEPARATOR) : opt
+        );
+      }
+    }
+  }
+  return data;
+}
 
 // ── Types ──────────────────────────────────────────────
 
@@ -29,6 +75,7 @@ export interface HandoutDetail extends HandoutMeta {
     analysisTitleText?: string;
     summaryTitleText?: string;
   };
+  workbook?: WorkbookData | null;
 }
 
 // ── Constants ──────────────────────────────────────────
@@ -92,6 +139,7 @@ export interface CreateHandoutInput {
     analysisTitleText?: string;
     summaryTitleText?: string;
   };
+  workbook?: WorkbookData | null;
 }
 
 export async function createHandout(
@@ -112,6 +160,9 @@ export async function createHandout(
     sections: input.sections,
     illustrations: input.illustrations ?? {},
     customTexts: input.customTexts ?? {},
+    workbook: input.workbook
+      ? serializeWorkbookForFirestore(input.workbook)
+      : null,
     inputHash: input.inputHash ?? null,
     createdAt: now,
     updatedAt: now,
@@ -222,6 +273,9 @@ export async function getHandout(
     sections,
     illustrations,
     customTexts: d.customTexts ?? {},
+    workbook: d.workbook
+      ? deserializeWorkbookFromFirestore(d.workbook as Record<string, unknown>)
+      : null,
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   };
@@ -238,6 +292,7 @@ export interface UpdateHandoutInput {
     analysisTitleText?: string;
     summaryTitleText?: string;
   };
+  workbook?: WorkbookData | null;
 }
 
 export async function updateHandout(
@@ -266,6 +321,13 @@ export async function updateHandout(
   }
   if (input.customTexts !== undefined) {
     updates.customTexts = input.customTexts;
+  }
+  if (input.workbook !== undefined) {
+    // Firestore rejects nested arrays (string[][]) and undefined values.
+    // serializeWorkbookForFirestore flattens string[][] and strips undefined.
+    updates.workbook = input.workbook
+      ? serializeWorkbookForFirestore(input.workbook)
+      : null;
   }
 
   await docRef.update(updates);
