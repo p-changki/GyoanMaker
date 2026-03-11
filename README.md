@@ -67,11 +67,11 @@ GyoanMaker automates the entire pipeline. Paste a passage, click **Generate**, a
 
 - System prompts stored in **GCP Secret Manager** and mounted as volumes in Cloud Run.
 - Real-time tracking of the prompt hash (SHA-256) and the model in use via the `/meta` endpoint.
-- Local development uses file-based prompts (`server/system-prompt.txt`).
+- Local development uses file-based prompts (`apps/api/system-prompt.txt`).
 
 ### 6. Client-Side PDF Generation & Inline Editing (No Backend Cost)
 
-- Uses `html2canvas` and `jsPDF` to capture and render high-quality A4 PDF handouts entirely within the user's browser, eliminating expensive server-side rendering costs.
+- Uses `html2canvas-pro` and `jsPDF` to capture and render high-quality A4 PDF handouts entirely within the user's browser, eliminating expensive server-side rendering costs.
 - Includes inline editing powered by `Zustand` to customize header text before exporting the PDF.
 - Template settings panel for per-section font size control and custom header/title text.
 
@@ -89,6 +89,28 @@ GyoanMaker automates the entire pipeline. Paste a passage, click **Generate**, a
 - **4-tier billing system** (Free / Basic / Standard / Pro) with per-model monthly quotas.
 - **Credits** system for pay-as-you-go usage after monthly quota exhaustion.
 - **Account self-deletion** with cascading data cleanup.
+
+### 9. Workbook Generation
+
+- Automatically generates **multi-step practice workbooks** (STEP 1–3) from the same passage analysis.
+- STEP 2 answer alternation: odd questions `[correct/wrong]`, even questions `[wrong/correct]` (deterministic rule).
+- STEP 3 label rotation based on question number to prevent predictable answer patterns.
+- Dedicated system prompt (`apps/api/system-prompt-workbook.txt`) for workbook-specific output quality.
+
+### 10. AI Illustration System
+
+- Generate **AI-powered illustrations** for handouts using Google Imagen.
+- **Style presets** with customizable aspect ratios (default 16:9).
+- Job-based async workflow: create → poll → cancel/retry.
+- Background removal via `@imgly/background-removal` (~80MB ONNX, dynamic import).
+
+### 11. Community Board & Additional Features
+
+- **Community board** (`/board`) for sharing and discovering handouts.
+- **Vocabulary test** (`/voca-test`) for interactive vocabulary practice.
+- **About page** (`/about`) with service introduction.
+- **Billing page** (`/billing`) for subscription management and payment history.
+- **Bank transfer** payment option alongside Toss Payments card billing.
 
 ## Getting Started (Local Execution)
 
@@ -209,6 +231,11 @@ flowchart LR
     F --> G["AI Results\n/results"]
     G --> H["PDF Compile\n/compile"]
     H --> I["Dashboard\n/dashboard"]
+    H --> J["Workbook\n/workbook"]
+    H --> K["Illustration\n/illustrations"]
+    I --> L["Board\n/board"]
+    I --> M["Voca Test\n/voca-test"]
+    I --> N["Billing\n/billing"]
 ```
 
 ## 주요 기능 (Key Features)
@@ -240,11 +267,11 @@ flowchart LR
 
 - **GCP Secret Manager**에 시스템 프롬프트를 저장하고 Cloud Run 볼륨 마운트로 주입.
 - `/meta` 엔드포인트를 통한 실시간 프롬프트 해시(SHA-256) 및 사용 모델 추적 가능.
-- 로컬 개발 시에는 파일 기반 (`server/system-prompt.txt`) 사용.
+- 로컬 개발 시에는 파일 기반 (`apps/api/system-prompt.txt`) 사용.
 
 ### 6. 클라이언트 사이드 PDF 렌더링 & 인라인 에디팅 기능
 
-- 별도의 비싼 PDF 렌더링 서버(Puppeteer 등) 없이 오직 유저의 브라우저 자원(`html2canvas`, `jspdf`)만으로 A4 고해상도 PDF 파일을 1초 안에 자동 병합 및 추출.
+- 별도의 비싼 PDF 렌더링 서버(Puppeteer 등) 없이 오직 유저의 브라우저 자원(`html2canvas-pro`, `jspdf`)만으로 A4 고해상도 PDF 파일을 1초 안에 자동 병합 및 추출.
 - `Zustand` 기반의 상태 관리를 통해 "고1 25년 9월" 등 실제 교안 배포에 필요한 커스텀 헤더 텍스트를 즉시 편집하고 PDF에 구워낼 수 있습니다.
 - 템플릿 설정 패널: 섹션별 폰트 크기 조절, 커스텀 헤더/타이틀 텍스트 지원.
 
@@ -262,6 +289,28 @@ flowchart LR
 - **4단계 요금제** (Free / Basic / Standard / Pro) 및 모델별 월간 쿼타.
 - **크레딧** 시스템으로 월간 쿼타 소진 후 추가 사용 가능.
 - **계정 자체 삭제** 기능 (교안 서브컬렉션 일괄 삭제 포함).
+
+### 9. 워크북 자동 생성
+
+- 동일 지문 분석 결과를 기반으로 **다단계 연습 워크북** (STEP 1~3) 자동 생성.
+- STEP 2 정답 교번: 홀수 문항 `[correct/wrong]`, 짝수 문항 `[wrong/correct]` (결정론적 규칙).
+- STEP 3 라벨 로테이션: 문항 번호 기반으로 예측 가능한 정답 패턴 방지.
+- 전용 시스템 프롬프트 (`apps/api/system-prompt-workbook.txt`)로 워크북 특화 출력 품질 보장.
+
+### 10. AI 삽화 시스템
+
+- **Google Imagen** 기반 AI 삽화 생성으로 교안에 시각 자료 삽입.
+- **스타일 프리셋** 및 커스텀 비율 설정 (기본 16:9).
+- Job 기반 비동기 워크플로우: 생성 → 폴링 → 취소/재시도.
+- `@imgly/background-removal` (~80MB ONNX) 동적 임포트로 배경 제거 지원.
+
+### 11. 커뮤니티 보드 & 추가 기능
+
+- **커뮤니티 보드** (`/board`)에서 교안 공유 및 탐색.
+- **어휘 테스트** (`/voca-test`)로 인터랙티브 단어 연습.
+- **소개 페이지** (`/about`) 서비스 안내.
+- **결제 페이지** (`/billing`) 구독 관리 및 결제 내역 확인.
+- Toss Payments 카드 결제와 함께 **무통장 입금** 결제 옵션 제공.
 
 ## 시작하기 (로컬 실행 방법)
 
@@ -342,14 +391,21 @@ gyoanmaker/                          # Turborepo monorepo (pnpm)
 │   │   │   │   ├── generate/page.tsx     # 교안 생성 (레벨+모델 선택, 지문 입력)
 │   │   │   │   ├── results/page.tsx      # AI 분석 결과
 │   │   │   │   ├── compile/page.tsx      # PDF 편집 & 출력
+│   │   │   │   ├── workbook/page.tsx     # 워크북 (→ /compile 리다이렉트)
 │   │   │   │   ├── dashboard/page.tsx    # 저장된 교안 목록
 │   │   │   │   ├── account/page.tsx      # 계정 관리 & 탈퇴
+│   │   │   │   ├── billing/page.tsx      # 구독 관리 & 결제 내역
 │   │   │   │   ├── pricing/page.tsx      # 요금제 안내
+│   │   │   │   ├── board/page.tsx        # 커뮤니티 보드
+│   │   │   │   ├── voca-test/page.tsx    # 어휘 테스트
+│   │   │   │   ├── about/page.tsx        # 서비스 소개
+│   │   │   │   ├── preview/page.tsx      # 교안 미리보기
 │   │   │   │   ├── privacy/page.tsx      # 개인정보 처리방침
 │   │   │   │   ├── terms/page.tsx        # 서비스 이용약관
 │   │   │   │   ├── (auth)/               # 인증 관련 (login, pending)
 │   │   │   │   ├── admin/page.tsx        # 관리자 페이지
-│   │   │   │   └── api/                  # API Routes (16개)
+│   │   │   │   ├── illustrations/        # AI 삽화 생성
+│   │   │   │   └── api/                  # API Routes (52개)
 │   │   │   ├── components/               # UI 컴포넌트 (landing, compile, ui, layout 등)
 │   │   │   ├── lib/                      # 유틸리티, Firestore CRUD
 │   │   │   ├── stores/                   # Zustand 상태 관리
@@ -360,10 +416,13 @@ gyoanmaker/                          # Turborepo monorepo (pnpm)
 │   └── api/                         # @gyoanmaker/api — Express 5 (Cloud Run)
 │       ├── src/
 │       │   ├── server.ts                 # Express 엔트리포인트
-│       │   ├── routes/                   # generate, meta 라우트
-│       │   ├── services/                 # gemini, processor, prompt
+│       │   ├── routes/                   # generate, meta, workbook 라우트
+│       │   ├── services/                 # gemini, processor, prompt, workbookGenerator
 │       │   ├── middleware/               # auth, rateLimit
-│       │   └── validation/               # output, request, vocab
+│       │   └── validation/               # output, request, vocab, workbook
+│       ├── system-prompt.txt             # Advanced 모드 프롬프트 (로컬 dev)
+│       ├── system-prompt-basic.txt       # Basic 모드 프롬프트 (로컬 dev)
+│       ├── system-prompt-workbook.txt    # Workbook 모드 프롬프트 (로컬 dev)
 │       └── package.json
 ├── packages/
 │   └── shared/                      # @gyoanmaker/shared — 공유 타입 & 요금제
@@ -371,11 +430,9 @@ gyoanmaker/                          # Turborepo monorepo (pnpm)
 │           ├── plans/                    # 요금제 정의
 │           ├── types/                    # 공유 타입
 │           └── index.ts
-├── server/                          # 검증 스크립트 & 로컬 프롬프트 파일
+├── server/                          # 검증 스크립트
 │   ├── scripts/                          # validate-output, validate-vocab-count
-│   ├── validators/                       # 검증 로직
-│   ├── system-prompt.txt                 # Advanced 모드 프롬프트 (로컬 dev)
-│   └── system-prompt-basic.txt           # Basic 모드 프롬프트 (로컬 dev)
+│   └── validators/                       # 검증 로직
 ├── Dockerfile                       # Cloud Run 프로덕션 빌드 (multi-stage)
 ├── turbo.json                       # Turborepo 태스크 설정
 ├── pnpm-workspace.yaml              # 워크스페이스 정의
