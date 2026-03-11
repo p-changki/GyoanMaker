@@ -5,7 +5,7 @@ import { useSectionStyle } from "./useSectionStyle";
 
 export function CustomSection({ sectionKey }: { sectionKey: CustomSectionKey }) {
   const content = useTemplateSettingsStore((s) => s.customSections?.[sectionKey]);
-  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle(sectionKey);
+  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight, textAlign } = useSectionStyle(sectionKey);
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
@@ -28,7 +28,7 @@ export function CustomSection({ sectionKey }: { sectionKey: CustomSectionKey }) 
         <div className="pl-1">
           <p
             className="leading-relaxed whitespace-pre-wrap"
-            style={{ fontSize: `${fontSizes.topicEn}pt`, fontFamily: fontCss, color: textColor }}
+            style={{ fontSize: `${fontSizes.topicEn}pt`, fontFamily: fontCss, color: textColor, textAlign }}
           >
             {content.body}
           </p>

@@ -240,6 +240,8 @@ export interface SectionStyleConfig {
   badgeBgColor?: string;   // badge background color ("" = transparent/white)
   badgeFontSize?: number;  // badge font size in px
   badgeAlign?: "left" | "center" | "right"; // badge alignment
+  badgeHeight?: number;    // badge height in px (default 32)
+  badgePaddingX?: number;  // badge horizontal padding in px (default 20)
   barWidth?: number; // bar width as percentage (20~100), default 95
 }
 
@@ -379,6 +381,8 @@ export interface SectionBadgeConfig {
   bgColor?: string;       // default theme primary (empty = theme)
   fontFamily?: FontFamily | "";  // "" = use default Impact
   fontSize?: number;      // px, default = fontSizes.passageNumber + 18
+  width?: number;         // px, default 168 (md) / 125 (sm)
+  height?: number;        // px, default 86 (md) / 68 (sm)
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {

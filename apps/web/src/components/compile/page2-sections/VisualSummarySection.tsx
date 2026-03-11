@@ -20,7 +20,7 @@ function statusLabel(status: string | undefined): string {
 
 export function VisualSummarySection({ section }: { section: HandoutSection }) {
   const illustration = useIllustration(section.passageId);
-  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } =
+  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight, textAlign } =
     useSectionStyle("visual_summary");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
   const customTitles = useTemplateSettingsStore((s) => s.sectionTitles);
@@ -118,8 +118,8 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
                 section.flow.map((step) => (
                   <div
                     key={step.text}
-                    className="px-2 py-2.5 rounded-md font-semibold text-center break-keep text-xs"
-                    style={flowItemStyle}
+                    className="px-2 py-2.5 rounded-md font-semibold break-keep text-xs"
+                    style={{ ...flowItemStyle, textAlign }}
                   >
                     {step.text}
                   </div>

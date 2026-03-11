@@ -33,6 +33,7 @@ export function SectionStyleEditor({ sectionKey }: Props) {
     case "header-badge":
       return (
         <div className="space-y-5 py-2">
+          <HeaderBadgeStyleEditor />
           <UnifiedSectionEditor sectionKey="headerBadge" />
         </div>
       );
@@ -305,6 +306,80 @@ function SummaryBarWidthEditor() {
   );
 }
 
+/* ─── Header Badge Style (shape, height, padding) ─── */
+
+function HeaderBadgeStyleEditor() {
+  const headerBadgeStyle = useTemplateSettingsStore((s) => s.headerBadgeStyle) ?? DEFAULT_SECTION_STYLE;
+  const setHeaderBadgeStyle = useTemplateSettingsStore((s) => s.setHeaderBadgeStyle);
+
+  const badgeShape = headerBadgeStyle.badgeShape || "rounded-none";
+  const badgeHeight = headerBadgeStyle.badgeHeight || 28;
+  const badgePaddingX = headerBadgeStyle.badgePaddingX || 16;
+
+  return (
+    <>
+      {/* Shape */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">뱃지 모양</p>
+        <div className="grid grid-cols-3 gap-1">
+          {([
+            { value: "rounded-full", label: "둥근" },
+            { value: "rounded-lg", label: "약간 둥근" },
+            { value: "rounded-none", label: "각진" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setHeaderBadgeStyle({ badgeShape: opt.value })}
+              className={`px-2 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                badgeShape === opt.value
+                  ? "bg-[#5E35B1] text-white"
+                  : "border border-gray-200 text-gray-500 hover:border-gray-300"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Badge Height */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">뱃지 높이</p>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={18}
+            max={56}
+            step={2}
+            value={badgeHeight}
+            onChange={(e) => setHeaderBadgeStyle({ badgeHeight: Number(e.target.value) })}
+            className="flex-1 h-1 accent-[#5E35B1]"
+          />
+          <span className="text-[9px] text-gray-500 w-10 text-right">{badgeHeight}px</span>
+        </div>
+      </div>
+
+      {/* Badge Horizontal Padding */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">뱃지 좌우 여백</p>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={8}
+            max={48}
+            step={2}
+            value={badgePaddingX}
+            onChange={(e) => setHeaderBadgeStyle({ badgePaddingX: Number(e.target.value) })}
+            className="flex-1 h-1 accent-[#5E35B1]"
+          />
+          <span className="text-[9px] text-gray-500 w-10 text-right">{badgePaddingX}px</span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Page1 Title Style (badge shape, color, size, alignment) ─── */
 
 function Page1TitleStyleEditor() {
@@ -320,6 +395,8 @@ function Page1TitleStyleEditor() {
   const badgeShape = page1Style.badgeShape || "rounded-full";
   const badgeFontSize = page1Style.badgeFontSize || 14;
   const badgeAlign = page1Style.badgeAlign || "left";
+  const badgeHeight = page1Style.badgeHeight || 32;
+  const badgePaddingX = page1Style.badgePaddingX || 20;
 
   return (
     <>
@@ -430,6 +507,40 @@ function Page1TitleStyleEditor() {
               {opt.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Badge Height */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">뱃지 높이</p>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={20}
+            max={56}
+            step={2}
+            value={badgeHeight}
+            onChange={(e) => setPage1BodyStyle({ badgeHeight: Number(e.target.value) })}
+            className="flex-1 h-1 accent-[#5E35B1]"
+          />
+          <span className="text-[9px] text-gray-500 w-10 text-right">{badgeHeight}px</span>
+        </div>
+      </div>
+
+      {/* Badge Horizontal Padding */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">뱃지 좌우 여백</p>
+        <div className="flex items-center gap-2">
+          <input
+            type="range"
+            min={8}
+            max={48}
+            step={2}
+            value={badgePaddingX}
+            onChange={(e) => setPage1BodyStyle({ badgePaddingX: Number(e.target.value) })}
+            className="flex-1 h-1 accent-[#5E35B1]"
+          />
+          <span className="text-[9px] text-gray-500 w-10 text-right">{badgePaddingX}px</span>
         </div>
       </div>
     </>
