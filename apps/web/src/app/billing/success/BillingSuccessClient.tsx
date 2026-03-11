@@ -60,7 +60,8 @@ export default function BillingSuccessClient({
           throw new Error(payload?.error?.message ?? "결제 승인에 실패했습니다.");
         }
       } else if (isPaylinkFlow) {
-        if (paylinkStatus && paylinkStatus !== "PAY_COMPLETE") {
+        const COMPLETED = new Set(["PAY_COMPLETE", "PAY_APPROVED", "SETTLEMENT_COMPLETE"]);
+        if (paylinkStatus && !COMPLETED.has(paylinkStatus)) {
           throw new Error(`결제 상태가 완료가 아닙니다. (${paylinkStatus})`);
         }
 

@@ -155,10 +155,16 @@ export async function applyPaylinkOrder(
   const { order } = acquired;
   const orderType = normalizeOrderType(order.type);
 
-  const status = await fetchTossPaylinkStatus({
-    orderNo: orderId,
-    payToken: order.payToken,
-  });
+  let status: Awaited<ReturnType<typeof fetchTossPaylinkStatus>>;
+  try {
+    status = await fetchTossPaylinkStatus({
+      orderNo: orderId,
+      payToken: order.payToken,
+    });
+  } catch (error) {
+    await clearConfirmingLock(orderId);
+    throw error;
+  }
 
   if (!PAYLINK_COMPLETED_STATUSES.has(status.payStatus)) {
     await clearConfirmingLock(orderId, status.payStatus);
