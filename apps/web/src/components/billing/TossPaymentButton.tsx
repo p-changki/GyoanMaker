@@ -11,6 +11,8 @@ interface CheckoutInitResponse {
   orderId: string;
   amount: number;
   orderName: string;
+  checkoutFlow?: "widget" | "paylink";
+  checkoutUrl?: string;
 }
 
 interface CheckoutErrorResponse {
@@ -24,6 +26,7 @@ interface TossPaymentButtonProps {
   type: "plan" | "topup";
   planId?: PlanId;
   packageId?: TopUpPackageId;
+  checkoutFlow?: "widget" | "paylink";
   label: string;
   className?: string;
   disabled?: boolean;
@@ -48,10 +51,20 @@ function isCheckoutInitResponse(payload: unknown): payload is CheckoutInitRespon
   }
 
   const record = payload as Record<string, unknown>;
+  const checkoutFlow = record.checkoutFlow;
+  const checkoutUrl = record.checkoutUrl;
+
+  const hasValidCheckoutFlow =
+    checkoutFlow === undefined || checkoutFlow === "widget" || checkoutFlow === "paylink";
+  const hasValidCheckoutUrl =
+    checkoutUrl === undefined || typeof checkoutUrl === "string";
+
   return (
     typeof record.orderId === "string" &&
     typeof record.orderName === "string" &&
-    typeof record.amount === "number"
+    typeof record.amount === "number" &&
+    hasValidCheckoutFlow &&
+    hasValidCheckoutUrl
   );
 }
 
@@ -59,6 +72,7 @@ export default function TossPaymentButton({
   type,
   planId,
   packageId,
+  checkoutFlow,
   label,
   className,
   disabled,
@@ -66,9 +80,15 @@ export default function TossPaymentButton({
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isPaylinkEnabled = process.env.NEXT_PUBLIC_PAYLINK_ENABLED === "true";
 
   const handleClick = async () => {
     if (isLoading || disabled) {
+      return;
+    }
+
+    if (checkoutFlow === "paylink" && !isPaylinkEnabled) {
+      setError("페이링크 결제는 승인 완료 후 활성화됩니다.");
       return;
     }
 
@@ -85,6 +105,7 @@ export default function TossPaymentButton({
           type,
           planId,
           packageId,
+          checkoutFlow,
         }),
       });
 
@@ -97,6 +118,15 @@ export default function TossPaymentButton({
         throw new Error(
           resolveErrorMessage(initPayload, "결제 초기화에 실패했습니다.")
         );
+      }
+
+      if (initPayload.checkoutFlow === "paylink") {
+        if (!initPayload.checkoutUrl) {
+          throw new Error("페이링크 URL이 없어 결제를 시작할 수 없습니다.");
+        }
+
+        window.location.assign(initPayload.checkoutUrl);
+        return;
       }
 
       const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;

@@ -20,7 +20,7 @@ export default async function BillingFailPage({ searchParams }: BillingFailPageP
   const params = await searchParams;
   const code = pickSingle(params.code) ?? "UNKNOWN_ERROR";
   const message = pickSingle(params.message) ?? "Payment request failed.";
-  const orderId = pickSingle(params.orderId);
+  const orderId = pickSingle(params.orderId) ?? pickSingle(params.orderNo);
 
   return (
     <BillingFailClient code={code} message={message} orderId={orderId} />

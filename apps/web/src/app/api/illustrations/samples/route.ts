@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       storagePath: body.storagePath,
       model: body.model,
       quality: body.quality || "standard",
-      aspectRatio: body.aspectRatio || "4:3",
+      aspectRatio: body.aspectRatio || "16:9",
     }, planTier);
 
     return NextResponse.json({ sample }, { status: 201 });

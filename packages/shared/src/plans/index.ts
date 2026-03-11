@@ -13,6 +13,7 @@ export type TopUpPackageId =
 export type OrderType = "plan" | "topup";
 export type OrderStatus = "pending" | "confirmed" | "failed" | "paid_not_applied";
 export type RefundStatus = "none" | "requested" | "processed" | "rejected";
+export type CheckoutFlow = "widget" | "paylink";
 
 export interface PendingOrder {
   orderId: string;
@@ -32,6 +33,9 @@ export interface PendingOrder {
   orderName: string;
   status: OrderStatus;
   createdAt: string;
+  checkoutFlow?: CheckoutFlow;
+  checkoutUrl?: string;
+  payToken?: string;
   confirmedAt?: string;
   paymentKey?: string;
   /**

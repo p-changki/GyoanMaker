@@ -47,7 +47,7 @@ export default function SubscriptionInfoSection({
 
   rows.push({
     label: "쿼터 리셋",
-    value: "매월 1일 초기화",
+    value: isFree ? "매월 1일 초기화" : "결제일 기준 30일 후 초기화",
   });
 
   if (createdAt) {

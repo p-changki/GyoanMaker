@@ -11,7 +11,12 @@ import type {
   WorkbookData,
 } from "@gyoanmaker/shared/types";
 import { getCachedResult, hashPassages, setCachedResult } from "@/services/cache";
-import { useHandoutStore } from "@/stores/useHandoutStore";
+import {
+  DEFAULT_ANALYSIS_TITLE_TEXT,
+  DEFAULT_CUSTOM_HEADER_TEXT,
+  DEFAULT_SUMMARY_TITLE_TEXT,
+  useHandoutStore,
+} from "@/stores/useHandoutStore";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { DEFAULT_TEMPLATE_SETTINGS } from "@gyoanmaker/shared/types";
@@ -41,6 +46,31 @@ interface CompileInitResponse {
   templateSettings: TemplateSettings;
 }
 
+function isCompileInitResponse(value: unknown): value is CompileInitResponse {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<CompileInitResponse>;
+  return Boolean(candidate.handout && candidate.templateSettings);
+}
+
+function buildSectionsFromHandout(
+  sectionsPayload: CompileInitResponse["handout"]["sections"]
+): Record<string, HandoutSection> {
+  const sections: Record<string, HandoutSection> = {};
+  for (const [id, rawText] of Object.entries(sectionsPayload)) {
+    sections[id] = {
+      passageId: id,
+      sentences: [],
+      topic: { en: "", ko: "" },
+      summary: { en: "", ko: "" },
+      flow: [],
+      vocabulary: [],
+      rawText,
+      isParsed: false,
+    };
+  }
+  return sections;
+}
+
 export function useHandoutLoader() {
   const searchParams = useSearchParams();
   const handoutId = searchParams.get("handoutId");
@@ -61,7 +91,7 @@ export function useHandoutLoader() {
 
   // ── Saved handout: combined endpoint (handout + template in one request) ──
 
-  const compileInitQuery = useQuery({
+  const compileInitQuery = useQuery<CompileInitResponse>({
     queryKey: ["compile-init", handoutId],
     enabled: Boolean(handoutId),
     staleTime: Infinity,
@@ -69,64 +99,57 @@ export function useHandoutLoader() {
     queryFn: async () => {
       const res = await fetch(`/api/compile/init/${handoutId}`);
       if (!res.ok) throw new Error("Failed to load handout.");
-      const data = (await res.json()) as CompileInitResponse;
-
-      // Apply handout sections
-      const sections: Record<string, HandoutSection> = {};
-      for (const [id, rawText] of Object.entries(data.handout.sections)) {
-        sections[id] = {
-          passageId: id,
-          sentences: [],
-          topic: { en: "", ko: "" },
-          summary: { en: "", ko: "" },
-          flow: [],
-          vocabulary: [],
-          rawText,
-          isParsed: false,
-        };
-      }
-      const illustrations =
-        data.handout.illustrations && typeof data.handout.illustrations === "object"
-          ? data.handout.illustrations
-          : {};
-      setCompiledData(sections, illustrations);
-
-      // Apply custom texts
-      if (data.handout.customTexts) {
-        const store = useHandoutStore.getState();
-        if (data.handout.customTexts.headerText)
-          store.setCustomHeaderText(data.handout.customTexts.headerText);
-        if (data.handout.customTexts.analysisTitleText)
-          store.setAnalysisTitleText(data.handout.customTexts.analysisTitleText);
-        if (data.handout.customTexts.summaryTitleText)
-          store.setSummaryTitleText(data.handout.customTexts.summaryTitleText);
-      }
-
-      // Apply template settings
-      useTemplateSettingsStore.getState().loadSettings(data.templateSettings);
-
-      return {
-        id: data.handout.id,
-        title: data.handout.title,
-        level: data.handout.level,
-        model: data.handout.model,
-        workbook: data.handout.workbook ?? null,
-      };
+      return (await res.json()) as CompileInitResponse;
     },
   });
+  const compileInitData = compileInitQuery.data;
+  const isCompileInitSuccess = compileInitQuery.isSuccess;
+  const isCompileInitFetching = compileInitQuery.isFetching;
+  const refetchCompileInit = compileInitQuery.refetch;
 
   useEffect(() => {
-    // While the query is refetching stale cache (isSuccess=true, isFetching=true),
-    // do NOT clear the store — the workbook page may have already populated it.
-    // Only update the store once the fetch has settled.
-    if (!compileInitQuery.isSuccess || compileInitQuery.isFetching) return;
-    const workbook = compileInitQuery.data?.workbook;
+    if (!isCompileInitSuccess || isCompileInitFetching) return;
+
+    const initData = compileInitData;
+    if (!isCompileInitResponse(initData)) {
+      void refetchCompileInit();
+      return;
+    }
+
+    const sections = buildSectionsFromHandout(initData.handout.sections);
+    const illustrations =
+      initData.handout.illustrations && typeof initData.handout.illustrations === "object"
+        ? initData.handout.illustrations
+        : {};
+    setCompiledData(sections, illustrations);
+
+    const store = useHandoutStore.getState();
+    store.setCustomHeaderText(
+      initData.handout.customTexts?.headerText || DEFAULT_CUSTOM_HEADER_TEXT
+    );
+    store.setAnalysisTitleText(
+      initData.handout.customTexts?.analysisTitleText || DEFAULT_ANALYSIS_TITLE_TEXT
+    );
+    store.setSummaryTitleText(
+      initData.handout.customTexts?.summaryTitleText || DEFAULT_SUMMARY_TITLE_TEXT
+    );
+
+    useTemplateSettingsStore.getState().loadSettings(initData.templateSettings);
+
+    const workbook = initData.handout.workbook ?? null;
     if (workbook) {
       setWorkbookData(workbook);
       return;
     }
     useWorkbookStore.setState({ workbookData: null });
-  }, [compileInitQuery.data?.workbook, compileInitQuery.isSuccess, compileInitQuery.isFetching, setWorkbookData]);
+  }, [
+    compileInitData,
+    isCompileInitSuccess,
+    isCompileInitFetching,
+    refetchCompileInit,
+    setCompiledData,
+    setWorkbookData,
+  ]);
 
   // ── New handout: standalone template query ──
 

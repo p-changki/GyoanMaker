@@ -17,7 +17,7 @@ const DEFAULT_PROFILE: IllustrationProfile = {
   negativePrompt: "blurry, watermark, logo, text overlay, gore, nsfw",
   bannedKeywords: ["celebrity", "copyright character"],
   defaultQuality: "standard",
-  aspectRatio: "4:3",
+  aspectRatio: "16:9",
   updatedAt: new Date(0).toISOString(),
 };
 
@@ -162,7 +162,7 @@ export function normalizeJob(input: Partial<IllustrationJob>): IllustrationJob {
     referenceImage: normalizeReferenceImage(input.referenceImage),
     status: input.status || "queued",
     quality: input.quality || "standard",
-    aspectRatio: input.aspectRatio || "4:3",
+    aspectRatio: input.aspectRatio || "16:9",
     total: input.total || 0,
     completed: input.completed || 0,
     failed: input.failed || 0,

@@ -20,7 +20,12 @@ function validateOrigin(req: NextRequest): boolean {
   const { pathname } = req.nextUrl;
 
   // Webhook, NextAuth 콜백은 외부 Origin 허용
-  const csrfExemptPaths = ["/api/auth", "/api/billing/webhook", "/api/cron"];
+  const csrfExemptPaths = [
+    "/api/auth",
+    "/api/billing/webhook",
+    "/api/billing/paylink/callback",
+    "/api/cron",
+  ];
   if (csrfExemptPaths.some((p) => pathname.startsWith(p))) {
     return true;
   }
@@ -85,6 +90,7 @@ export const middleware = auth((req) => {
     "/about",
     "/api/auth",
     "/api/billing/webhook",
+    "/api/billing/paylink/callback",
     "/api/cron",
     "/_next",
     "/favicon.ico",
