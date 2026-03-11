@@ -118,7 +118,12 @@ function normalizeSectionStyle(raw: unknown): SectionStyleConfig {
       ? (obj.textAlign as "left" | "center" | "right" | "")
       : DEFAULT_SECTION_STYLE.textAlign;
 
-  return { paddingTop, paddingBottom, borderStyle, borderColor, titleColor, bgColor, textColor, fontFamily, titleWeight, textAlign };
+  const barWidth =
+    typeof obj.barWidth === "number" && obj.barWidth >= 0 && obj.barWidth <= 100
+      ? obj.barWidth
+      : undefined;
+
+  return { paddingTop, paddingBottom, borderStyle, borderColor, titleColor, bgColor, textColor, fontFamily, titleWeight, textAlign, ...(barWidth !== undefined && { barWidth }) };
 }
 
 function normalizeSectionStyles(raw: unknown): Partial<Record<Page2SectionKey, SectionStyleConfig>> | undefined {
