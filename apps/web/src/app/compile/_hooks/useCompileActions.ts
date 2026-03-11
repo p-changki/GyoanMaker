@@ -100,6 +100,11 @@ async function captureElementToPdf(
       if (clonedDoc.fonts?.ready) {
         await clonedDoc.fonts.ready;
       }
+      // html2canvas renders each character individually when letter-spacing != 0,
+      // causing floating-point y-offset errors (wavy text). Reset to 0 for stable rendering.
+      clonedDoc.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        el.style.letterSpacing = "0px";
+      });
       clonedDoc.querySelectorAll<HTMLElement>("[data-summary-bar]").forEach((bar) => {
         bar.style.overflow = "visible";
         bar.style.borderRadius = "12px";
