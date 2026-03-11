@@ -64,15 +64,14 @@ export default function PlanChangeModal({
                       type="plan"
                       planId={planId}
                       checkoutFlow="widget"
-                      label={isCurrent ? "위젯 재구매" : "위젯 구매"}
+                      label={isCurrent ? "위젯 연장" : "위젯 구매"}
                       className="w-full"
                     />
                     <TossPaymentButton
                       type="plan"
                       planId={planId}
                       checkoutFlow="paylink"
-                      label={isCurrent ? "페이링크 재구매 (준비중)" : "페이링크 구매 (준비중)"}
-                      disabled
+                      label={isCurrent ? "페이링크 연장" : "페이링크 구매"}
                       className="w-full bg-emerald-600 hover:bg-emerald-700"
                     />
                   </div>

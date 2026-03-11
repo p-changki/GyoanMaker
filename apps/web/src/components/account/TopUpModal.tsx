@@ -102,8 +102,7 @@ export default function TopUpModal({
                     type="topup"
                     packageId={pkg.id}
                     checkoutFlow="paylink"
-                    label="페이링크 결제 (준비중)"
-                    disabled
+                    label="페이링크 결제"
                     className="w-full bg-emerald-600 hover:bg-emerald-700"
                   />
                 </div>
@@ -142,8 +141,7 @@ export default function TopUpModal({
                     type="topup"
                     packageId={pkg.id}
                     checkoutFlow="paylink"
-                    label="페이링크 결제 (준비중)"
-                    disabled
+                    label="페이링크 결제"
                     className="w-full bg-emerald-600 hover:bg-emerald-700"
                   />
                 </div>
