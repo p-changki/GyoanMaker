@@ -58,7 +58,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
         <div className="flex flex-col min-w-0">
           {/* Section Title */}
           <div
-            className="mb-2 inline-flex items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg text-white self-start"
+            className="mb-2 flex w-fit items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg text-white self-start"
             style={{ backgroundColor: titleColor }}
           >
             <h3
@@ -98,7 +98,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
           <div className="flex-1 flex flex-col">
             {/* Sub-title badge */}
             <div
-              className="mb-2 inline-flex items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg text-white self-start"
+              className="mb-2 flex w-fit items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg text-white self-start"
               style={{ backgroundColor: flowHeaderColor }}
             >
               <h3

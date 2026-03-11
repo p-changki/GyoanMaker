@@ -60,6 +60,8 @@ export async function GET(req: NextRequest) {
         receiptType: d.receiptType ?? null,
         receiptPhone: d.receiptPhone ?? null,
         taxInvoiceInfo: d.taxInvoiceInfo ?? null,
+        taxStatus: (d.taxStatus ?? "none") as "none" | "pending" | "issued",
+        taxStatusUpdatedAt: d.taxStatusUpdatedAt ?? null,
       };
     });
 

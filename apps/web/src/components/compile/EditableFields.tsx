@@ -52,7 +52,7 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
         openModal("header-badge");
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] hover:opacity-90 transition-opacity whitespace-nowrap relative"
-      style={{ fontFamily: "inherit", fontWeight: "inherit" }}
+      style={{ fontFamily: "inherit", fontWeight: "inherit", display: "inline-block", verticalAlign: "middle" }}
       aria-label="헤더 텍스트 편집"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-current/60 transition-colors">
@@ -85,7 +85,7 @@ export const EditableAnalysisTitle = memo(function EditableAnalysisTitle({ passa
         openModal("page1-title", passageId);
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 font-bold hover:opacity-80 transition-opacity relative"
-      style={{ color: "inherit" }}
+      style={{ color: "inherit", display: "inline-block", verticalAlign: "middle" }}
       aria-label="분석 제목 편집"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
@@ -115,7 +115,7 @@ export const EditableSummaryTitleText = memo(function EditableSummaryTitleText()
         openModal("page2-header");
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap relative"
-      style={{ fontWeight: "inherit" }}
+      style={{ fontWeight: "inherit", display: "inline-block", verticalAlign: "middle" }}
       aria-label="요약 제목 편집"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-current/60 transition-colors">

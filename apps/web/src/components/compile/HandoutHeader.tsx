@@ -129,7 +129,7 @@ export function HandoutHeader({
   if (pageNum > 1) {
     return (
       <header
-        className="mb-6 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 shrink-0"
+        className="mb-8 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 shrink-0"
         style={{
           backgroundColor: hBgColor,
           borderBottom:
@@ -138,10 +138,10 @@ export function HandoutHeader({
               : undefined,
         }}
       >
-        <div className="flex items-center justify-end py-2">
+        <div className="flex items-end justify-end pb-4 pt-4">
           <HeaderClickZone focusKey="header-badge" label="배지">
             <div
-              className={`shrink-0 whitespace-nowrap ${hBadgeShape}`}
+              className={`shrink-0 whitespace-nowrap translate-y-4 ${hBadgeShape}`}
               style={{
                 backgroundColor: badgeBg,
                 color: badgeTextColor,
@@ -151,7 +151,8 @@ export function HandoutHeader({
                 height: `${hBadgeHeight}px`,
                 paddingLeft: `${hBadgePaddingX}px`,
                 paddingRight: `${hBadgePaddingX}px`,
-                display: "inline-flex",
+                display: "flex",
+                width: "fit-content",
                 alignItems: "center",
                 borderTop:
                   headerBadgeStyle.borderStyle &&
@@ -266,7 +267,8 @@ export function HandoutHeader({
               height: `${hBadgeHeight}px`,
               paddingLeft: `${hBadgePaddingX}px`,
               paddingRight: `${hBadgePaddingX}px`,
-              display: "inline-flex",
+              display: "flex",
+              width: "fit-content",
               alignItems: "center",
               borderTop:
                 headerBadgeStyle.borderStyle &&

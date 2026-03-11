@@ -26,7 +26,7 @@ export function TopicSection({ section }: { section: HandoutSection }) {
   return (
     <div style={bgColor ? { backgroundColor: bgColor, borderRadius: "8px", padding: "8px" } : undefined}>
       <div
-        className="inline-flex items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg mb-3"
+        className="flex w-fit items-center justify-center px-4 pt-[5px] pb-[7px] rounded-lg mb-3"
         style={{ backgroundColor: titleColor, boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)" }}
       >
         <h3
