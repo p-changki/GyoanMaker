@@ -40,8 +40,12 @@ export function useWorkbookGenerator() {
 
         if (!res.ok) {
           const error = (await res.json().catch(() => null)) as
-            | { error?: { message?: string } }
+            | { error?: { code?: string; message?: string } }
             | null;
+          if (res.status === 429 && error?.error?.code === "QUOTA_EXCEEDED") {
+            const model = selectedModel === "flash" ? "빠른 생성" : "정밀 생성";
+            throw new Error(`QUOTA_EXCEEDED:${model} 사용량 한도를 초과했습니다. 플랜을 업그레이드하거나 다음 달까지 기다려주세요.`);
+          }
           throw new Error(error?.error?.message ?? "워크북 생성에 실패했습니다.");
         }
 

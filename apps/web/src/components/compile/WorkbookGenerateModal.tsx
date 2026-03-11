@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useWorkbookGenerator } from "@/app/workbook/_hooks/useWorkbookGenerator";
@@ -35,6 +36,7 @@ export default function WorkbookGenerateModal({
   const setGenerateError = useWorkbookStore((state) => state.setGenerateError);
   const setIncludeInCompile = useWorkbookStore((state) => state.setIncludeInCompile);
 
+  const router = useRouter();
   const { generate } = useWorkbookGenerator();
   const { status } = useSession();
   const { data: quota } = useQuery<QuotaStatusResponse>({
@@ -71,7 +73,7 @@ export default function WorkbookGenerateModal({
         if (e.target === e.currentTarget && !isGenerating) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl p-8 mx-4 space-y-6">
+      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl p-8 mx-4 space-y-6">
         {/* Header */}
         <div>
           <h2 className="text-xl font-black text-gray-900">워크북 생성</h2>
@@ -112,9 +114,38 @@ export default function WorkbookGenerateModal({
         </div>
 
         {/* Error */}
-        {generateError && (
+        {generateError && !generateError.startsWith("QUOTA_EXCEEDED:") && (
           <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-600">
             {generateError}
+          </div>
+        )}
+
+        {/* Quota exceeded overlay */}
+        {generateError?.startsWith("QUOTA_EXCEEDED:") && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 backdrop-blur-sm p-6">
+            <div className="text-center max-w-xs space-y-4">
+              <div className="text-4xl">🚫</div>
+              <h4 className="text-lg font-black text-gray-900">사용량 한도 초과</h4>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                {generateError.slice("QUOTA_EXCEEDED:".length)}
+              </p>
+              <div className="flex justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setGenerateError(null); onClose(); }}
+                  className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/pricing")}
+                  className="rounded-xl bg-[#5E35B1] px-5 py-2 text-sm font-bold text-white hover:bg-[#4527A0] transition-colors"
+                >
+                  플랜 업그레이드
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

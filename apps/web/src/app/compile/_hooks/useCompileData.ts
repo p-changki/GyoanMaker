@@ -20,6 +20,7 @@ export function useCompileData() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveTitle, setSaveTitle] = useState("");
+  const [storageLimitError, setStorageLimitError] = useState(false);
 
   const setApplying = useHandoutStore((state) => state.setApplying);
   const setProgress = useHandoutStore((state) => state.setProgress);
@@ -136,7 +137,14 @@ export function useCompileData() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error("Failed to save handout.");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const code = errorData?.error?.code;
+        if (res.status === 403 && code === "STORAGE_LIMIT_EXCEEDED") {
+          throw new Error("STORAGE_LIMIT_EXCEEDED");
+        }
+        throw new Error("Failed to save handout.");
+      }
       return res.json();
     },
     onSuccess: (data: { id?: string; updated?: boolean }) => {
@@ -159,6 +167,11 @@ export function useCompileData() {
   const handleSaveConfirm = useCallback(() => {
     saveMutation.mutate(undefined, {
       onSettled: () => setShowSaveModal(false),
+      onError: (error: Error) => {
+        if (error.message === "STORAGE_LIMIT_EXCEEDED") {
+          setStorageLimitError(true);
+        }
+      },
     });
   }, [saveMutation]);
 
@@ -203,6 +216,8 @@ export function useCompileData() {
     handleExportPDF,
     handleSave,
     handleSaveConfirm,
+    storageLimitError,
+    setStorageLimitError,
     activeSample: illustration.activeSample,
   };
 }

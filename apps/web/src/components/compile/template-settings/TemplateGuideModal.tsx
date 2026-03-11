@@ -80,9 +80,9 @@ export default function TemplateGuideModal({
           <section className="space-y-3">
             <SectionHeader
               icon={<OverviewIcon />}
-              title="교안 만들기 3단계"
+              title="교안 만들기 흐름"
             />
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <StepCard
                 step="1"
                 label="템플릿 적용"
@@ -91,14 +91,20 @@ export default function TemplateGuideModal({
               />
               <StepCard
                 step="2"
-                label="편집"
-                desc="미리보기에서 제목, 내용을 직접 수정합니다."
+                label="편집 & 디자인"
+                desc="미리보기에서 내용을 수정하고 스타일을 설정합니다."
                 color="blue"
               />
               <StepCard
                 step="3"
-                label="PDF 다운로드"
-                desc="완성된 교안을 PDF로 내보냅니다."
+                label="일러스트 & 워크북"
+                desc="AI 삽화와 워크북을 추가합니다. (선택)"
+                color="amber"
+              />
+              <StepCard
+                step="4"
+                label="저장 & PDF"
+                desc="교안을 저장하고 PDF로 내보냅니다."
                 color="emerald"
               />
             </div>
@@ -116,22 +122,32 @@ export default function TemplateGuideModal({
               <FeatureRow
                 badge="교안 템플릿 적용"
                 badgeColor="bg-[#5E35B1] text-white"
-                desc="AI 분석 결과 20개를 교안 레이아웃으로 변환합니다. 이 버튼을 먼저 눌러주세요."
+                desc="AI 분석 결과를 교안 레이아웃으로 변환합니다. 이 버튼을 먼저 눌러주세요."
+              />
+              <FeatureRow
+                badge="일러스트 적용"
+                badgeColor="bg-[#F59E0B] text-white"
+                desc="AI가 각 지문에 맞는 삽화를 자동 생성합니다. 교안 저장 후 사용할 수 있으며, 스타일·화질·컨셉 등을 설정할 수 있습니다."
+              />
+              <FeatureRow
+                badge="워크북 생성"
+                badgeColor="bg-white border border-gray-200 text-gray-700"
+                desc="파싱된 지문으로 STEP 1~3 워크북을 자동 생성합니다. ⚡ 빠른 생성(경제적)과 ✦ 정밀 생성(고품질) 중 선택할 수 있습니다."
               />
               <FeatureRow
                 badge="교안 저장"
-                badgeColor="bg-white border border-gray-200 text-gray-700"
-                desc="현재 교안을 교안 저장소에 저장합니다. 나중에 다시 불러올 수 있습니다."
-              />
-              <FeatureRow
-                badge="전체 복사 / TXT 다운로드"
-                badgeColor="bg-white border border-gray-200 text-gray-700"
-                desc="교안 텍스트를 클립보드에 복사하거나 TXT 파일로 다운로드합니다."
+                badgeColor="bg-white border border-[#5E35B1] text-[#5E35B1]"
+                desc="현재 교안을 저장소에 저장합니다. 대시보드에서 다시 불러올 수 있습니다."
               />
               <FeatureRow
                 badge="PDF 다운로드"
                 badgeColor="bg-gray-50 border border-dashed border-gray-300 text-gray-500"
-                desc="최종 교안을 PDF 파일로 내보냅니다. 파일명을 직접 지정할 수도 있습니다."
+                desc="최종 교안을 PDF 파일로 내보냅니다. 파일명을 직접 지정할 수 있으며, 워크북 포함 여부도 선택 가능합니다."
+              />
+              <FeatureRow
+                badge="전체 복사 / TXT"
+                badgeColor="bg-white border border-gray-200 text-gray-700"
+                desc="교안 텍스트를 클립보드에 복사하거나 TXT 파일로 다운로드합니다."
               />
             </div>
           </section>
@@ -145,19 +161,18 @@ export default function TemplateGuideModal({
               title="설정 탭 — 교안 디자인 커스터마이징"
             />
             <div className="space-y-2">
-              <SettingRow emoji="🏫" title="브랜딩" desc="학원 로고와 캐릭터 이미지를 업로드합니다. 교안 상단과 2페이지에 표시됩니다." />
+              <SettingRow emoji="🏫" title="브랜딩" desc="학원 로고와 캐릭터 이미지를 업로드합니다. 교안 상단과 2페이지에 표시되며, 요약바 너비도 조절할 수 있습니다." />
               <SettingRow emoji="🎨" title="테마" desc="5가지 색상 프리셋(퍼플/블루/그린/블랙/화이트) 중 선택하거나, 커스텀 색상을 직접 지정할 수 있습니다." />
-              <SettingRow emoji="🔤" title="폰트" desc="11종 글꼴(프리텐다드/나눔고딕/지마켓산스/KoPub돋움체/Times New Roman 등), 크기, 제목 굵기를 조절합니다." />
+              <SettingRow emoji="🔤" title="폰트" desc="영어·한글 폰트를 각각 설정할 수 있습니다. 11종 글꼴, 크기, 제목 굵기를 조절하며, 섹션별로 개별 폰트 지정도 가능합니다." />
               <SettingRow emoji="📋" title="섹션 구성" desc="2페이지의 섹션(주제문, 요약, 흐름, 어휘)을 드래그로 순서 변경하거나 숨길 수 있습니다. 커스텀 텍스트 섹션을 최대 5개까지 추가할 수도 있습니다." />
               <SettingRow emoji="✏️" title="커스텀 섹션" desc="'+ 섹션 추가' 버튼으로 나만의 텍스트 섹션을 만들 수 있습니다. 제목과 본문을 자유롭게 입력하고, 스타일도 개별 설정 가능합니다." />
               <SettingRow emoji="📊" title="어휘 레이아웃" desc="어휘 표를 2열/3열/4열 중 선택하고, 유의어·반의어 열을 개별적으로 표시하거나 숨길 수 있습니다." />
               <SettingRow emoji="🌐" title="요약 언어" desc="요약 섹션에서 영어+한국어, 영어만, 한국어만 중 표시할 언어를 선택할 수 있습니다." />
-              <SettingRow emoji="🖌️" title="섹션별 스타일" desc="각 섹션의 배경색, 제목색, 텍스트색, 여백, 구분선을 개별 조절할 수 있습니다." />
+              <SettingRow emoji="🖌️" title="섹션별 스타일" desc="각 섹션의 배경색, 제목색, 텍스트색, 폰트(영어/한글 개별), 여백, 구분선을 개별 조절할 수 있습니다. 섹션 클릭으로 편집 모달도 열 수 있습니다." />
               <SettingRow emoji="📐" title="1페이지 레이아웃" desc="영어 컬럼 비율, 번호 스타일(01/1/①), 테이블 테두리 두께를 설정합니다. 문장 번호와 한국어 열의 표시/숨김도 토글할 수 있습니다." />
               <SettingRow emoji="↔️" title="텍스트 정렬" desc="각 섹션별로 텍스트를 왼쪽/가운데/오른쪽으로 정렬할 수 있습니다." />
               <SettingRow emoji="🧑‍🏫" title="아바타 설정" desc="2페이지 요약바의 캐릭터 위치, 크기를 조절하고, 레이어(앞/뒤)를 전환하여 바 위 또는 뒤에 배치할 수 있습니다. 기본 캐릭터와 업로드 이미지 모두 지원합니다." />
               <SettingRow emoji="🖼️" title="Visual Summary" desc="일러스트와 내용 정리가 2컬럼 레이아웃으로 나란히 표시됩니다. 내용 정리 항목의 배경색도 개별 설정 가능합니다." />
-              <SettingRow emoji="🔠" title="추가 폰트" desc="지마켓산스 Bold/Medium, KoPub돋움체, Times New Roman 등 11종의 폰트를 섹션별로 선택할 수 있습니다." />
             </div>
           </section>
 
@@ -196,10 +211,13 @@ export default function TemplateGuideModal({
               icon={<PencilIcon />}
               title="인라인 편집"
             />
-            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-100 space-y-2">
+            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-100 space-y-3">
               <p className="text-xs text-gray-700 leading-relaxed">
                 미리보기 영역에서 <strong>헤더 텍스트</strong>, <strong>분석 제목</strong>, <strong>요약 제목</strong>을
                 직접 클릭하면 편집할 수 있습니다.
+              </p>
+              <p className="text-xs text-gray-700 leading-relaxed">
+                2페이지의 <strong>각 섹션을 클릭</strong>하면 섹션 편집 모달이 열려 내용, 스타일, 폰트를 한 번에 수정할 수 있습니다.
               </p>
               <div className="flex items-center gap-2 text-xs text-gray-500">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-md border border-gray-200 text-[10px] font-medium">
@@ -254,11 +272,13 @@ function StepCard({ step, label, desc, color }: { step: string; label: string; d
   const styles: Record<string, string> = {
     purple: "bg-purple-50/50 border-purple-100",
     blue: "bg-blue-50/50 border-blue-100",
+    amber: "bg-amber-50/50 border-amber-100",
     emerald: "bg-emerald-50/50 border-emerald-100",
   };
   const badges: Record<string, string> = {
     purple: "bg-purple-600",
     blue: "bg-blue-600",
+    amber: "bg-amber-600",
     emerald: "bg-emerald-600",
   };
   return (
