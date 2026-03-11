@@ -45,7 +45,6 @@ function useVocabEdit({ section, vocabIndex }: Omit<VocabEditProps, "titleColor"
 
 function VocabRow4({
   vocab,
-  index: _index,
   vocabIndex,
   fontSizes,
   fontCss,
@@ -57,7 +56,6 @@ function VocabRow4({
   section,
 }: {
   vocab: VocabItem;
-  index: number;
   vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
@@ -123,7 +121,6 @@ function VocabRow4({
 
 function VocabRow3({
   vocab,
-  index: _index,
   vocabIndex,
   fontSizes,
   fontCss,
@@ -133,7 +130,6 @@ function VocabRow3({
   section,
 }: {
   vocab: VocabItem;
-  index: number;
   vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
@@ -176,7 +172,6 @@ function VocabRow3({
 
 function VocabRow2({
   vocab,
-  index: _index,
   vocabIndex,
   fontSizes,
   fontCss,
@@ -186,7 +181,6 @@ function VocabRow2({
   section,
 }: {
   vocab: VocabItem;
-  index: number;
   vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
@@ -294,7 +288,6 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
                 <VocabRow4
                   key={`${vocab.word}-${vocab.meaning}-${idx}`}
                   vocab={vocab}
-                  index={idx}
                   vocabIndex={vocabIndex}
                   fontSizes={fontSizes}
                   fontCss={fontCss}
@@ -312,7 +305,6 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
                 <VocabRow3
                   key={`${vocab.word}-${vocab.meaning}-${idx}`}
                   vocab={vocab}
-                  index={idx}
                   vocabIndex={vocabIndex}
                   fontSizes={fontSizes}
                   fontCss={fontCss}
@@ -327,7 +319,6 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
               <VocabRow2
                 key={`${vocab.word}-${vocab.meaning}-${idx}`}
                 vocab={vocab}
-                index={idx}
                 vocabIndex={vocabIndex}
                 fontSizes={fontSizes}
                 fontCss={fontCss}
