@@ -119,6 +119,9 @@ export function HandoutHeader({
     TITLE_WEIGHT_MAP[headerBadgeStyle.titleWeight || globalTitleWeight]
       ?.value ?? 700;
   const badgeAlign = headerBadgeStyle.textAlign || "right";
+  const hBadgeShape = headerBadgeStyle.badgeShape || "rounded-none";
+  const hBadgeHeight = headerBadgeStyle.badgeHeight || 28;
+  const hBadgePaddingX = headerBadgeStyle.badgePaddingX || 16;
 
   // Continuation pages: minimal header
   if (pageNum > 1) {
@@ -180,19 +183,18 @@ export function HandoutHeader({
           </HeaderClickZone>
           <HeaderClickZone focusKey="header-badge" label="배지">
             <div
-              className="px-3 py-1 shrink-0 whitespace-nowrap"
+              className={`shrink-0 whitespace-nowrap ${hBadgeShape}`}
               style={{
                 backgroundColor: badgeBg,
                 color: badgeTextColor,
                 fontSize: `${fontSizes.headerBadge}px`,
                 fontFamily: badgeFontCss,
                 fontWeight: badgeWeight,
-                paddingTop: headerBadgeStyle.paddingTop
-                  ? `${headerBadgeStyle.paddingTop}px`
-                  : undefined,
-                paddingBottom: headerBadgeStyle.paddingBottom
-                  ? `${headerBadgeStyle.paddingBottom}px`
-                  : undefined,
+                height: `${hBadgeHeight}px`,
+                paddingLeft: `${hBadgePaddingX}px`,
+                paddingRight: `${hBadgePaddingX}px`,
+                display: "inline-flex",
+                alignItems: "center",
                 borderTop:
                   headerBadgeStyle.borderStyle &&
                   headerBadgeStyle.borderStyle !== "none"
@@ -296,19 +298,18 @@ export function HandoutHeader({
           className="shrink-0"
         >
           <div
-            className="px-4 py-1.5 whitespace-nowrap translate-y-4 relative z-20"
+            className={`whitespace-nowrap translate-y-4 relative z-20 ${hBadgeShape}`}
             style={{
               backgroundColor: badgeBg,
               color: badgeTextColor,
               fontSize: `${fontSizes.headerBadge}px`,
               fontFamily: badgeFontCss,
               fontWeight: badgeWeight,
-              paddingTop: headerBadgeStyle.paddingTop
-                ? `${headerBadgeStyle.paddingTop}px`
-                : undefined,
-              paddingBottom: headerBadgeStyle.paddingBottom
-                ? `${headerBadgeStyle.paddingBottom}px`
-                : undefined,
+              height: `${hBadgeHeight}px`,
+              paddingLeft: `${hBadgePaddingX}px`,
+              paddingRight: `${hBadgePaddingX}px`,
+              display: "inline-flex",
+              alignItems: "center",
               borderTop:
                 headerBadgeStyle.borderStyle &&
                 headerBadgeStyle.borderStyle !== "none"

@@ -18,6 +18,8 @@ export function useSectionStyle(sectionKey: Page2SectionKey) {
   const fontFamily = style.fontFamily || globalFontFamily;
   const titleWeight = style.titleWeight || globalTitleWeight;
 
+  const textAlign = (style.textAlign || "justify") as "left" | "center" | "right" | "justify";
+
   return {
     titleColor: style.titleColor || theme.primary,
     bgColor: style.bgColor || "",
@@ -28,5 +30,6 @@ export function useSectionStyle(sectionKey: Page2SectionKey) {
     fontFamily,
     titleWeight,
     fontSizes,
+    textAlign,
   };
 }

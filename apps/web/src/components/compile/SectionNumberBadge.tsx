@@ -37,6 +37,8 @@ export default function SectionNumberBadge({
   const fontCss = config?.fontFamily
     ? FONT_FAMILY_MAP[config.fontFamily].css
     : DEFAULT_BADGE_FONT;
+  const badgeWidth = config?.width || 168;
+  const badgeHeight = config?.height || 86;
 
   const handleSave = useCallback(
     (partial: Partial<SectionBadgeConfig>) => {
@@ -48,15 +50,21 @@ export default function SectionNumberBadge({
 
   return (
     <>
-      <div className="absolute top-0 left-8 md:left-12 xl:left-16 w-[125px] md:w-[168px] h-[68px] md:h-[86px] z-20">
+      <div
+        className="absolute top-0 left-8 md:left-12 xl:left-16 z-20"
+        style={{ width: `${badgeWidth}px`, height: `${badgeHeight}px` }}
+      >
         {/* Solid Drop Shadow */}
-        <div className="absolute top-[6px] left-[6px] w-[125px] md:w-[168px] h-[68px] md:h-[86px] bg-[#D1D5DB] rounded-b-[18px] z-0" />
+        <div
+          className="absolute top-[6px] left-[6px] bg-[#D1D5DB] rounded-b-[18px] z-0"
+          style={{ width: `${badgeWidth}px`, height: `${badgeHeight}px` }}
+        />
         {/* Main Background Block */}
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="absolute top-0 left-0 w-[125px] md:w-[168px] h-[68px] md:h-[86px] rounded-b-[18px] flex items-start justify-start pl-4 pt-3 z-10 border-0 cursor-pointer group/badge"
-          style={{ backgroundColor: bgColor }}
+          className="absolute top-0 left-0 rounded-b-[18px] flex items-start justify-start pl-4 pt-3 z-10 border-0 cursor-pointer group/badge"
+          style={{ backgroundColor: bgColor, width: `${badgeWidth}px`, height: `${badgeHeight}px` }}
           aria-label="섹션 번호 편집"
         >
           <span
@@ -77,7 +85,7 @@ export default function SectionNumberBadge({
       {isOpen && (
         <BadgeEditModal
           title={sectionKey === "handout" ? "교안 섹션 뱃지" : "워크북 섹션 뱃지"}
-          config={{ label, textColor, bgColor, fontFamily: config?.fontFamily || "", fontSize }}
+          config={{ label, textColor, bgColor, fontFamily: config?.fontFamily || "", fontSize, width: badgeWidth, height: badgeHeight }}
           defaultNumber={defaultNumber}
           themeColor={color}
           onSave={handleSave}
@@ -107,7 +115,7 @@ function BadgeEditModal({
   onClose,
 }: {
   title: string;
-  config: { label: string; textColor: string; bgColor: string; fontFamily: FontFamily | ""; fontSize: number };
+  config: { label: string; textColor: string; bgColor: string; fontFamily: FontFamily | ""; fontSize: number; width: number; height: number };
   defaultNumber: string;
   themeColor: string;
   onSave: (partial: Partial<SectionBadgeConfig>) => void;
@@ -118,6 +126,8 @@ function BadgeEditModal({
   const [bgColor, setBgColor] = useState(config.bgColor);
   const [fontFamily, setFontFamily] = useState<FontFamily | "">(config.fontFamily);
   const [fontSize, setFontSize] = useState(config.fontSize);
+  const [badgeWidth, setBadgeWidth] = useState(config.width);
+  const [badgeHeight, setBadgeHeight] = useState(config.height);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -133,8 +143,10 @@ function BadgeEditModal({
       bgColor: bgColor === themeColor ? "" : bgColor,
       fontFamily,
       fontSize,
+      width: badgeWidth,
+      height: badgeHeight,
     });
-  }, [label, textColor, bgColor, fontFamily, fontSize, defaultNumber, themeColor, onSave]);
+  }, [label, textColor, bgColor, fontFamily, fontSize, badgeWidth, badgeHeight, defaultNumber, themeColor, onSave]);
 
   // Preview font for the label
   const previewFont = fontFamily
@@ -157,8 +169,12 @@ function BadgeEditModal({
         {/* Preview */}
         <div className="flex justify-center py-3">
           <div
-            className="rounded-b-[18px] px-6 py-4 flex items-center justify-center"
-            style={{ backgroundColor: bgColor, minWidth: 80 }}
+            className="rounded-b-[18px] flex items-center justify-center"
+            style={{
+              backgroundColor: bgColor,
+              width: `${Math.round(badgeWidth * 0.7)}px`,
+              height: `${Math.round(badgeHeight * 0.7)}px`,
+            }}
           >
             <span
               className="font-black leading-none"
@@ -251,6 +267,40 @@ function BadgeEditModal({
             className="w-full accent-current"
             style={{ accentColor: themeColor }}
           />
+        </div>
+
+        {/* Badge dimensions */}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="text-[11px] font-semibold text-gray-400 mb-1 block">
+              가로 ({badgeWidth}px)
+            </label>
+            <input
+              type="range"
+              min={80}
+              max={280}
+              step={4}
+              value={badgeWidth}
+              onChange={(e) => setBadgeWidth(Number(e.target.value))}
+              className="w-full accent-current"
+              style={{ accentColor: themeColor }}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-[11px] font-semibold text-gray-400 mb-1 block">
+              세로 ({badgeHeight}px)
+            </label>
+            <input
+              type="range"
+              min={40}
+              max={140}
+              step={2}
+              value={badgeHeight}
+              onChange={(e) => setBadgeHeight(Number(e.target.value))}
+              className="w-full accent-current"
+              style={{ accentColor: themeColor }}
+            />
+          </div>
         </div>
 
         {/* Actions */}
