@@ -111,7 +111,7 @@ function PassageNumberChip({
 }) {
   const passageNumber = passageId.slice(1).padStart(2, "0");
   return (
-    <div className="relative inline-flex flex-col items-start translate-y-0 z-10 shrink-0">
+    <div className="relative flex flex-col items-start w-fit translate-y-0 z-10 shrink-0">
       {/* "Number" Label */}
       <span
         className="absolute -top-[14px] left-0"
@@ -152,7 +152,6 @@ function PassageNumberChip({
               fontSize: "20px",
               lineHeight: 1,
               fontFamily: '"Arial Black", "Impact", sans-serif', // Boldest sans
-              transform: "translateY(1px)",
             }}
           >
             {passageNumber}
@@ -300,7 +299,7 @@ export function ParsedHandoutViewPage1({
               </div>
             )}
             <div
-              className={`inline-flex items-center justify-center font-bold border ${badgeShape} relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
+              className={`flex w-fit items-center justify-center font-bold border ${badgeShape} relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
               style={{
                 color: p1TitleColor,
                 borderColor: p1TitleColor,
@@ -313,9 +312,7 @@ export function ParsedHandoutViewPage1({
                 letterSpacing: "0.01em",
               }}
             >
-              <span className="translate-y-px">
-                <EditableAnalysisTitle passageId={section.passageId} />
-              </span>
+              <EditableAnalysisTitle passageId={section.passageId} />
             </div>
           </div>
         </ClickZone>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface QuotaModelStatus {
   limit: number;
@@ -35,6 +35,21 @@ export default function QuotaPanel({ email }: { email: string }) {
   const [editPlan, setEditPlan] = useState<"free" | "basic" | "standard" | "pro">("free");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+
+  // Manual bank transfer grant state
+  const [showManualGrant, setShowManualGrant] = useState(false);
+  const [manualPlan, setManualPlan] = useState<"free" | "basic" | "standard" | "pro">("basic");
+  const [manualEndDate, setManualEndDate] = useState("");
+  const [manualAmount, setManualAmount] = useState("");
+  const [manualMemo, setManualMemo] = useState("");
+  const [granting, setGranting] = useState(false);
+  const [grantMsg, setGrantMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const defaultEndDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  }, []);
 
   const fetchQuota = useCallback(async () => {
     setLoading(true);
@@ -138,6 +153,38 @@ export default function QuotaPanel({ email }: { email: string }) {
       setSaveMsg(err instanceof Error ? err.message : "Plan save failed");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleManualGrant = async () => {
+    const endDate = manualEndDate || defaultEndDate;
+    setGranting(true);
+    setGrantMsg(null);
+    try {
+      const res = await fetch("/api/admin/billing/manual-grant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          planId: manualPlan,
+          periodEndAt: endDate,
+          amount: manualAmount.trim() ? parseInt(manualAmount, 10) : 0,
+          memo: manualMemo.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error?.message ?? "플랜 부여 실패");
+      }
+      setGrantMsg({ text: `${manualPlan.toUpperCase()} 플랜 부여 완료 (만료: ${endDate})`, ok: true });
+      setManualMemo("");
+      setManualAmount("");
+      await fetchQuota();
+      setTimeout(() => setGrantMsg(null), 4000);
+    } catch (err) {
+      setGrantMsg({ text: err instanceof Error ? err.message : "오류 발생", ok: false });
+    } finally {
+      setGranting(false);
     }
   };
 
@@ -276,6 +323,98 @@ export default function QuotaPanel({ email }: { email: string }) {
           {saveMsg}
         </p>
       )}
+
+      {/* Manual Bank Transfer Grant */}
+      <div className="pt-3 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={() => setShowManualGrant((v) => !v)}
+          className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors"
+        >
+          <span className="text-[10px]">{showManualGrant ? "▲" : "▼"}</span>
+          무통장 수동 부여
+        </button>
+
+        {showManualGrant && (
+          <div className="mt-3 space-y-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100">
+            <p className="text-[10px] text-purple-600 font-medium">
+              플랜 부여 후 billing_orders에 수동 기록이 생성됩니다.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  플랜
+                </label>
+                <select
+                  value={manualPlan}
+                  onChange={(e) => setManualPlan(e.target.value as typeof manualPlan)}
+                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                >
+                  <option value="basic">BASIC</option>
+                  <option value="standard">STANDARD</option>
+                  <option value="pro">PRO</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  만료일
+                </label>
+                <input
+                  type="date"
+                  value={manualEndDate || defaultEndDate}
+                  onChange={(e) => setManualEndDate(e.target.value)}
+                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  입금액 (원, 선택)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={manualAmount}
+                  onChange={(e) => setManualAmount(e.target.value)}
+                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  메모 (선택)
+                </label>
+                <input
+                  type="text"
+                  placeholder="입금자명, 특이사항 등"
+                  value={manualMemo}
+                  onChange={(e) => setManualMemo(e.target.value)}
+                  maxLength={200}
+                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleManualGrant}
+              disabled={granting}
+              className="w-full px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+            >
+              {granting ? "처리 중..." : "플랜 부여 + 기록 저장"}
+            </button>
+
+            {grantMsg && (
+              <p className={`text-xs font-medium ${grantMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                {grantMsg.text}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -149,6 +149,48 @@ export async function changePlan(
 }
 
 /**
+ * Manually grants a plan with a custom end date (for bank transfer / admin override).
+ * Unlike changePlan, this accepts an explicit periodEndAt instead of auto-calculating it.
+ */
+export async function changePlanManual(
+  email: string,
+  targetPlan: PlanId,
+  periodEndAt: string | null
+): Promise<UserPlan> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = (snap.data() ?? {}) as UserDocLike;
+
+    const now = getNowIso();
+    const periodKey = targetPlan === "free" ? getMonthKeyKst() : now.slice(0, 10);
+
+    const nextPlan: UserPlan = {
+      tier: targetPlan,
+      status: "active",
+      currentPeriodStartAt: now,
+      currentPeriodEndAt: targetPlan === "free" ? null : (periodEndAt ?? null),
+    };
+
+    tx.set(
+      docRef,
+      {
+        plan: nextPlan,
+        planPendingTier: FieldValue.delete(),
+        billingKey: FieldValue.delete(),
+        quota: upsertPlanLimits(data, targetPlan, periodKey),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return nextPlan;
+  });
+}
+
+/**
  * Lazily expires a plan if currentPeriodEndAt is in the past.
  * Returns true if the plan was expired and downgraded to free.
  */
