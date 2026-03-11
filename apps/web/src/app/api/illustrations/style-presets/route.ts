@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       characterGuide: clamp(body.characterGuide, 300),
       negativePrompt: clamp(body.negativePrompt, 400),
       defaultQuality: isQuality(body.defaultQuality) ? body.defaultQuality : "standard",
-      aspectRatio: isAspectRatio(body.aspectRatio) ? body.aspectRatio : "4:3",
+      aspectRatio: isAspectRatio(body.aspectRatio) ? body.aspectRatio : "16:9",
     });
 
     return NextResponse.json({ preset }, { status: 201 });

@@ -148,7 +148,7 @@ export default function IllustrationConceptPage() {
 
     try {
       const quality: IllustrationQuality = profile?.defaultQuality ?? "standard";
-      const aspectRatio: IllustrationAspectRatio = profile?.aspectRatio ?? "4:3";
+      const aspectRatio: IllustrationAspectRatio = profile?.aspectRatio ?? "16:9";
 
       const res = await fetch("/api/illustrations/profile/sample", {
         method: "POST",

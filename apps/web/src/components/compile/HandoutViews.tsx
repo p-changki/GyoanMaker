@@ -486,8 +486,9 @@ export function ParsedHandoutViewPage2({
 
         <ClickZone focusKey="page2-header" label="요약바">
           <div
-            className="relative z-10 mb-3 h-10 rounded-r-xl flex items-center pr-10 w-[95%] mt-1"
+            className="relative z-10 mb-3 h-10 rounded-xl flex items-center pr-10 mt-1 overflow-hidden"
             style={{
+              width: `${page2HeaderStyle?.barWidth ?? 95}%`,
               backgroundColor: page2HeaderStyle?.bgColor || theme.primary,
 
               paddingTop: page2HeaderStyle?.paddingTop ?? 0,

@@ -75,6 +75,9 @@ export default function PlanChangeModal({
                       className="w-full bg-emerald-600 hover:bg-emerald-700"
                     />
                   </div>
+                  <p className="mt-2 text-[11px] text-amber-600">
+                    페이링크 결제는 승인 완료 후 활성화됩니다.
+                  </p>
                 </div>
               );
             }
