@@ -85,7 +85,7 @@ export default function BankTransferSection() {
 
   const handleCopyAccount = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText("3333-00-0000000");
+      await navigator.clipboard.writeText("토스뱅크 1002-4752-1132");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -167,7 +167,7 @@ export default function BankTransferSection() {
   const canSubmit = !!selectedProduct && !!depositorName.trim() && isReceiptValid && !isSubmitting;
 
   return (
-    <div className="mx-auto max-w-lg space-y-5">
+    <div className="space-y-5">
       {/* Request form */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6">
         <h3 className="text-base font-bold text-gray-900">입금 신청</h3>
@@ -469,12 +469,12 @@ export default function BankTransferSection() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">은행</dt>
-              <dd className="font-semibold text-gray-900">카카오뱅크</dd>
+              <dd className="font-semibold text-gray-900">토스뱅크</dd>
             </div>
             <div className="flex justify-between items-center">
               <dt className="text-gray-500">계좌번호</dt>
               <dd className="flex items-center gap-2">
-                <span className="font-semibold text-gray-900">3333-00-0000000</span>
+                <span className="font-semibold text-gray-900">1002-4752-1132</span>
                 <button
                   type="button"
                   onClick={handleCopyAccount}

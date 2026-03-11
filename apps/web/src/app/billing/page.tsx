@@ -38,15 +38,15 @@ async function fetchBillingStatus(): Promise<BillingStatusResponse> {
 }
 
 const TABS: { key: Tab; label: string }[] = [
+  { key: "bank", label: "무통장입금" },
   { key: "plan", label: "이용권 구매" },
   { key: "topup", label: "크레딧 충전" },
-  { key: "bank", label: "무통장입금" },
 ];
 
 function BillingPageContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const activeTab: Tab = isTab(tabParam) ? tabParam : "plan";
+  const activeTab: Tab = isTab(tabParam) ? tabParam : "bank";
   const targetParam = searchParams.get("target");
   const targetPlan = isPlanId(targetParam) ? targetParam : null;
 

@@ -198,7 +198,7 @@ export async function sendOrderReceivedEmail(info: OrderEmailInfo): Promise<void
     <div style="padding:14px 16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:20px;">
       <p style="margin:0 0 6px;font-size:13px;font-weight:600;color:#374151;">입금 계좌</p>
       <p style="margin:0;font-size:14px;color:#111;line-height:1.6;">
-        카카오뱅크 <strong>3333-00-0000000</strong><br/>
+        토스뱅크 <strong>1002-4752-1132</strong><br/>
         예금주: 박창기
       </p>
     </div>

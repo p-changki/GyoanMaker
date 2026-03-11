@@ -10,6 +10,7 @@ import type { CreditEntry } from "@gyoanmaker/shared/types";
 import UsageBar from "./UsageBar";
 import DeleteAccountModal from "./DeleteAccountModal";
 import SubscriptionInfoSection from "./SubscriptionInfoSection";
+import RecentOrders from "./RecentOrders";
 import HistoryTabs from "./HistoryTabs";
 
 interface BillingStatusResponse {
@@ -51,6 +52,12 @@ export default function AccountDashboard() {
 
   const currentPlan = data?.subscription?.tier ?? "free";
   const periodEndAt = data?.subscription?.currentPeriodEndAt ?? null;
+
+  const now = new Date();
+  const endDate = periodEndAt ? new Date(periodEndAt) : null;
+  const isExpired = endDate ? endDate < now : false;
+  const daysLeft = endDate ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+  const isExpiringSoon = !isExpired && daysLeft !== null && daysLeft <= 7 && daysLeft >= 0;
 
   if (isLoading || !data) {
     return (
@@ -134,23 +141,51 @@ export default function AccountDashboard() {
             </div>
           </div>
 
-          {/* Right: action buttons */}
-          <div className="flex gap-2 sm:shrink-0">
-            <Link
-              href="/billing?tab=topup"
-              className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              충전
-            </Link>
-            <Link
-              href="/billing?tab=plan"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
-            >
-              플랜 변경
-            </Link>
-          </div>
+          {/* Right: action button */}
+          <Link
+            href="/billing"
+            className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 sm:shrink-0"
+          >
+            결제하기
+          </Link>
         </div>
       </section>
+
+      {/* Expiry warning banner */}
+      {currentPlan !== "free" && isExpired && (
+        <section className="flex items-center justify-between rounded-2xl border border-red-200 bg-red-50 p-5">
+          <div>
+            <p className="text-sm font-bold text-red-700">이용권이 만료되었습니다</p>
+            <p className="mt-0.5 text-xs text-red-600/80">
+              서비스를 계속 이용하려면 이용권을 다시 구매해주세요.
+            </p>
+          </div>
+          <Link
+            href="/billing"
+            className="shrink-0 rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700"
+          >
+            다시 구매하기
+          </Link>
+        </section>
+      )}
+      {currentPlan !== "free" && isExpiringSoon && (
+        <section className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <div>
+            <p className="text-sm font-bold text-amber-700">
+              이용권 만료 D-{daysLeft}
+            </p>
+            <p className="mt-0.5 text-xs text-amber-600/80">
+              {endDate!.toLocaleDateString("ko-KR")}에 만료됩니다. 미리 갱신하세요.
+            </p>
+          </div>
+          <Link
+            href="/billing"
+            className="shrink-0 rounded-xl bg-amber-600 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-700"
+          >
+            갱신하기
+          </Link>
+        </section>
+      )}
 
       {/* Plan Info */}
       <SubscriptionInfoSection
@@ -238,6 +273,9 @@ export default function AccountDashboard() {
           </p>
         </div>
       </section>
+
+      {/* Recent Orders */}
+      <RecentOrders />
 
       {/* History Tabs */}
       <HistoryTabs
