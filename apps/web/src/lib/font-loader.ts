@@ -3,6 +3,7 @@
 import type { FontFamily } from "@gyoanmaker/shared/types";
 
 const FONT_STYLESHEET_URLS: Partial<Record<FontFamily, string>> = {
+  pretendard: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css",
   noto: "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap",
   nanumSquare: "https://hangeul.pstatic.net/hangeul_static/css/nanum-square.css",
   nanumGothic: "https://hangeul.pstatic.net/hangeul_static/css/nanum-gothic.css",

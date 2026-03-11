@@ -178,6 +178,24 @@ export default function ControlPanel({
               </div>
             </section>
 
+            {/* Handout Save — elevated position */}
+            {onSave && (
+              <section>
+                <button
+                  type="button"
+                  onClick={onSave}
+                  disabled={!isReady || isSaving}
+                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm transition-[transform,color,border-color,background-color,opacity] shadow-sm hover:scale-[1.02] active:scale-[0.98] ${
+                    saveSuccess
+                      ? "bg-emerald-50 border-2 border-emerald-400 text-emerald-600"
+                      : "bg-white border-2 border-[#5E35B1] text-[#5E35B1] hover:bg-purple-50"
+                  } disabled:opacity-40 disabled:hover:scale-100`}
+                >
+                  {isSaving ? "저장 중..." : saveSuccess ? "저장됨!" : "이 교안 저장하기"}
+                </button>
+              </section>
+            )}
+
             {/* Illustration Apply */}
             <section className="space-y-3">
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
@@ -316,20 +334,6 @@ export default function ControlPanel({
                   className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
                 >
                   워크북 생성
-                </button>
-              )}
-              {onSave && (
-                <button
-                  type="button"
-                  onClick={onSave}
-                  disabled={!isReady || isSaving}
-                  className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm transition-[color,border-color,background-color,opacity] shadow-sm ${
-                    saveSuccess
-                      ? "bg-emerald-50 border border-emerald-300 text-emerald-600"
-                      : "bg-white border border-gray-200 text-gray-700 hover:border-[#5E35B1] hover:text-[#5E35B1]"
-                  } disabled:opacity-40`}
-                >
-                  {isSaving ? "저장 중..." : saveSuccess ? "저장됨!" : "교안 저장"}
                 </button>
               )}
               <button

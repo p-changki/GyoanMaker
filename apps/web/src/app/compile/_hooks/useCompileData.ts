@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { hashPassages } from "@/services/cache";
@@ -26,6 +26,12 @@ export function useCompileData() {
   const updateSection = useHandoutStore((state) => state.updateSection);
 
   const { handoutId, handoutQuery, inputQuery, compileQuery, isLoading } = useHandoutLoader();
+
+  // Ref tracks handoutId immediately — avoids stale searchParams after save
+  const handoutIdRef = useRef<string | null>(handoutId);
+  useEffect(() => {
+    handoutIdRef.current = handoutId;
+  }, [handoutId]);
 
   const illustration = useIllustrationManager(handoutId);
 
@@ -56,7 +62,7 @@ export function useCompileData() {
         sections[id] = section.rawText;
       }
 
-      const existingId = searchParams.get("handoutId");
+      const existingId = handoutIdRef.current;
 
       // If handout already saved, update instead of creating duplicate
       if (existingId) {
@@ -138,6 +144,7 @@ export function useCompileData() {
       setTimeout(() => setSaveSuccess(false), 3000);
       // Add handoutId to URL so illustration apply becomes active
       if (data?.id && !searchParams.get("handoutId")) {
+        handoutIdRef.current = data.id;
         const params = new URLSearchParams(searchParams.toString());
         params.set("handoutId", data.id);
         router.replace(`/compile?${params.toString()}`, { scroll: false });

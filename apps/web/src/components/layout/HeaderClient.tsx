@@ -86,11 +86,64 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
       l.href === "/" ? pathname === "/" : pathname.startsWith(l.href)
     )?.label ?? navLinks[0].label;
 
+  const navPill = (
+    <div className="flex items-center gap-0.5 rounded-full border border-gray-200/80 bg-white/95 px-1 py-1 shadow-md sm:gap-1 lg:gap-1.5">
+      {navLinks.map((item) => {
+        const isActive = activeTab === item.label;
+
+        return (
+          <Link
+            key={item.label}
+            href={item.href}
+            className={cn(
+              "relative cursor-pointer whitespace-nowrap rounded-full px-3 py-2 text-[13px] font-semibold transition-colors lg:px-5 lg:text-sm",
+              "text-gray-500 hover:text-gray-900",
+              isActive && "text-gray-900"
+            )}
+          >
+            {/* Mobile: icon only / Desktop: text only */}
+            <span className="hidden md:inline">{item.label}</span>
+            <span className="md:hidden">
+              <svg
+                className="h-[18px] w-[18px]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+              >
+                <title>{item.label}</title>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d={item.icon}
+                />
+              </svg>
+            </span>
+            {isActive && (
+              <motion.div
+                layoutId="nav-lamp"
+                className="absolute inset-0 -z-10 w-full rounded-full bg-gray-100"
+                initial={false}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 30,
+                }}
+              >
+                <div className="absolute -top-2 left-1/2 h-1 w-8 -translate-x-1/2 rounded-t-full bg-blue-600" />
+              </motion.div>
+            )}
+          </Link>
+        );
+      })}
+    </div>
+  );
+
   return (
     <>
-      {/* Top bar: Logo + UserMenu/CTA */}
+      {/* Header: Logo + inline nav (md+) + UserMenu */}
       <header className="relative z-50 bg-transparent">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6 sm:h-20">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:h-20 sm:px-6">
           {/* Logo */}
           <Link href="/" className="shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -101,7 +154,12 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
             />
           </Link>
 
-          {/* Desktop right: CTA or UserMenu */}
+          {/* Desktop inline nav pill */}
+          {mounted && (
+            <div className="hidden md:flex">{navPill}</div>
+          )}
+
+          {/* Right: CTA or UserMenu */}
           <div className="flex items-center gap-4">
             {isAuth ? (
               <UserMenu user={user} />
@@ -117,63 +175,10 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
         </div>
       </header>
 
-      {/* Floating pill nav — client-only to prevent hydration mismatch */}
+      {/* Mobile bottom floating nav */}
       {mounted && (
-        <div
-          className={cn(
-            "fixed left-1/2 z-50 -translate-x-1/2",
-            "bottom-6 sm:bottom-auto sm:top-0 sm:pt-6"
-          )}
-        >
-          <div className="flex items-center gap-1 rounded-full border border-gray-200/80 bg-white/95 px-1 py-1 shadow-md sm:gap-2">
-            {navLinks.map((item) => {
-              const isActive = activeTab === item.label;
-
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={cn(
-                    "relative cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors sm:px-6",
-                    "text-gray-500 hover:text-gray-900",
-                    isActive && "text-gray-900"
-                  )}
-                >
-                  <span className="hidden md:inline">{item.label}</span>
-                  <span className="md:hidden">
-                    <svg
-                      className="h-[18px] w-[18px]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2.5}
-                    >
-                      <title>{item.label}</title>
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d={item.icon}
-                      />
-                    </svg>
-                  </span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-lamp"
-                      className="absolute inset-0 -z-10 w-full rounded-full bg-gray-100"
-                      initial={false}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30,
-                      }}
-                    >
-                      <div className="absolute -top-2 left-1/2 h-1 w-8 -translate-x-1/2 rounded-t-full bg-blue-600" />
-                    </motion.div>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 md:hidden">
+          {navPill}
         </div>
       )}
     </>

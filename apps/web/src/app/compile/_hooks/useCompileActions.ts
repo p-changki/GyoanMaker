@@ -11,6 +11,35 @@ import {
   normalizeRawExportText,
 } from "./compileData.constants";
 
+/**
+ * Wait for all document fonts to be fully loaded and rendered.
+ * Uses document.fonts.load() to explicitly trigger loading of commonly used fonts,
+ * then waits for document.fonts.ready to ensure all fonts are available.
+ */
+async function waitForFontsReady(): Promise<void> {
+  if (typeof document === "undefined" || !document.fonts) return;
+
+  // Explicitly trigger font loading for known families used in handouts
+  const fontChecks = [
+    'normal 400 16px "GmarketSans"',
+    'normal 700 16px "GmarketSans"',
+    'normal 500 16px "KoPub Dotum"',
+    'normal 400 16px "Pretendard Variable"',
+    'normal 700 16px "Pretendard Variable"',
+  ];
+
+  // Trigger loads (some may fail if font isn't declared — that's fine)
+  await Promise.allSettled(fontChecks.map((spec) => document.fonts.load(spec)));
+
+  // Wait for all in-flight font loads to finish
+  await document.fonts.ready;
+
+  // Extra frame to let the browser finish painting with real fonts
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+
 interface UseCompileActionsParams {
   hash: string | undefined;
   setApplying: (isApplying: boolean) => void;
@@ -156,11 +185,8 @@ export function useCompileActions({
       setExportProgress({ current: 0, total: totalPages });
 
       try {
-        if (document.fonts?.ready) {
-          await document.fonts.ready;
-          // Wait one extra tick for fonts to paint
-          await new Promise((resolve) => setTimeout(resolve, 50));
-        }
+        // Ensure all fonts are fully loaded before capture
+        await waitForFontsReady();
 
         const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
           import("html2canvas-pro"),
@@ -228,6 +254,12 @@ export function useCompileActions({
               backgroundColor: "#ffffff",
               windowWidth: 794,
               windowHeight: naturalHeight,
+              onclone: async (clonedDoc) => {
+                // Wait for fonts to load in the cloned document
+                if (clonedDoc.fonts?.ready) {
+                  await clonedDoc.fonts.ready;
+                }
+              },
               ignoreElements: (el) => {
                 // Exclude devtools elements that cause 404 errors in iframe cloning
                 const tag = el.tagName?.toLowerCase();
@@ -345,6 +377,11 @@ export function useCompileActions({
               backgroundColor: "#ffffff",
               windowWidth: 794,
               windowHeight: naturalHeight,
+              onclone: async (clonedDoc) => {
+                if (clonedDoc.fonts?.ready) {
+                  await clonedDoc.fonts.ready;
+                }
+              },
               ignoreElements: (el) => {
                 const tag = el.tagName?.toLowerCase();
                 if (tag === "script" || tag === "link") {

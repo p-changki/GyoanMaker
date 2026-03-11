@@ -166,7 +166,7 @@ export const EditableText = memo(function EditableText({
       <Tag
         role="button"
         tabIndex={0}
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
