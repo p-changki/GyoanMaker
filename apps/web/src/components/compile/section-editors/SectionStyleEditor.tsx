@@ -41,6 +41,7 @@ export function SectionStyleEditor({ sectionKey }: Props) {
       return (
         <div className="space-y-5 py-2">
           <Page1TitleStyleEditor />
+          <UnifiedSectionEditor sectionKey={"page1Body" as EditableSectionKey} />
         </div>
       );
     case "page1-body":
