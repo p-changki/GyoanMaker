@@ -107,7 +107,14 @@ function markStaleIllustrations(
     const illustration = rawIllustration as HandoutIllustration;
     const rawText = sections[passageId] ?? "";
     const nextSourceHash = hashSectionRawText(rawText);
+
+    // Preserve completed illustrations with imageUrl on load —
+    // only mark stale if illustration is NOT completed with a valid image
+    const hasCompletedImage =
+      illustration?.status === "completed" && typeof illustration?.imageUrl === "string";
+
     const shouldMarkStale =
+      !hasCompletedImage &&
       typeof illustration?.sourceHash === "string" &&
       illustration.sourceHash !== nextSourceHash &&
       illustration.status !== "queued" &&
