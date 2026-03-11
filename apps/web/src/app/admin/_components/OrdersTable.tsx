@@ -17,12 +17,27 @@ interface OrderRow {
   failedAt: string | null;
   paidNotAppliedAt: string | null;
   errorMessage: string | null;
+  checkoutFlow: string | null;
+  depositorName: string | null;
+  receiptType: string | null;
+  receiptPhone: string | null;
+  taxInvoiceInfo: {
+    businessNumber: string;
+    companyName: string;
+    representative: string;
+    email: string;
+    businessType?: string;
+    businessItem?: string;
+    address?: string;
+  } | null;
 }
 
-type StatusFilter = "all" | "confirmed" | "paid_not_applied" | "failed" | "pending";
+type StatusFilter = "all" | "confirmed" | "paid_not_applied" | "failed" | "pending" | "awaiting_deposit";
+type FlowFilter = "all" | "card" | "bank_transfer";
 
 const STATUS_TABS: { key: StatusFilter; label: string; color: string }[] = [
   { key: "all", label: "All", color: "bg-gray-100 text-gray-700" },
+  { key: "awaiting_deposit", label: "입금 대기", color: "bg-purple-100 text-purple-700" },
   { key: "confirmed", label: "Confirmed", color: "bg-green-100 text-green-700" },
   { key: "paid_not_applied", label: "Paid Not Applied", color: "bg-red-100 text-red-700" },
   { key: "failed", label: "Failed", color: "bg-orange-100 text-orange-700" },
@@ -31,6 +46,7 @@ const STATUS_TABS: { key: StatusFilter; label: string; color: string }[] = [
 
 const STATUS_BADGE: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600 border-amber-200",
+  awaiting_deposit: "bg-purple-50 text-purple-600 border-purple-200",
   confirmed: "bg-green-50 text-green-600 border-green-200",
   failed: "bg-orange-50 text-orange-600 border-orange-200",
   paid_not_applied: "bg-red-50 text-red-600 border-red-200",
@@ -64,6 +80,7 @@ export default function OrdersTable() {
   const [allOrders, setAllOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
+  const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -87,12 +104,22 @@ export default function OrdersTable() {
     fetchAllOrders();
   }, [fetchAllOrders]);
 
+  const flowFilteredOrders = useMemo(
+    () =>
+      flowFilter === "all"
+        ? allOrders
+        : flowFilter === "bank_transfer"
+          ? allOrders.filter((o) => o.checkoutFlow === "bank_transfer")
+          : allOrders.filter((o) => o.checkoutFlow !== "bank_transfer"),
+    [allOrders, flowFilter]
+  );
+
   const filteredOrders = useMemo(
     () =>
       activeFilter === "all"
-        ? allOrders
-        : allOrders.filter((o) => o.status === activeFilter),
-    [allOrders, activeFilter]
+        ? flowFilteredOrders
+        : flowFilteredOrders.filter((o) => o.status === activeFilter),
+    [flowFilteredOrders, activeFilter]
   );
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
@@ -102,11 +129,18 @@ export default function OrdersTable() {
   );
 
   const tabCounts: Record<StatusFilter, number> = {
+    all: flowFilteredOrders.length,
+    awaiting_deposit: flowFilteredOrders.filter((o) => o.status === "awaiting_deposit").length,
+    confirmed: flowFilteredOrders.filter((o) => o.status === "confirmed").length,
+    paid_not_applied: flowFilteredOrders.filter((o) => o.status === "paid_not_applied").length,
+    failed: flowFilteredOrders.filter((o) => o.status === "failed").length,
+    pending: flowFilteredOrders.filter((o) => o.status === "pending").length,
+  };
+
+  const flowCounts = {
     all: allOrders.length,
-    confirmed: allOrders.filter((o) => o.status === "confirmed").length,
-    paid_not_applied: allOrders.filter((o) => o.status === "paid_not_applied").length,
-    failed: allOrders.filter((o) => o.status === "failed").length,
-    pending: allOrders.filter((o) => o.status === "pending").length,
+    card: allOrders.filter((o) => o.checkoutFlow !== "bank_transfer").length,
+    bank_transfer: allOrders.filter((o) => o.checkoutFlow === "bank_transfer").length,
   };
 
   const handleRetry = async (orderId: string) => {
@@ -130,8 +164,62 @@ export default function OrdersTable() {
     }
   };
 
+  const [bankActionId, setBankActionId] = useState<string | null>(null);
+
+  const handleBankApprove = async (orderId: string) => {
+    if (!confirm("입금 확인 후 서비스를 적용하시겠습니까?")) return;
+    setBankActionId(orderId);
+    try {
+      const res = await fetch("/api/admin/billing/bank-transfer/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.error?.message ?? "승인 실패");
+        return;
+      }
+      await fetchAllOrders();
+    } catch {
+      alert("승인 요청 실패");
+    } finally {
+      setBankActionId(null);
+    }
+  };
+
+  const handleBankReject = async (orderId: string) => {
+    const reason = prompt("거절 사유를 입력하세요 (선택):");
+    if (reason === null) return;
+    setBankActionId(orderId);
+    try {
+      const res = await fetch("/api/admin/billing/bank-transfer/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, reason: reason || undefined }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.error?.message ?? "거절 실패");
+        return;
+      }
+      await fetchAllOrders();
+    } catch {
+      alert("거절 요청 실패");
+    } finally {
+      setBankActionId(null);
+    }
+  };
+
   const handleFilterChange = (filter: StatusFilter) => {
     setActiveFilter(filter);
+    setExpandedId(null);
+    setCurrentPage(1);
+  };
+
+  const handleFlowFilterChange = (flow: FlowFilter) => {
+    setFlowFilter(flow);
+    setActiveFilter("all");
     setExpandedId(null);
     setCurrentPage(1);
   };
@@ -139,8 +227,41 @@ export default function OrdersTable() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Billing Orders</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-gray-900">Billing Orders</h2>
+          {!loading && tabCounts.awaiting_deposit > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 animate-pulse">
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+              입금 대기 {tabCounts.awaiting_deposit}건
+            </span>
+          )}
+        </div>
         <p className="text-sm text-gray-500 mt-0.5">Recent payment orders</p>
+      </div>
+
+      {/* Checkout flow filter */}
+      <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 w-fit">
+        {([
+          { key: "all" as const, label: "전체" },
+          { key: "card" as const, label: "카드결제" },
+          { key: "bank_transfer" as const, label: "무통장입금" },
+        ]).map((f) => (
+          <button
+            key={f.key}
+            type="button"
+            onClick={() => handleFlowFilterChange(f.key)}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              flowFilter === f.key
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {f.label}
+            {!loading && (
+              <span className="ml-1 text-[10px] opacity-60">{flowCounts[f.key]}</span>
+            )}
+          </button>
+        ))}
       </div>
 
       <div className="flex gap-2 flex-wrap">
@@ -210,7 +331,7 @@ export default function OrdersTable() {
                         STATUS_BADGE[order.status] ?? "bg-gray-50 text-gray-500 border-gray-200"
                       }`}
                     >
-                      {order.status.replace(/_/g, " ")}
+                      {order.status === "awaiting_deposit" ? "입금 대기" : order.status.replace(/_/g, " ")}
                     </span>
                     <span className="text-[11px] text-gray-400 hidden sm:inline">
                       {new Date(order.createdAt).toLocaleDateString("ko-KR")}
@@ -248,6 +369,58 @@ export default function OrdersTable() {
                         </div>
                       )}
                     </div>
+
+                    {order.checkoutFlow === "bank_transfer" && order.depositorName && (
+                      <div className="mt-2 space-y-1">
+                        <div>
+                          <span className="font-medium text-gray-600 text-xs">입금자명:</span>{" "}
+                          <span className="text-xs text-gray-700 font-semibold">{order.depositorName}</span>
+                          <span className="ml-2 px-1.5 py-0.5 text-[10px] font-medium bg-purple-50 text-purple-600 rounded-full">
+                            무통장입금
+                          </span>
+                        </div>
+                        {order.receiptType === "cash_receipt" && (
+                          <div className="text-xs text-gray-600">
+                            <span className="font-medium">현금영수증:</span>{" "}
+                            {order.receiptPhone ?? "-"}
+                          </div>
+                        )}
+                        {order.receiptType === "tax_invoice" && order.taxInvoiceInfo && (
+                          <div className="text-xs text-gray-600 space-y-0.5">
+                            <span className="font-medium">세금계산서:</span>
+                            <div className="ml-2">
+                              {order.taxInvoiceInfo.businessNumber} · {order.taxInvoiceInfo.companyName} · {order.taxInvoiceInfo.representative} · {order.taxInvoiceInfo.email}
+                              {order.taxInvoiceInfo.businessType && ` · ${order.taxInvoiceInfo.businessType}`}
+                              {order.taxInvoiceInfo.businessItem && ` · ${order.taxInvoiceInfo.businessItem}`}
+                              {order.taxInvoiceInfo.address && (
+                                <div className="mt-0.5 text-gray-500">{order.taxInvoiceInfo.address}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {order.status === "awaiting_deposit" && order.checkoutFlow === "bank_transfer" && (
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleBankApprove(order.orderId)}
+                          disabled={bankActionId === order.orderId}
+                          className="px-4 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                        >
+                          {bankActionId === order.orderId ? "처리 중..." : "입금 확인 (승인)"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBankReject(order.orderId)}
+                          disabled={bankActionId === order.orderId}
+                          className="px-4 py-1.5 bg-white border border-red-300 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+                        >
+                          거절
+                        </button>
+                      </div>
+                    )}
 
                     {order.status === "paid_not_applied" && (
                       <div className="mt-3">

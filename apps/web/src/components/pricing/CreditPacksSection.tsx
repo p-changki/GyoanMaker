@@ -84,7 +84,7 @@ export default function CreditPacksSection() {
 
       <div className="text-center">
         <Link
-          href="/account"
+          href="/billing?tab=topup"
           className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-gray-800"
         >
           크레딧 충전하기

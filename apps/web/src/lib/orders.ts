@@ -8,6 +8,7 @@ export interface OrderRow {
   status: string;
   createdAt: string;
   confirmedAt: string | null;
+  checkoutFlow: string | null;
 }
 
 interface RawOrder {
@@ -21,6 +22,7 @@ interface RawOrder {
   status?: string;
   createdAt?: string | { toDate?: () => Date };
   confirmedAt?: string | { toDate?: () => Date } | null;
+  checkoutFlow?: string;
 }
 
 function toIsoString(value: string | { toDate?: () => Date } | null | undefined): string | null {
@@ -47,6 +49,7 @@ function toOrderRow(data: RawOrder): OrderRow {
     status: typeof data.status === "string" ? data.status : "pending",
     createdAt: toIsoString(data.createdAt) ?? new Date().toISOString(),
     confirmedAt: toIsoString(data.confirmedAt),
+    checkoutFlow: typeof data.checkoutFlow === "string" ? data.checkoutFlow : null,
   };
 }
 

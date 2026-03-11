@@ -42,11 +42,12 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
     description: "서비스를 체험해 보세요",
     features: [
       {
-        category: "교안 생성",
+        category: "교안 · 워크북 생성",
         items: [
           { label: "속도 모드 지문 10개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 5개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+          { label: "워크북 자동 생성", tooltip: "교안 할당량을 공유하여 차감됩니다 (지문 1개 = 1회)" },
         ],
       },
       {
@@ -73,11 +74,12 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
     bookEstimate: { precision: "5권", speed: "15권" },
     features: [
       {
-        category: "교안 생성",
+        category: "교안 · 워크북 생성",
         items: [
           { label: "속도 모드 지문 300개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 100개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+          { label: "워크북 자동 생성", tooltip: "교안 할당량을 공유하여 차감됩니다 (지문 1개 = 1회)" },
         ],
       },
       {
@@ -106,11 +108,12 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
     bookEstimate: { precision: "10권", speed: "40권" },
     features: [
       {
-        category: "교안 생성",
+        category: "교안 · 워크북 생성",
         items: [
           { label: "속도 모드 지문 800개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 200개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+          { label: "워크북 자동 생성", tooltip: "교안 할당량을 공유하여 차감됩니다 (지문 1개 = 1회)" },
         ],
       },
       {
@@ -140,11 +143,12 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
     bookEstimate: { precision: "20권", speed: "100권" },
     features: [
       {
-        category: "교안 생성",
+        category: "교안 · 워크북 생성",
         items: [
           { label: "속도 모드 지문 2,000개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 400개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
+          { label: "워크북 자동 생성", tooltip: "교안 할당량을 공유하여 차감됩니다 (지문 1개 = 1회)" },
         ],
       },
       {
