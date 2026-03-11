@@ -60,9 +60,9 @@ const ClickZone = memo(function ClickZone({
   label: string;
   className?: string;
 }) {
-  const focus = useEditorFocusStore((s) => s.focus);
-  const setFocus = useEditorFocusStore((s) => s.setFocus);
-  const isActive = focus === focusKey;
+  const modalKey = useEditorFocusStore((s) => s.modalKey);
+  const openModal = useEditorFocusStore((s) => s.openModal);
+  const isActive = modalKey === focusKey;
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
   const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
@@ -81,7 +81,7 @@ const ClickZone = memo(function ClickZone({
       }
       onClick={(e) => {
         e.stopPropagation();
-        setFocus(focusKey);
+        openModal(focusKey);
       }}
     >
       {children}
@@ -93,7 +93,7 @@ const ClickZone = memo(function ClickZone({
         }`}
         style={{ backgroundColor: primary }}
       >
-        {isActive ? "편집 중" : label}
+        {label}
       </div>
     </div>
   );
@@ -193,7 +193,7 @@ export function ParsedHandoutViewPage1({
     useTemplateSettingsStore((s) => s.page1Layout) ?? DEFAULT_PAGE1_LAYOUT;
   const page1Style =
     useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
-  const setFocus = useEditorFocusStore((s) => s.setFocus);
+
   const updateSection = useHandoutStore((s) => s.updateSection);
 
   const handleSentenceEdit = useCallback(
@@ -266,7 +266,7 @@ export function ParsedHandoutViewPage1({
   return (
     <div
       className="p-8 md:p-12 xl:p-16 flex flex-col h-full bg-white relative"
-      onClick={() => setFocus("global")}
+      onClick={() => { /* no-op: modal closes via backdrop/Escape */ }}
     >
       {page1Layout.headerVisible && (
         <HandoutHeader section={section} pageNum={pageNum} />
@@ -447,7 +447,7 @@ export function ParsedHandoutViewPage2({
     useTemplateSettingsStore((s) => s.avatarDisplay) ?? DEFAULT_IMAGE_DISPLAY;
   const sectionStyles = useTemplateSettingsStore((s) => s.sectionStyles);
   const page2HeaderStyle = useTemplateSettingsStore((s) => s.page2HeaderStyle);
-  const setFocus = useEditorFocusStore((s) => s.setFocus);
+
 
   const avatarStyle = useMemo(
     () => ({
@@ -462,7 +462,7 @@ export function ParsedHandoutViewPage2({
   return (
     <div
       className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
-      onClick={() => setFocus("global")}
+      onClick={() => { /* no-op: modal closes via backdrop/Escape */ }}
     >
       <DiscoveryBanner />
       <section className="mb-2 relative flex-1 w-full">

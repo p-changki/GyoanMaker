@@ -1,8 +1,6 @@
 "use client";
 
 import type React from "react";
-import { useState, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import {
   THEME_PRESETS,
@@ -37,9 +35,9 @@ function HeaderClickZone({
   label: string;
   className?: string;
 }) {
-  const focus = useEditorFocusStore((s) => s.focus);
-  const setFocus = useEditorFocusStore((s) => s.setFocus);
-  const isActive = focus === focusKey;
+  const modalKey = useEditorFocusStore((s) => s.modalKey);
+  const openModal = useEditorFocusStore((s) => s.openModal);
+  const isActive = modalKey === focusKey;
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
   const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
@@ -57,7 +55,7 @@ function HeaderClickZone({
       }}
       onClick={(e) => {
         e.stopPropagation();
-        setFocus(focusKey);
+        openModal(focusKey);
       }}
     >
       <div
@@ -67,7 +65,7 @@ function HeaderClickZone({
         }`}
         style={{ backgroundColor: primary }}
       >
-        {isActive ? "편집 중" : label}
+        {label}
       </div>
       {children}
     </div>
@@ -94,8 +92,7 @@ export function HandoutHeader({
   const logoBase64 = useTemplateSettingsStore((s) => s.logoBase64);
   const logoDisplay =
     useTemplateSettingsStore((s) => s.logoDisplay) ?? DEFAULT_IMAGE_DISPLAY;
-  const setAcademyName = useTemplateSettingsStore((s) => s.setAcademyName);
-  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+  const openModal = useEditorFocusStore((s) => s.openModal);
 
   // Derive effective colors from headerStyle
   const hTitleColor = headerStyle.titleColor || theme.primary;
@@ -248,7 +245,7 @@ export function HandoutHeader({
             >
               <button
                 type="button"
-                onClick={() => setIsNameModalOpen(true)}
+                onClick={(e) => { e.stopPropagation(); openModal("header"); }}
                 className="group/edit bg-transparent border-0 p-0 m-0 hover:opacity-80 transition-opacity relative"
                 style={{ color: hTitleColor }}
                 aria-label="학원명 편집"
@@ -352,103 +349,7 @@ export function HandoutHeader({
         />
       )}
 
-      {isNameModalOpen && (
-        <AcademyNameModal
-          themeColor={theme.primary}
-          themeColorDark={theme.primaryDark}
-          currentName={academyName}
-          onConfirm={(name) => {
-            setAcademyName(name);
-            setIsNameModalOpen(false);
-          }}
-          onClose={() => setIsNameModalOpen(false)}
-        />
-      )}
     </header>
-  );
-}
-
-function AcademyNameModal({
-  themeColor,
-  themeColorDark,
-  currentName,
-  onConfirm,
-  onClose,
-}: {
-  themeColor: string;
-  themeColorDark: string;
-  currentName: string | null;
-  onConfirm: (name: string | null) => void;
-  onClose: () => void;
-}) {
-  const [draft, setDraft] = useState(currentName ?? "");
-
-  const handleConfirm = useCallback(() => {
-    const trimmed = draft.trim();
-    onConfirm(trimmed === "" ? null : trimmed.slice(0, 20));
-  }, [draft, onConfirm]);
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-[400px] max-w-[90vw] space-y-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-          학원명
-        </p>
-        <input
-          type="text"
-          value={draft}
-          maxLength={20}
-          autoFocus
-          placeholder="미입력 시 Logic"
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleConfirm();
-            }
-            if (e.key === "Escape") {
-              e.preventDefault();
-              onClose();
-            }
-          }}
-          className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none text-center"
-          style={{
-            borderColor: themeColor,
-            boxShadow: `0 0 0 1px ${themeColor}`,
-          }}
-        />
-        <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="px-4 py-2 text-xs font-bold text-white rounded-lg transition-colors"
-            style={{ backgroundColor: themeColor }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = themeColorDark)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = themeColor)
-            }
-          >
-            적용
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
   );
 }
 

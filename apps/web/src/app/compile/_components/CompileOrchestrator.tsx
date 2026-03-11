@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import CompileLayout from "@/components/compile/CompileLayout";
+import SectionEditModal from "@/components/compile/SectionEditModal";
 import { useCompileData } from "../_hooks/useCompileData";
 
 function SkeletonBlock({ className }: { className?: string }) {
@@ -131,6 +132,7 @@ export default function CompileOrchestrator() {
 
   return (
     <>
+      <SectionEditModal />
       <CompileLayout
         onApplyTemplate={handleApplyTemplate}
         activeSample={activeSample}

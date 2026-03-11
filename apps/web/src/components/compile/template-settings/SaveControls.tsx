@@ -43,7 +43,7 @@ export default function SaveControls({
         onClick={onReset}
         className="w-full py-2 border border-gray-300 text-gray-500 rounded-xl text-xs font-medium hover:bg-gray-50 hover:text-gray-700 transition-colors"
       >
-        기본값으로 초기화
+        설정 초기화
       </button>
 
       <button
@@ -52,11 +52,15 @@ export default function SaveControls({
         disabled={isSaving}
         className="relative w-full py-2.5 bg-[#5E35B1] text-white rounded-xl text-xs font-bold hover:bg-[#4527A0] disabled:opacity-50 transition-colors"
       >
-        {isSaving ? "저장 중..." : "기본 설정으로 저장"}
+        {isSaving ? "저장 중..." : "이 설정을 기본값으로 저장"}
         {isDirty && !isSaving && (
           <span className="absolute top-1.5 right-3 w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
         )}
       </button>
+
+      <p className="text-[10px] text-gray-400 font-medium text-center leading-relaxed">
+        현재 설정이 향후 새 교안의 기본 형식으로 적용됩니다
+      </p>
 
       {saveMessage && (
         <p className={`text-[10px] font-medium text-center ${msgColor}`}>
