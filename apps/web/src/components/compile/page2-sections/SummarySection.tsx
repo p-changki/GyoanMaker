@@ -8,7 +8,7 @@ import { EditableText } from "../EditableText";
 import { updateSummaryText } from "@/lib/sectionUpdaters";
 
 export function SummarySection({ section }: { section: HandoutSection }) {
-  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("summary");
+  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight, textAlign } = useSectionStyle("summary");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
   const summaryLanguage = useTemplateSettingsStore((s) => s.summaryLanguage) ?? "both";
@@ -49,7 +49,7 @@ export function SummarySection({ section }: { section: HandoutSection }) {
             themeColor={titleColor}
             onConfirm={(v) => handleEdit("en", v)}
             className="font-normal mb-1 leading-relaxed"
-            style={{ fontSize: `${fontSizes.summaryEn}pt`, fontFamily: fontCss, color: textColor }}
+            style={{ fontSize: `${fontSizes.summaryEn}pt`, fontFamily: fontCss, color: textColor, textAlign }}
             as="p"
           />
         )}
@@ -61,7 +61,7 @@ export function SummarySection({ section }: { section: HandoutSection }) {
             themeColor={titleColor}
             onConfirm={(v) => handleEdit("ko", v)}
             className="font-medium tracking-tight"
-            style={{ fontSize: `${fontSizes.summaryKo}pt`, fontFamily: fontCss, color: textColor === "#111827" ? "#374151" : textColor }}
+            style={{ fontSize: `${fontSizes.summaryKo}pt`, fontFamily: fontCss, color: textColor === "#111827" ? "#374151" : textColor, textAlign }}
             as="p"
           />
         )}

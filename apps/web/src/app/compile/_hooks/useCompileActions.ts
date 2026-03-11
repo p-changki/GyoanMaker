@@ -252,6 +252,11 @@ export function useCompileActions({
                 if (clonedDoc.fonts?.ready) {
                   await clonedDoc.fonts.ready;
                 }
+                // Prevent summary bar border-radius from clipping text
+                clonedDoc.querySelectorAll<HTMLElement>("[data-summary-bar]").forEach((bar) => {
+                  bar.style.overflow = "visible";
+                  bar.style.borderRadius = "12px";
+                });
               },
               ignoreElements: (el) => {
                 // Exclude devtools elements that cause 404 errors in iframe cloning
@@ -367,6 +372,11 @@ export function useCompileActions({
                 if (clonedDoc.fonts?.ready) {
                   await clonedDoc.fonts.ready;
                 }
+                // Prevent summary bar border-radius from clipping text
+                clonedDoc.querySelectorAll<HTMLElement>("[data-summary-bar]").forEach((bar) => {
+                  bar.style.overflow = "visible";
+                  bar.style.borderRadius = "12px";
+                });
               },
               ignoreElements: (el) => {
                 const tag = el.tagName?.toLowerCase();

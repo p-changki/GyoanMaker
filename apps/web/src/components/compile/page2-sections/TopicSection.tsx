@@ -8,7 +8,7 @@ import { EditableText } from "../EditableText";
 import { updateTopicText } from "@/lib/sectionUpdaters";
 
 export function TopicSection({ section }: { section: HandoutSection }) {
-  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("topic");
+  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight, textAlign } = useSectionStyle("topic");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
   const customTitle = useTemplateSettingsStore((s) => s.sectionTitles);
   const sectionTitle = customTitle?.topic || "주제";
@@ -43,7 +43,7 @@ export function TopicSection({ section }: { section: HandoutSection }) {
           themeColor={titleColor}
           onConfirm={(v) => handleEdit("en", v)}
           className="font-bold mb-1 leading-relaxed"
-          style={{ fontSize: `${fontSizes.topicEn}pt`, fontFamily: fontCss, color: textColor }}
+          style={{ fontSize: `${fontSizes.topicEn}pt`, fontFamily: fontCss, color: textColor, textAlign }}
           as="p"
         />
         <EditableText
@@ -53,7 +53,7 @@ export function TopicSection({ section }: { section: HandoutSection }) {
           themeColor={titleColor}
           onConfirm={(v) => handleEdit("ko", v)}
           className="font-medium tracking-tight"
-          style={{ fontSize: `${fontSizes.topicKo}pt`, fontFamily: fontCss, color: textColor === "#111827" ? "#374151" : textColor }}
+          style={{ fontSize: `${fontSizes.topicKo}pt`, fontFamily: fontCss, color: textColor === "#111827" ? "#374151" : textColor, textAlign }}
           as="p"
         />
       </div>

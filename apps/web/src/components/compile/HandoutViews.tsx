@@ -221,6 +221,8 @@ export function ParsedHandoutViewPage1({
   const badgeBgColor = page1Style.badgeBgColor || "transparent";
   const badgeFontSize = page1Style.badgeFontSize || 14;
   const badgeAlign = page1Style.badgeAlign || "left";
+  const badgeHeight = page1Style.badgeHeight || 32;
+  const badgePaddingX = page1Style.badgePaddingX || 20;
 
   const enRatio = page1Layout.sentenceColumnRatio;
   const koRatio = 1 - enRatio;
@@ -295,9 +297,9 @@ export function ParsedHandoutViewPage1({
                 backgroundColor:
                   badgeBgColor === "transparent" ? "white" : badgeBgColor,
                 fontSize: `${badgeFontSize + 1}px`,
-                height: "32px",
-                paddingLeft: pageNum === 1 ? "24px" : "18px",
-                paddingRight: "20px",
+                height: `${badgeHeight}px`,
+                paddingLeft: pageNum === 1 ? `${badgePaddingX + 4}px` : `${badgePaddingX - 2}px`,
+                paddingRight: `${badgePaddingX}px`,
                 letterSpacing: "0.01em",
               }}
             >
@@ -487,13 +489,16 @@ export function ParsedHandoutViewPage2({
 
         <ClickZone focusKey="page2-header" label="요약바">
           <div
-            className="relative z-10 mb-3 h-10 rounded-xl flex items-center pr-10 mt-1 overflow-hidden"
+            data-summary-bar
+            className="relative z-10 mb-3 rounded-xl flex items-center mt-1"
             style={{
               width: `${page2HeaderStyle?.barWidth ?? 95}%`,
+              minHeight: "40px",
               backgroundColor: page2HeaderStyle?.bgColor || theme.primary,
-
               paddingTop: page2HeaderStyle?.paddingTop ?? 0,
               paddingBottom: page2HeaderStyle?.paddingBottom ?? 0,
+              paddingRight: "16px",
+              overflow: "visible",
               borderTop:
                 page2HeaderStyle?.borderStyle &&
                 page2HeaderStyle.borderStyle !== "none"
@@ -502,7 +507,7 @@ export function ParsedHandoutViewPage2({
             }}
           >
             <span
-              className="tracking-wide ml-32 z-30"
+              className="tracking-wide z-30 flex-1"
               style={{
                 fontFamily: page2HeaderStyle?.fontFamily
                   ? FONT_FAMILY_MAP[page2HeaderStyle.fontFamily].css
@@ -510,6 +515,17 @@ export function ParsedHandoutViewPage2({
                 fontWeight: theme.titleFontWeight,
                 fontSize: `${theme.fontSizes.summaryBarTitle}px`,
                 color: page2HeaderStyle?.titleColor || "#FFFFFF",
+                marginLeft: (() => {
+                  const avatarML = Math.round(24 + avatarDisplay.offsetX + 90 * avatarDisplay.scale + 8);
+                  // Limit marginLeft to 40% of bar width so text always has space
+                  const barPct = (page2HeaderStyle?.barWidth ?? 95) / 100;
+                  const barPx = 794 * barPct; // PDF base width
+                  const maxML = Math.round(barPx * 0.4);
+                  return `${Math.min(avatarML, maxML)}px`;
+                })(),
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
+                textAlign: (page2HeaderStyle?.textAlign || "left") as "left" | "center" | "right" | "justify",
               }}
             >
               <EditableSummaryTitleText />
