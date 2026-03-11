@@ -70,23 +70,26 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
 
 /* ─── Editable Analysis Title ─── */
 
-export const EditableAnalysisTitle = memo(function EditableAnalysisTitle() {
+export const EditableAnalysisTitle = memo(function EditableAnalysisTitle({ passageId }: { passageId: string }) {
   const analysisTitleText = useHandoutStore((state) => state.analysisTitleText);
+  const analysisTitleTexts = useHandoutStore((state) => state.analysisTitleTexts);
   const openModal = useEditorFocusStore((s) => s.openModal);
+
+  const displayText = analysisTitleTexts[passageId] ?? analysisTitleText;
 
   return (
     <button
       type="button"
       onClick={(e) => {
         e.stopPropagation();
-        openModal("page1-title");
+        openModal("page1-title", passageId);
       }}
       className="group/edit bg-transparent border-0 p-0 m-0 font-bold hover:opacity-80 transition-opacity relative"
       style={{ color: "inherit" }}
       aria-label="분석 제목 편집"
     >
       <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
-        {analysisTitleText}
+        {displayText}
       </span>
       <span
         className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/edit:opacity-50 pointer-events-none"

@@ -314,7 +314,7 @@ export function ParsedHandoutViewPage1({
               }}
             >
               <span className="translate-y-px">
-                <EditableAnalysisTitle />
+                <EditableAnalysisTitle passageId={section.passageId} />
               </span>
             </div>
           </div>
