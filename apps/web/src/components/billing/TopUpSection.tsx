@@ -1,7 +1,7 @@
 "use client";
 
 import { TOP_UP_PACKAGES, type TopUpCreditType } from "@gyoanmaker/shared/plans";
-import TossPaymentButton from "@/components/billing/TossPaymentButton";
+import TossPaymentButton from "./TossPaymentButton";
 
 const CREDIT_TYPE_LABELS: Record<TopUpCreditType, string> = {
   flash: "속도",
@@ -12,18 +12,17 @@ const CREDIT_TYPE_LABELS: Record<TopUpCreditType, string> = {
 const ILLUSTRATION_PACKAGES = TOP_UP_PACKAGES.filter((pkg) => pkg.type === "illustration");
 const LESSON_PACKAGES = TOP_UP_PACKAGES.filter((pkg) => pkg.type === "pro" || pkg.type === "flash");
 
-export default function TopUpPanel() {
+export default function TopUpSection() {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h3 className="text-base font-bold text-gray-900">크레딧 충전</h3>
-      <p className="mt-1 text-xs text-gray-400">90일 유효 · VAT 별도</p>
+    <div>
+      <p className="mb-4 text-xs text-gray-400">90일 유효 · VAT 별도</p>
 
       {/* Illustration packs */}
-      <div className="mt-4">
+      <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
           일러스트 추가 팩
         </p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {ILLUSTRATION_PACKAGES.map((pkg) => (
             <div
               key={pkg.id}
@@ -39,14 +38,14 @@ export default function TopUpPanel() {
                   packageId={pkg.id}
                   checkoutFlow="widget"
                   label="위젯 결제"
-                  className="w-full"
+                  className="w-full bg-gray-900 hover:bg-gray-800"
                 />
                 <TossPaymentButton
                   type="topup"
                   packageId={pkg.id}
                   checkoutFlow="paylink"
                   label="페이링크 결제"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  className="w-full border border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                 />
               </div>
             </div>
@@ -55,11 +54,11 @@ export default function TopUpPanel() {
       </div>
 
       {/* Lesson credit packs */}
-      <div className="mt-4">
+      <div className="mt-6">
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
           교안 크레딧 팩
         </p>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {LESSON_PACKAGES.map((pkg) => (
             <div
               key={pkg.id}
@@ -78,14 +77,14 @@ export default function TopUpPanel() {
                   packageId={pkg.id}
                   checkoutFlow="widget"
                   label="위젯 결제"
-                  className="w-full"
+                  className="w-full bg-gray-900 hover:bg-gray-800"
                 />
                 <TossPaymentButton
                   type="topup"
                   packageId={pkg.id}
                   checkoutFlow="paylink"
                   label="페이링크 결제"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  className="w-full border border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                 />
               </div>
             </div>

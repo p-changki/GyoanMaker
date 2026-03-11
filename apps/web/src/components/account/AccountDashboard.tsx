@@ -1,16 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { type PlanId, type TopUpCreditType, PLANS } from "@gyoanmaker/shared/plans";
+import { type PlanId, PLANS } from "@gyoanmaker/shared/plans";
 import type { CreditEntry } from "@gyoanmaker/shared/types";
 import UsageBar from "./UsageBar";
 import DeleteAccountModal from "./DeleteAccountModal";
-import PlanChangeModal from "./PlanChangeModal";
-import TopUpModal from "./TopUpModal";
 import SubscriptionInfoSection from "./SubscriptionInfoSection";
 import HistoryTabs from "./HistoryTabs";
 
@@ -35,15 +33,6 @@ interface BillingStatusResponse {
   dailySampleUsage: { used: number; limit: number };
 }
 
-function isPlanId(value: string | null): value is PlanId {
-  return value === "free" || value === "basic" || value === "standard" || value === "pro";
-}
-
-function isTopUpCreditType(value: string | null): value is TopUpCreditType {
-  return value === "flash" || value === "pro" || value === "illustration";
-}
-
-
 async function fetchBillingStatus(): Promise<BillingStatusResponse> {
   const res = await fetch("/api/billing/status");
   if (!res.ok) throw new Error("Failed to fetch billing status");
@@ -52,13 +41,8 @@ async function fetchBillingStatus(): Promise<BillingStatusResponse> {
 
 export default function AccountDashboard() {
   const { data: session } = useSession();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showPlanModal, setShowPlanModal] = useState(false);
-  const [showTopUpModal, setShowTopUpModal] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["billing-status"],
@@ -67,38 +51,6 @@ export default function AccountDashboard() {
 
   const currentPlan = data?.subscription?.tier ?? "free";
   const periodEndAt = data?.subscription?.currentPeriodEndAt ?? null;
-
-  const targetPlan = useMemo(() => {
-    const value = searchParams.get("targetPlan");
-    return isPlanId(value) ? value : null;
-  }, [searchParams]);
-  const autoOpenPlanModal = targetPlan !== null && targetPlan !== currentPlan;
-  const isPlanModalOpen = showPlanModal || autoOpenPlanModal;
-  const topUpTypeParam = searchParams.get("topup");
-  const autoOpenTopUpModal = isTopUpCreditType(topUpTypeParam);
-  const isTopUpModalOpen = showTopUpModal || autoOpenTopUpModal;
-
-  const clearTargetPlanQuery = () => {
-    if (!searchParams.get("targetPlan")) {
-      return;
-    }
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("targetPlan");
-    const next = params.toString();
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
-  };
-
-  const clearTopUpQuery = () => {
-    if (!searchParams.get("topup")) {
-      return;
-    }
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("topup");
-    const next = params.toString();
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
-  };
 
   if (isLoading || !data) {
     return (
@@ -184,20 +136,18 @@ export default function AccountDashboard() {
 
           {/* Right: action buttons */}
           <div className="flex gap-2 sm:shrink-0">
-            <button
-              type="button"
-              onClick={() => setShowTopUpModal(true)}
+            <Link
+              href="/billing?tab=topup"
               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50"
             >
               충전
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPlanModal(true)}
+            </Link>
+            <Link
+              href="/billing?tab=plan"
               className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
             >
               플랜 변경
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -327,23 +277,6 @@ export default function AccountDashboard() {
       </section>
 
       {/* Modals */}
-      <TopUpModal
-        open={isTopUpModalOpen}
-        onClose={() => {
-          setShowTopUpModal(false);
-          clearTopUpQuery();
-        }}
-      />
-
-      <PlanChangeModal
-        open={isPlanModalOpen}
-        currentPlan={currentPlan}
-        onClose={() => {
-          setShowPlanModal(false);
-          clearTargetPlanQuery();
-        }}
-      />
-
       <DeleteAccountModal
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
