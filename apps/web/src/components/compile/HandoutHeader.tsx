@@ -15,6 +15,8 @@ import { EditableHeaderText } from "./EditableFields";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { PencilHintIcon } from "./EditableHintBanner";
 import SectionNumberBadge from "./SectionNumberBadge";
+import { EditableText } from "./EditableText";
+import { useHandoutStore } from "@/stores/useHandoutStore";
 
 function useTheme() {
   const preset = useTemplateSettingsStore((s) => s.themePreset);
@@ -123,64 +125,20 @@ export function HandoutHeader({
   const hBadgeHeight = headerBadgeStyle.badgeHeight || 28;
   const hBadgePaddingX = headerBadgeStyle.badgePaddingX || 16;
 
-  // Continuation pages: minimal header
+  // Continuation pages: minimal header (badge only, no logo)
   if (pageNum > 1) {
     return (
       <header
-        className="mb-8 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 shrink-0"
+        className="mb-6 relative -mx-8 px-8 md:-mx-12 md:px-12 xl:-mx-16 xl:px-16 -mt-8 pt-8 md:-mt-12 md:pt-12 xl:-mt-16 xl:pt-16 shrink-0"
         style={{
           backgroundColor: hBgColor,
-          paddingTop: headerStyle.paddingTop
-            ? `${headerStyle.paddingTop + 32}px`
-            : undefined,
-          paddingBottom: headerStyle.paddingBottom
-            ? `${headerStyle.paddingBottom}px`
-            : undefined,
           borderBottom:
             headerStyle.borderStyle && headerStyle.borderStyle !== "none"
               ? `1px ${headerStyle.borderStyle} ${headerStyle.borderColor || hTitleColor}`
               : undefined,
         }}
       >
-        <div
-          className={`flex items-center pb-3 pt-4 ${badgeAlign === "left" ? "flex-row-reverse justify-between" : badgeAlign === "center" ? "justify-center" : "justify-between"}`}
-        >
-          <HeaderClickZone focusKey="header" label="헤더">
-            <div
-              className="tracking-tighter leading-none"
-              style={{ fontFamily: hFontCss, color: hTitleColor }}
-            >
-              {academyName ? (
-                <span
-                  style={{
-                    fontSize: `${Math.round(fontSizes.headerLogo * 0.56)}px`,
-                    fontWeight: hWeight,
-                  }}
-                >
-                  {academyName}
-                </span>
-              ) : (
-                <>
-                  <span
-                    style={{
-                      fontSize: `${Math.round(fontSizes.headerLogo * 0.67)}px`,
-                      fontWeight: hWeight,
-                    }}
-                  >
-                    L
-                  </span>
-                  <span
-                    style={{
-                      fontSize: `${Math.round(fontSizes.headerLogo * 0.67)}px`,
-                      fontWeight: Math.max(400, hWeight - 200),
-                    }}
-                  >
-                    ogic
-                  </span>
-                </>
-              )}
-            </div>
-          </HeaderClickZone>
+        <div className="flex items-center justify-end py-2">
           <HeaderClickZone focusKey="header-badge" label="배지">
             <div
               className={`shrink-0 whitespace-nowrap ${hBadgeShape}`}
@@ -357,19 +315,48 @@ export function HandoutHeader({
 export function HandoutFooter({
   section,
   pageNum,
+  globalPageNumber,
+  pageKey,
 }: {
   section: HandoutSection;
   pageNum: number;
+  globalPageNumber?: number;
+  pageKey?: string;
 }) {
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
+  const override = useHandoutStore((s) =>
+    pageKey ? s.pageNumberOverrides[pageKey] : undefined
+  );
+  const setOverride = useHandoutStore((s) => s.setPageNumberOverride);
+  const theme = useTheme();
+
+  const displayValue =
+    override !== undefined && override !== ""
+      ? override
+      : globalPageNumber !== undefined
+        ? String(globalPageNumber)
+        : "";
+
   return (
-    <footer className="mt-auto pt-10 flex items-center justify-end shrink-0">
+    <footer className="mt-auto pt-10 flex items-center justify-between shrink-0">
       <span
         className="font-black text-[#E5E7EB]"
         style={{ fontSize: `${fontSizes.pageFooter}px` }}
       >
         PAGE {section.passageId.slice(1)}-{pageNum}
       </span>
+      {globalPageNumber !== undefined && pageKey && (
+        <EditableText
+          as="span"
+          value={displayValue}
+          label="페이지 번호 수정"
+          themeColor={theme.primary}
+          maxLength={10}
+          onConfirm={(next) => setOverride(pageKey, next)}
+          className="font-black text-[#E5E7EB]"
+          style={{ fontSize: `${fontSizes.pageFooter}px` }}
+        />
+      )}
     </footer>
   );
 }

@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import type {
   HandoutIllustration,
   HandoutIllustrations,
+  VocabBankData,
   WorkbookData,
 } from "@gyoanmaker/shared/types";
 import { deleteIllustrationFolder } from "./firebase-storage";
@@ -76,6 +77,7 @@ export interface HandoutDetail extends HandoutMeta {
     summaryTitleText?: string;
   };
   workbook?: WorkbookData | null;
+  vocabBank?: VocabBankData | null;
 }
 
 // ── Constants ──────────────────────────────────────────
@@ -147,6 +149,7 @@ export interface CreateHandoutInput {
     summaryTitleText?: string;
   };
   workbook?: WorkbookData | null;
+  vocabBank?: VocabBankData | null;
 }
 
 export async function createHandout(
@@ -170,6 +173,7 @@ export async function createHandout(
     workbook: input.workbook
       ? serializeWorkbookForFirestore(input.workbook)
       : null,
+    vocabBank: input.vocabBank ?? null,
     inputHash: input.inputHash ?? null,
     createdAt: now,
     updatedAt: now,
@@ -283,6 +287,7 @@ export async function getHandout(
     workbook: d.workbook
       ? deserializeWorkbookFromFirestore(d.workbook as Record<string, unknown>)
       : null,
+    vocabBank: (d.vocabBank as VocabBankData | null | undefined) ?? null,
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   };
@@ -300,6 +305,7 @@ export interface UpdateHandoutInput {
     summaryTitleText?: string;
   };
   workbook?: WorkbookData | null;
+  vocabBank?: VocabBankData | null;
 }
 
 export async function updateHandout(
@@ -335,6 +341,9 @@ export async function updateHandout(
     updates.workbook = input.workbook
       ? serializeWorkbookForFirestore(input.workbook)
       : null;
+  }
+  if (input.vocabBank !== undefined) {
+    updates.vocabBank = input.vocabBank ?? null;
   }
 
   await docRef.update(updates);

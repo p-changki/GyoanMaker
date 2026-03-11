@@ -13,6 +13,8 @@ import { EditableHeaderText } from "./EditableFields";
 import WorkbookStepBanner from "./WorkbookStepBanner";
 import { useTemplateFontLoader } from "./useTemplateFontLoader";
 import SectionNumberBadge from "./SectionNumberBadge";
+import { EditableText } from "./EditableText";
+import { useHandoutStore } from "@/stores/useHandoutStore";
 
 interface WorkbookPageShellProps {
   sectionNumber: string; // e.g. "02" — sequential, continuing from handout passages
@@ -20,6 +22,7 @@ interface WorkbookPageShellProps {
   stepBadge: string; // e.g. "Workbook" | "정답지"
   stepLabel: string; // e.g. "STEP 1 스스로 분석"
   globalPageNumber: number;
+  pageKey?: string;
   /** Show step banner bar (default true) */
   showBanner?: boolean;
   children: ReactNode;
@@ -31,6 +34,7 @@ export default function WorkbookPageShell({
   stepBadge,
   stepLabel,
   globalPageNumber,
+  pageKey,
   showBanner = true,
   children,
 }: WorkbookPageShellProps) {
@@ -193,14 +197,58 @@ export default function WorkbookPageShell({
       <section className="flex-1 w-full overflow-hidden flex flex-col">{children}</section>
 
       {/* Footer */}
-      <footer className="mt-auto pt-10 flex items-center justify-end shrink-0">
+      <PageNumberFooter
+        globalPageNumber={globalPageNumber}
+        pageKey={pageKey}
+        fontSize={fontSizes.pageFooter}
+        themeColor={colors.primary}
+      />
+    </div>
+  );
+}
+
+function PageNumberFooter({
+  globalPageNumber,
+  pageKey,
+  fontSize,
+  themeColor,
+}: {
+  globalPageNumber: number;
+  pageKey?: string;
+  fontSize: number;
+  themeColor: string;
+}) {
+  const override = useHandoutStore((s) =>
+    pageKey ? s.pageNumberOverrides[pageKey] : undefined
+  );
+  const setOverride = useHandoutStore((s) => s.setPageNumberOverride);
+
+  const displayValue =
+    override !== undefined && override !== ""
+      ? override
+      : String(globalPageNumber);
+
+  return (
+    <footer className="mt-auto pt-10 flex items-center justify-end shrink-0">
+      {pageKey ? (
+        <EditableText
+          as="span"
+          value={displayValue}
+          label="페이지 번호 수정"
+          themeColor={themeColor}
+          maxLength={10}
+          onConfirm={(next) => setOverride(pageKey, next)}
+          className="font-black text-[#E5E7EB]"
+          style={{ fontSize: `${fontSize}px` }}
+        />
+      ) : (
         <span
           className="font-black text-[#E5E7EB]"
-          style={{ fontSize: `${fontSizes.pageFooter}px` }}
+          style={{ fontSize: `${fontSize}px` }}
         >
           {globalPageNumber}
         </span>
-      </footer>
-    </div>
+      )}
+    </footer>
   );
 }

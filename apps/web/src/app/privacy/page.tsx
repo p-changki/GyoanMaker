@@ -136,7 +136,7 @@ export default function PrivacyPage() {
                     서비스 이용 통계 (익명화 처리)
                   </td>
                   <td className="border border-gray-200 px-3 py-2">
-                    교안 생성 횟수, 워크북 생성 횟수, 모델 사용 이력
+                    교안 생성 횟수, 워크북 생성 횟수, 단어 테스트 생성 횟수, 포켓보카 생성 횟수, 모델 사용 이력
                   </td>
                 </tr>
               </tbody>
@@ -429,15 +429,15 @@ export default function PrivacyPage() {
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              교안 및 워크북(문제지) 생성을 위해 이용자가 입력한 영어 지문은
-              Google Gemini API로 전송됩니다.
+              교안, 워크북(문제지), 단어 테스트(보카테스트), 포켓보카 생성을 위해 이용자가 입력한 영어 지문은
+              Google Cloud AI API로 전송됩니다.
             </li>
             <li>
               전송된 입력 텍스트는 서비스 서버에 별도 보관하지 않으며, AI
               응답 처리 후 즉시 폐기됩니다.
             </li>
             <li>
-              Google Gemini API 이용약관에 따라 입력 데이터는 모델 학습에
+              Google Cloud AI API 이용약관에 따라 입력 데이터는 모델 학습에
               사용되지 않습니다.
             </li>
           </ul>

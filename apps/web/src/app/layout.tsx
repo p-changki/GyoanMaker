@@ -28,6 +28,11 @@ export const metadata: Metadata = {
     "어휘 분석",
     "영어 수업 자료",
     "English handout generator",
+    "포켓보카",
+    "영어 단어 테스트",
+    "보카테스트",
+    "영어 어휘 암기",
+    "유의어 반의어",
   ],
   metadataBase: new URL(SITE_URL),
   openGraph: {

@@ -5,6 +5,7 @@ import type { IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmak
 import SectionNav from "./SectionNav";
 import PreviewCanvas from "./PreviewCanvas";
 import ControlPanel from "./ControlPanel";
+import type { ExportSelection } from "./ExportSelectModal";
 
 interface ActiveConceptSample {
   imageUrl: string;
@@ -28,8 +29,8 @@ interface CompileLayoutProps {
   }) => void;
   onRetryIllustrations: () => void;
   onCancelIllustrations: () => void;
-  onCopyAll: () => void;
-  onDownloadTxt: () => void;
+  onCopyAll: (selection: ExportSelection) => void;
+  onDownloadTxt: (selection: ExportSelection) => void;
   onExportPdf: (customFileName?: string) => void;
   onSave?: () => void;
   isSaving?: boolean;

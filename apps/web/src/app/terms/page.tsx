@@ -67,6 +67,8 @@ export default function TermsPage() {
           <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>AI 기반 영어 지문 분석 및 교안 생성</li>
             <li>AI 기반 워크북(문제지) 생성</li>
+            <li>AI 기반 단어 테스트(보카테스트) 생성</li>
+            <li>AI 기반 포켓보카(유의어·반의어 암기 시트) 생성</li>
             <li>생성된 교안의 인라인 편집 및 템플릿 커스터마이징</li>
             <li>인쇄용 PDF 내보내기</li>
             <li>AI 일러스트 생성 및 교안 삽입</li>
@@ -163,9 +165,9 @@ export default function TermsPage() {
                 <tr>
                   <td className="border border-gray-200 px-3 py-2">무료</td>
                   <td className="border border-gray-200 px-3 py-2">무료</td>
-                  <td className="border border-gray-200 px-3 py-2">10개</td>
+                  <td className="border border-gray-200 px-3 py-2">20개</td>
                   <td className="border border-gray-200 px-3 py-2">5개</td>
-                  <td className="border border-gray-200 px-3 py-2">5회</td>
+                  <td className="border border-gray-200 px-3 py-2">3회</td>
                   <td className="border border-gray-200 px-3 py-2">10개</td>
                   <td className="border border-gray-200 px-3 py-2">3회</td>
                   <td className="border border-gray-200 px-3 py-2">최대 3개</td>
@@ -602,7 +604,7 @@ export default function TermsPage() {
               명확하지 않은 경우 서울중앙지방법원을 관할 법원으로 합니다.
             </li>
           </ul>
-          <p className="mt-4 text-sm text-gray-500">시행일: 2026년 3월 8일</p>
+          <p className="mt-4 text-sm text-gray-500">시행일: 2026년 3월 12일</p>
         </section>
       </div>
 

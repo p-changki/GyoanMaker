@@ -4,6 +4,7 @@ import { memo, useEffect, useMemo } from "react";
 import type { HandoutSection } from "@gyoanmaker/shared/types";
 import { useHandoutStore, useSection } from "@/stores/useHandoutStore";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
+import { useVocabBankStore } from "@/stores/useVocabBankStore";
 import EditableHintBanner from "./EditableHintBanner";
 import {
   ANALYSIS_TITLE_STORAGE_KEY,
@@ -16,6 +17,9 @@ import {
 import EmptyHandoutView from "./EmptyHandoutView";
 import { ParsedHandoutViewPage1, ParsedHandoutViewPage2 } from "./HandoutViews";
 import WorkbookSheetsForCompile from "./WorkbookSheetsForCompile";
+import VocabBankSheetsForCompile, {
+  getVocabBankPageCount,
+} from "./VocabBankSheetsForCompile";
 
 export default function PreviewCanvas() {
   const setCustomHeaderText = useHandoutStore((state) => state.setCustomHeaderText);
@@ -40,6 +44,9 @@ export default function PreviewCanvas() {
   }, [setCustomHeaderText, setAnalysisTitleText, setSummaryTitleText]);
 
   const sections = useHandoutStore((state) => state.sections);
+  const vocabBankData = useVocabBankStore((state) => state.vocabBankData);
+  const vocabBankConfig = useVocabBankStore((state) => state.config);
+  const includeVocabBank = useVocabBankStore((state) => state.includeInCompile);
   const workbookData = useWorkbookStore((state) => state.workbookData);
   const includeInCompile = useWorkbookStore((state) => state.includeInCompile);
   const activeIds = useMemo(
@@ -75,18 +82,41 @@ export default function PreviewCanvas() {
     [parsedSections]
   );
 
+  const vocabBankPageCount = useMemo(() => {
+    if (!vocabBankData || !includeVocabBank) return 0;
+    return getVocabBankPageCount(vocabBankData.items.length);
+  }, [vocabBankData, includeVocabBank]);
+
   return (
     <div id="preview-canvas-root" className="h-full overflow-auto bg-[#F9FAFB] px-8 py-6">
       <EditableHintBanner />
       <div className="w-full space-y-12">
-        {activeIds.map((id) => (
-          <SectionCanvasItem key={id} id={id} />
-        ))}
+        {vocabBankData && includeVocabBank && (
+          <VocabBankSheetsForCompile
+            vocabBankData={vocabBankData}
+            config={vocabBankConfig}
+            startOrder={0}
+          />
+        )}
+        {activeIds.map((id, idx) => {
+          // Calculate globalPageStart for this section
+          const preceding = activeIds.slice(0, idx);
+          const precedingPages = preceding.reduce((count, prevId) => {
+            const s = parsedSections[prevId];
+            if (!s) return count;
+            const page1Count = Math.max(1, Math.ceil(s.sentences.length / 7));
+            return count + page1Count + 1; // page1 chunks + 1 page2
+          }, 0);
+          const globalPageStart = vocabBankPageCount + precedingPages + 1;
+          return (
+            <SectionCanvasItem key={id} id={id} globalPageStart={globalPageStart} />
+          );
+        })}
         {workbookData && includeInCompile && (
           <WorkbookSheetsForCompile
             workbookData={workbookData}
             parsedSections={parsedSections}
-            startOrder={handoutPageCount}
+            startOrder={vocabBankPageCount + handoutPageCount}
           />
         )}
       </div>
@@ -94,7 +124,7 @@ export default function PreviewCanvas() {
   );
 }
 
-const SectionCanvasItem = memo(function SectionCanvasItem({ id }: { id: string }) {
+const SectionCanvasItem = memo(function SectionCanvasItem({ id, globalPageStart }: { id: string; globalPageStart: number }) {
   const section = useSection(id);
   const isActive = useHandoutStore((state) => state.activeId === id);
 
@@ -147,6 +177,8 @@ const SectionCanvasItem = memo(function SectionCanvasItem({ id }: { id: string }
             section={section}
             sentencesChunk={page.chunk}
             pageNum={page.pageNum}
+            globalPageNumber={globalPageStart + page.pageNum - 1}
+            pageKey={`handout-${id}-p1-${page.pageNum}`}
           />
         </div>
       ))}
@@ -157,7 +189,12 @@ const SectionCanvasItem = memo(function SectionCanvasItem({ id }: { id: string }
         className="bg-white rounded-[2px] overflow-hidden min-h-[1123px] flex flex-col relative"
         style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
       >
-        <ParsedHandoutViewPage2 section={section} pageNum={sentenceChunks.length + 1} />
+        <ParsedHandoutViewPage2
+          section={section}
+          pageNum={sentenceChunks.length + 1}
+          globalPageNumber={globalPageStart + sentenceChunks.length}
+          pageKey={`handout-${id}-p2`}
+        />
       </div>
     </div>
   );

@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import WorkbookGenerateModal from "./WorkbookGenerateModal";
-import type { IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmaker/shared/types";
+import VocabBankGenerateModal from "./VocabBankGenerateModal";
+import ExportSelectModal, { type ExportSelection } from "./ExportSelectModal";
+import type {
+  IllustrationBubbleStyle,
+  IllustrationConceptMode,
+} from "@gyoanmaker/shared/types";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
+import { useVocabBankStore } from "@/stores/useVocabBankStore";
 import { TemplateSettingsPanel } from "./template-settings";
-import TemplateGuideModal, { GUIDE_DISMISSED_KEY } from "./template-settings/TemplateGuideModal";
+import TemplateGuideModal, {
+  GUIDE_DISMISSED_KEY,
+} from "./template-settings/TemplateGuideModal";
 import IllustrationOptionsModal from "./IllustrationOptionsModal";
 
 type TabKey = "actions" | "settings";
@@ -33,8 +42,8 @@ interface ControlPanelProps {
   }) => void;
   onRetryIllustrations: () => void;
   onCancelIllustrations: () => void;
-  onCopyAll: () => void;
-  onDownloadTxt: () => void;
+  onCopyAll: (selection: ExportSelection) => void;
+  onDownloadTxt: (selection: ExportSelection) => void;
   onExportPdf: (customFileName?: string) => void;
   onSave?: () => void;
   isSaving?: boolean;
@@ -99,22 +108,48 @@ export default function ControlPanel({
   );
   const workbookData = useWorkbookStore((state) => state.workbookData);
   const includeInCompile = useWorkbookStore((state) => state.includeInCompile);
-  const setIncludeInCompile = useWorkbookStore((state) => state.setIncludeInCompile);
+  const setIncludeInCompile = useWorkbookStore(
+    (state) => state.setIncludeInCompile
+  );
   const resetWorkbook = useWorkbookStore((state) => state.resetWorkbook);
   const hasWorkbook = Boolean(workbookData?.passages.length);
+  const vocabBankData = useVocabBankStore((state) => state.vocabBankData);
+  const includeVocabBank = useVocabBankStore((state) => state.includeInCompile);
+  const setIncludeVocabBank = useVocabBankStore(
+    (state) => state.setIncludeInCompile
+  );
+  const resetVocabBank = useVocabBankStore((state) => state.resetVocabBank);
+  const hasVocabBank = Boolean(vocabBankData?.items.length);
+
+  const searchParams = useSearchParams();
+  const handoutId = searchParams.get("handoutId");
 
   const [activeTab, setActiveTab] = useState<TabKey>("actions");
   const [showGuide, setShowGuide] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [showIllustrationOptions, setShowIllustrationOptions] = useState(false);
   const [showWorkbookModal, setShowWorkbookModal] = useState(false);
+  const [showVocabBankModal, setShowVocabBankModal] = useState(false);
+  const [exportMode, setExportMode] = useState<"copy" | "download" | null>(null);
+
+  const handleExportClick = (mode: "copy" | "download") => {
+    if (!hasVocabBank && !hasWorkbook) {
+      // 교안만 있으면 바로 실행
+      const selection = { handout: true, vocabBank: false, workbook: false };
+      if (mode === "copy") onCopyAll(selection);
+      else onDownloadTxt(selection);
+    } else {
+      setExportMode(mode);
+    }
+  };
 
   const TABS: { key: TabKey; label: string }[] = [
     { key: "actions", label: "실행" },
     { key: "settings", label: "설정" },
   ];
 
-  const statusLabel = STATUS_LABELS[illustrationProgress.status] ?? illustrationProgress.status;
+  const statusLabel =
+    STATUS_LABELS[illustrationProgress.status] ?? illustrationProgress.status;
 
   return (
     <aside className="w-full h-full bg-white border-l border-gray-200 flex flex-col">
@@ -126,7 +161,10 @@ export default function ControlPanel({
             type="button"
             onClick={() => {
               setActiveTab(tab.key);
-              if (tab.key === "settings" && !localStorage.getItem(GUIDE_DISMISSED_KEY)) {
+              if (
+                tab.key === "settings" &&
+                !localStorage.getItem(GUIDE_DISMISSED_KEY)
+              ) {
                 setShowGuide(true);
               }
             }}
@@ -151,7 +189,9 @@ export default function ControlPanel({
                 {isApplying ? (
                   <div className="space-y-4">
                     <div className="flex justify-between items-end">
-                      <span className="text-xs font-black text-[#5E35B1]">적용 중...</span>
+                      <span className="text-xs font-black text-[#5E35B1]">
+                        적용 중...
+                      </span>
                       <span className="text-[10px] font-bold text-gray-400">
                         {progress} / {total}
                       </span>
@@ -187,7 +227,9 @@ export default function ControlPanel({
                   disabled={!canApplyIllustrations || isApplyingIllustrations}
                   className="w-full py-4 bg-[#F59E0B] text-white rounded-xl font-black text-sm disabled:opacity-50 hover:bg-[#D97706] active:scale-[0.98] transition-[transform,background-color,opacity]"
                 >
-                  {isApplyingIllustrations ? "일러스트 생성 중..." : "현재 스타일로 일러스트 적용"}
+                  {isApplyingIllustrations
+                    ? "일러스트 생성 중..."
+                    : "현재 스타일로 일러스트 적용"}
                 </button>
                 {!canApplyIllustrations && (
                   <p className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-amber-600 font-semibold">
@@ -212,9 +254,12 @@ export default function ControlPanel({
                 {illustrationProgress.total > 0 && (
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-gray-700">{statusLabel}</span>
+                      <span className="text-[11px] font-bold text-gray-700">
+                        {statusLabel}
+                      </span>
                       <span className="text-[11px] text-gray-500">
-                        {illustrationProgress.completed} / {illustrationProgress.total}건
+                        {illustrationProgress.completed} /{" "}
+                        {illustrationProgress.total}건
                         {illustrationProgress.failed > 0 && (
                           <span className="text-red-500 ml-1">
                             (실패 {illustrationProgress.failed}건)
@@ -236,14 +281,18 @@ export default function ControlPanel({
                       />
                     </div>
                     {illustrationMessage && (
-                      <p className="text-[11px] text-gray-600">{illustrationMessage}</p>
+                      <p className="text-[11px] text-gray-600">
+                        {illustrationMessage}
+                      </p>
                     )}
                   </div>
                 )}
 
                 {!illustrationProgress.total && (
                   <div className="mt-3">
-                    <p className="text-[11px] font-bold text-gray-400">{statusLabel}</p>
+                    <p className="text-[11px] font-bold text-gray-400">
+                      {statusLabel}
+                    </p>
                   </div>
                 )}
 
@@ -270,7 +319,79 @@ export default function ControlPanel({
               </div>
             </section>
 
-            {/* 3. Workbook */}
+            {/* 3. Vocab Bank */}
+            <section className="space-y-3">
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
+                보카
+              </p>
+              {hasVocabBank ? (
+                <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm space-y-3">
+                  <label className="flex items-center justify-between gap-3 text-sm font-semibold text-gray-700">
+                    <span>보카 포함</span>
+                    <input
+                      type="checkbox"
+                      checked={includeVocabBank}
+                      onChange={(event) =>
+                        setIncludeVocabBank(event.target.checked)
+                      }
+                      className="h-4 w-4 rounded border-gray-300 accent-[#5E35B1]"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    합본 PDF 가장 앞에 보카 시트를 추가합니다.
+                  </p>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowVocabBankModal(true)}
+                      disabled={!isReady}
+                      className="flex-1 rounded-lg border border-gray-200 py-2 text-xs font-bold text-gray-600 hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 transition-colors"
+                    >
+                      재생성
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetVocabBank();
+                        setIncludeVocabBank(false);
+                      }}
+                      className="flex-1 rounded-lg border border-red-200 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowVocabBankModal(true)}
+                  disabled={!isReady}
+                  className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
+                >
+                  보카 생성
+                </button>
+              )}
+
+              {/* 보카테스트 / 포켓보카 quick links */}
+              {handoutId && (
+                <div className="flex gap-2 pt-1">
+                  <a
+                    href={`/voca-test?handoutId=${handoutId}`}
+                    className="flex-1 rounded-lg border border-gray-200 py-2 text-xs font-bold text-center text-gray-600 hover:border-[#5E35B1] hover:text-[#5E35B1] transition-colors"
+                  >
+                    보카테스트
+                  </a>
+                  <a
+                    href={`/pocket-voca?handoutId=${handoutId}`}
+                    className="flex-1 rounded-lg border border-gray-200 py-2 text-xs font-bold text-center text-gray-600 hover:border-[#5E35B1] hover:text-[#5E35B1] transition-colors"
+                  >
+                    포켓보카
+                  </a>
+                </div>
+              )}
+            </section>
+
+            {/* 4. Workbook */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
                 워크북
@@ -282,11 +403,15 @@ export default function ControlPanel({
                     <input
                       type="checkbox"
                       checked={includeInCompile}
-                      onChange={(event) => setIncludeInCompile(event.target.checked)}
+                      onChange={(event) =>
+                        setIncludeInCompile(event.target.checked)
+                      }
                       className="h-4 w-4 rounded border-gray-300 accent-[#5E35B1]"
                     />
                   </label>
-                  <p className="text-xs text-gray-500">합본 PDF에 워크북 시트를 추가합니다.</p>
+                  <p className="text-xs text-gray-500">
+                    합본 PDF에 워크북 시트를 추가합니다.
+                  </p>
                   <div className="flex gap-2 pt-1">
                     <button
                       type="button"
@@ -320,7 +445,7 @@ export default function ControlPanel({
               )}
             </section>
 
-            {/* 4. Save */}
+            {/* 5. Save */}
             {onSave && (
               <section>
                 <button
@@ -333,12 +458,16 @@ export default function ControlPanel({
                       : "bg-white border-2 border-[#5E35B1] text-[#5E35B1] hover:bg-purple-50"
                   } disabled:opacity-40 disabled:hover:scale-100`}
                 >
-                  {isSaving ? "저장 중..." : saveSuccess ? "저장됨!" : "이 교안 저장하기"}
+                  {isSaving
+                    ? "저장 중..."
+                    : saveSuccess
+                      ? "저장됨!"
+                      : "이 교안 저장하기"}
                 </button>
               </section>
             )}
 
-            {/* 5. PDF Export */}
+            {/* 6. PDF Export */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
                 PDF 내보내기
@@ -373,14 +502,14 @@ export default function ControlPanel({
               )}
             </section>
 
-            {/* 6. Auxiliary */}
+            {/* 7. Auxiliary */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
                 보조 기능
               </p>
               <button
                 type="button"
-                onClick={onCopyAll}
+                onClick={() => handleExportClick("copy")}
                 disabled={!isReady}
                 className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
               >
@@ -388,7 +517,7 @@ export default function ControlPanel({
               </button>
               <button
                 type="button"
-                onClick={onDownloadTxt}
+                onClick={() => handleExportClick("download")}
                 disabled={!isReady}
                 className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
               >
@@ -403,7 +532,12 @@ export default function ControlPanel({
               onClick={() => setShowGuide(true)}
               className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-gray-400 hover:text-[#5E35B1] border border-dashed border-gray-200 hover:border-[#5E35B1]/30 rounded-lg transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <title>Guide</title>
                 <path
                   strokeLinecap="round"
@@ -425,7 +559,32 @@ export default function ControlPanel({
         </p>
       </div>
 
-      <TemplateGuideModal isOpen={showGuide} onClose={() => setShowGuide(false)} />
+      <TemplateGuideModal
+        isOpen={showGuide}
+        onClose={() => setShowGuide(false)}
+      />
+
+      {/* Vocab Bank Generate Modal */}
+      {showVocabBankModal && (
+        <VocabBankGenerateModal
+          onClose={() => setShowVocabBankModal(false)}
+          onSaveAfterGenerate={onSave}
+        />
+      )}
+
+      {/* Export Select Modal */}
+      {exportMode && (
+        <ExportSelectModal
+          mode={exportMode}
+          hasVocabBank={hasVocabBank}
+          hasWorkbook={hasWorkbook}
+          onConfirm={(selection) => {
+            if (exportMode === "copy") onCopyAll(selection);
+            else onDownloadTxt(selection);
+          }}
+          onClose={() => setExportMode(null)}
+        />
+      )}
 
       {/* Workbook Generate Modal */}
       {showWorkbookModal && (
@@ -471,10 +630,15 @@ export default function ControlPanel({
             <div className="mt-4 space-y-2 text-sm text-gray-600">
               <p>
                 일러스트 생성에{" "}
-                <strong className="text-gray-900">{illustrationCreditError.needed}건</strong>의
-                크레딧이 필요하지만, 현재
-                <strong className="text-red-600"> {illustrationCreditError.available}건</strong>만
-                남아있습니다.
+                <strong className="text-gray-900">
+                  {illustrationCreditError.needed}건
+                </strong>
+                의 크레딧이 필요하지만, 현재
+                <strong className="text-red-600">
+                  {" "}
+                  {illustrationCreditError.available}건
+                </strong>
+                만 남아있습니다.
               </p>
               <p className="text-xs text-gray-400">
                 크레딧을 충전하거나 적용할 지문 수를 줄여주세요.

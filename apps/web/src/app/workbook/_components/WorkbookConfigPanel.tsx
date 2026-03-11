@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
 
 interface WorkbookConfigPanelProps {
@@ -29,6 +30,11 @@ function Field({ label, value, placeholder, onChange }: FieldProps) {
   );
 }
 
+const MODEL_LABEL: Record<string, string> = {
+  pro: "Pro (정밀)",
+  flash: "Flash (속도)",
+};
+
 export default function WorkbookConfigPanel({
   handoutTitle,
   onGenerate,
@@ -39,6 +45,7 @@ export default function WorkbookConfigPanel({
   const generateError = useWorkbookStore((state) => state.generateError);
   const updateConfig = useWorkbookStore((state) => state.updateConfig);
   const setSelectedModel = useWorkbookStore((state) => state.setSelectedModel);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
     <aside className="space-y-4 rounded-xl border border-gray-200 bg-white p-5">
@@ -121,12 +128,72 @@ export default function WorkbookConfigPanel({
 
       <button
         type="button"
-        onClick={onGenerate}
+        onClick={() => setShowConfirm(true)}
         disabled={isGenerating}
         className="w-full rounded-lg bg-[#5E35B1] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4527A0] disabled:cursor-not-allowed disabled:bg-gray-300"
       >
         {isGenerating ? "워크북 생성 중..." : "워크북 생성"}
       </button>
+
+      {showConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setShowConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 mx-auto">
+              <svg className="h-6 w-6 text-[#5E35B1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <title>워크북 생성</title>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </div>
+
+            <div className="text-center space-y-1">
+              <h2 className="text-lg font-bold text-gray-900">워크북 생성</h2>
+              <p className="text-sm text-gray-500">AI가 워크북 문항을 자동 생성합니다.</p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4 space-y-2 text-sm">
+              {handoutTitle && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">교안</span>
+                  <span className="font-semibold text-gray-900 truncate max-w-40">{handoutTitle}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-500">모델</span>
+                <span className="font-semibold text-gray-900">{MODEL_LABEL[selectedModel] ?? selectedModel}</span>
+              </div>
+              <div className="border-t border-gray-200 pt-2 text-xs text-gray-400">
+                생성 시 <span className="font-semibold text-[#5E35B1]">{selectedModel === "pro" ? "Pro" : "Flash"} 크레딧</span>이 차감됩니다.
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirm(false);
+                  onGenerate();
+                }}
+                className="flex-1 rounded-xl bg-[#5E35B1] py-2.5 text-sm font-bold text-white transition hover:bg-[#4527A0]"
+              >
+                생성하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

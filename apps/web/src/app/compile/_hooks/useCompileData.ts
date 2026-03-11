@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { hashPassages } from "@/services/cache";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
+import { useVocabBankStore } from "@/stores/useVocabBankStore";
 import { INPUT_STORAGE_KEY } from "./compileData.constants";
 import { useCompileActions } from "./useCompileActions";
 import { useHandoutLoader } from "./useHandoutLoader";
@@ -25,6 +26,8 @@ export function useCompileData() {
   const setApplying = useHandoutStore((state) => state.setApplying);
   const setProgress = useHandoutStore((state) => state.setProgress);
   const updateSection = useHandoutStore((state) => state.updateSection);
+  const vocabBankData = useVocabBankStore((state) => state.vocabBankData);
+  const includeVocabBank = useVocabBankStore((state) => state.includeInCompile);
 
   const { handoutId, handoutQuery, inputQuery, compileQuery, isLoading } = useHandoutLoader();
 
@@ -68,6 +71,7 @@ export function useCompileData() {
       // If handout already saved, update instead of creating duplicate
       if (existingId) {
         const workbookState = useWorkbookStore.getState();
+        const vocabBankState = useVocabBankStore.getState();
         const body = {
           title: saveTitle.trim() || undefined,
           sections,
@@ -78,6 +82,7 @@ export function useCompileData() {
             summaryTitleText: state.summaryTitleText,
           },
           workbook: workbookState.workbookData ?? undefined,
+          vocabBank: vocabBankState.vocabBankData ?? undefined,
         };
 
         const res = await fetch(`/api/handouts/${existingId}`, {
@@ -117,6 +122,7 @@ export function useCompileData() {
       }
 
       const workbookStateNew = useWorkbookStore.getState();
+      const vocabBankStateNew = useVocabBankStore.getState();
       const body = {
         title: saveTitle.trim() || `Handout ${new Date().toLocaleDateString("en-US")}`,
         sections,
@@ -130,6 +136,7 @@ export function useCompileData() {
           summaryTitleText: state.summaryTitleText,
         },
         workbook: workbookStateNew.workbookData ?? undefined,
+        vocabBank: vocabBankStateNew.vocabBankData ?? undefined,
       };
 
       const res = await fetch("/api/handouts", {
@@ -219,5 +226,7 @@ export function useCompileData() {
     storageLimitError,
     setStorageLimitError,
     activeSample: illustration.activeSample,
+    vocabBankData,
+    includeVocabBank,
   };
 }

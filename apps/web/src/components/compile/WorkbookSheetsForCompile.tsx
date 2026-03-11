@@ -165,6 +165,7 @@ export default function WorkbookSheetsForCompile({
               stepBadge="Workbook"
               stepLabel="STEP 1 스스로 분석"
               globalPageNumber={order}
+              pageKey={`workbook-step1-${index}`}
               showBanner={index === 0}
             >
               <CompileStep1Content
@@ -197,6 +198,7 @@ export default function WorkbookSheetsForCompile({
               stepBadge="Workbook"
               stepLabel="STEP 2 어법/어휘 선택"
               globalPageNumber={order}
+              pageKey={`workbook-step2-${index}`}
               showBanner={index === 0}
             >
               <CompileStep2Content
@@ -226,6 +228,7 @@ export default function WorkbookSheetsForCompile({
               stepBadge="Workbook"
               stepLabel="STEP 3 순서 배열"
               globalPageNumber={order}
+              pageKey={`workbook-step3-${index}`}
               showBanner={index === 0}
             >
               <CompileStep3Content
@@ -250,6 +253,7 @@ export default function WorkbookSheetsForCompile({
           stepBadge="정답지"
           stepLabel=""
           globalPageNumber={answerOrder}
+          pageKey="workbook-answer"
         >
           <CompileAnswerContent passages={sortedPassages} />
         </WorkbookPageShell>

@@ -33,9 +33,9 @@ const STEPS = [
   },
   {
     number: 5,
-    title: "단어 테스트 생성",
+    title: "단어 테스트 & 포켓보카",
     description:
-      "교안의 핵심 어휘로 유의어 5지선다 시험지를 자동 생성하고 PDF로 인쇄하세요.",
+      "핵심 어휘로 유의어 5지선다 시험지(보카테스트)와 유의어·반의어 암기 시트(포켓보카)를 PDF로 인쇄하세요.",
     color: { bg: "bg-teal-100", text: "text-teal-700" },
   },
 ] as const;
@@ -78,7 +78,7 @@ export default function HowItWorksSection() {
             이용 방법
           </h2>
           <p className="mt-4 text-lg text-gray-500">
-            5단계로 완성하는 영어 교안
+            5단계로 완성하는 영어 수업 자료
           </p>
         </motion.div>
 

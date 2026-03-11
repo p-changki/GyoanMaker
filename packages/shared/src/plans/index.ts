@@ -111,9 +111,9 @@ export function toVatInclusiveAmount(
 
 export const PLANS: Record<PlanId, PlanDefinition> = {
   free: {
-    flashLimit: 10,
+    flashLimit: 20,
     proLimit: 5,
-    illustrationMonthlyLimit: 5,
+    illustrationMonthlyLimit: 3,
     maxSamples: 10,
     dailySampleLimit: 3,
     price: 0,

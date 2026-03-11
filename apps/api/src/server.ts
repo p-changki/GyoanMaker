@@ -6,7 +6,9 @@ import express, { type Request, type Response } from "express";
 import { createRateLimitMiddleware } from "./middleware/rateLimit";
 import { createGenerateRouter } from "./routes/generate";
 import { createMetaRouter } from "./routes/meta";
+import { createVocabBankRouter } from "./routes/vocabBank";
 import { createWorkbookRouter } from "./routes/workbook";
+import { createPocketVocaRouter } from "./routes/pocketVoca";
 import { getSystemPrompt } from "./services/prompt";
 
 dotenv.config({
@@ -67,6 +69,22 @@ const WORKBOOK_RATE_LIMIT_MAX = toPositiveInt(
   process.env.WORKBOOK_RATE_LIMIT_MAX,
   20
 );
+const VOCAB_BANK_RATE_LIMIT_WINDOW_MS = toPositiveInt(
+  process.env.VOCAB_BANK_RATE_LIMIT_WINDOW_MS,
+  60_000
+);
+const VOCAB_BANK_RATE_LIMIT_MAX = toPositiveInt(
+  process.env.VOCAB_BANK_RATE_LIMIT_MAX,
+  20
+);
+const POCKET_VOCA_RATE_LIMIT_WINDOW_MS = toPositiveInt(
+  process.env.POCKET_VOCA_RATE_LIMIT_WINDOW_MS,
+  60_000
+);
+const POCKET_VOCA_RATE_LIMIT_MAX = toPositiveInt(
+  process.env.POCKET_VOCA_RATE_LIMIT_MAX,
+  20
+);
 
 const generateRateLimit = createRateLimitMiddleware({
   windowMs: GENERATE_RATE_LIMIT_WINDOW_MS,
@@ -84,6 +102,18 @@ const workbookRateLimit = createRateLimitMiddleware({
   windowMs: WORKBOOK_RATE_LIMIT_WINDOW_MS,
   max: WORKBOOK_RATE_LIMIT_MAX,
   scope: "workbook",
+});
+
+const vocabBankRateLimit = createRateLimitMiddleware({
+  windowMs: VOCAB_BANK_RATE_LIMIT_WINDOW_MS,
+  max: VOCAB_BANK_RATE_LIMIT_MAX,
+  scope: "vocab-bank",
+});
+
+const pocketVocaRateLimit = createRateLimitMiddleware({
+  windowMs: POCKET_VOCA_RATE_LIMIT_WINDOW_MS,
+  max: POCKET_VOCA_RATE_LIMIT_MAX,
+  scope: "pocket-voca",
 });
 
 function sendError(res: Response, status: number, code: string, message: string): void {
@@ -181,6 +211,8 @@ app.use(
 );
 app.use("/meta", createMetaRouter(metaRateLimit));
 app.use("/workbook", createWorkbookRouter(workbookRateLimit));
+app.use("/vocab-bank", createVocabBankRouter(vocabBankRateLimit));
+app.use("/pocket-voca", createPocketVocaRouter(pocketVocaRateLimit));
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -208,6 +240,16 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(
     `[api] rate limit /workbook: ${WORKBOOK_RATE_LIMIT_MAX}/${Math.floor(
       WORKBOOK_RATE_LIMIT_WINDOW_MS / 1000
+    )}s`
+  );
+  console.log(
+    `[api] rate limit /vocab-bank: ${VOCAB_BANK_RATE_LIMIT_MAX}/${Math.floor(
+      VOCAB_BANK_RATE_LIMIT_WINDOW_MS / 1000
+    )}s`
+  );
+  console.log(
+    `[api] rate limit /pocket-voca: ${POCKET_VOCA_RATE_LIMIT_MAX}/${Math.floor(
+      POCKET_VOCA_RATE_LIMIT_WINDOW_MS / 1000
     )}s`
   );
 });

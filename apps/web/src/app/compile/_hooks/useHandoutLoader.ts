@@ -8,6 +8,7 @@ import { type CompiledHandout, type HandoutSection } from "@gyoanmaker/shared/ty
 import type {
   HandoutIllustrations,
   TemplateSettings,
+  VocabBankData,
   WorkbookData,
 } from "@gyoanmaker/shared/types";
 import { getCachedResult, hashPassages, setCachedResult } from "@/services/cache";
@@ -18,6 +19,7 @@ import {
   useHandoutStore,
 } from "@/stores/useHandoutStore";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
+import { useVocabBankStore } from "@/stores/useVocabBankStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { DEFAULT_TEMPLATE_SETTINGS } from "@gyoanmaker/shared/types";
 import {
@@ -37,6 +39,7 @@ interface CompileInitResponse {
     sections: Record<string, string>;
     illustrations?: HandoutIllustrations;
     workbook?: WorkbookData | null;
+    vocabBank?: VocabBankData | null;
     customTexts?: {
       headerText?: string;
       analysisTitleText?: string;
@@ -88,6 +91,7 @@ export function useHandoutLoader() {
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
   const setWorkbookData = useWorkbookStore((state) => state.setWorkbookData);
+  const setVocabBankData = useVocabBankStore((state) => state.setVocabBankData);
 
   // ── Saved handout: combined endpoint (handout + template in one request) ──
 
@@ -136,18 +140,29 @@ export function useHandoutLoader() {
 
     useTemplateSettingsStore.getState().loadSettings(initData.templateSettings);
 
+    const handoutModel = initData.handout.model === "flash" ? "flash" : "pro" as const;
+    useHandoutStore.getState().setHandoutModel(handoutModel);
+
     const workbook = initData.handout.workbook ?? null;
     if (workbook) {
       setWorkbookData(workbook);
+    } else {
+      useWorkbookStore.setState({ workbookData: null });
+    }
+
+    const vocabBank = initData.handout.vocabBank ?? null;
+    if (vocabBank) {
+      setVocabBankData(vocabBank);
       return;
     }
-    useWorkbookStore.setState({ workbookData: null });
+    useVocabBankStore.setState({ vocabBankData: null });
   }, [
     compileInitData,
     isCompileInitSuccess,
     isCompileInitFetching,
     refetchCompileInit,
     setCompiledData,
+    setVocabBankData,
     setWorkbookData,
   ]);
 
@@ -237,6 +252,9 @@ export function useHandoutLoader() {
       if (!input) {
         throw new Error("Input data not found.");
       }
+
+      const inputModel = input.model === "flash" ? "flash" : "pro" as const;
+      useHandoutStore.getState().setHandoutModel(inputModel);
 
       const compiledKey = `${COMPILED_PREFIX}${input.hash}`;
       const cachedCompiled = sessionStorage.getItem(compiledKey);
