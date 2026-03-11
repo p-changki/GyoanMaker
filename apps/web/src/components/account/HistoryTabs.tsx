@@ -15,9 +15,9 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { key: "payment", label: "Payment History" },
-  { key: "usage", label: "Usage History" },
-  { key: "credits", label: "Credit Details" },
+  { key: "payment", label: "결제 내역" },
+  { key: "usage", label: "사용 내역" },
+  { key: "credits", label: "크레딧 상세" },
 ];
 
 interface HistoryTabsProps {
