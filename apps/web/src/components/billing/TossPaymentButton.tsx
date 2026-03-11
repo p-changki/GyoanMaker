@@ -80,9 +80,15 @@ export default function TossPaymentButton({
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isPaylinkEnabled = process.env.NEXT_PUBLIC_PAYLINK_ENABLED === "true";
 
   const handleClick = async () => {
     if (isLoading || disabled) {
+      return;
+    }
+
+    if (checkoutFlow === "paylink" && !isPaylinkEnabled) {
+      setError("페이링크 결제는 승인 완료 후 활성화됩니다.");
       return;
     }
 
