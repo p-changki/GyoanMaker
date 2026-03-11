@@ -221,15 +221,8 @@ export function useCompileActions({
             styles.flexShrink = "0";
             styles.boxShadow = "none"; // Remove shadow from PDF output
 
-            // Auto-fit: zoom down content that exceeds A4 height (1123px)
-            const a4HeightPx = 1123;
+            // Measure natural height (no CSS zoom — html2canvas doesn't support it)
             const naturalHeight = element.scrollHeight;
-            const oZoom = styles.zoom;
-            let fitScale = 1;
-            if (naturalHeight > a4HeightPx) {
-              fitScale = a4HeightPx / naturalHeight;
-              styles.zoom = `${fitScale}`;
-            }
 
             // Wait for reflow after style changes
             await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -276,28 +269,34 @@ export function useCompileActions({
             styles.minWidth = oMinWidth;
             styles.maxWidth = oMaxWidth;
             styles.flexShrink = oFlexShrink;
-            styles.zoom = oZoom;
             styles.boxShadow = oBoxShadow;
 
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
-            const imageWidth = a4WidthMm;
-            const imageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
+
+            // Scale image to fit A4 page (scale down if taller than A4)
+            const a4HeightMm = 297;
+            const rawImageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
+            const fitInA4 = rawImageHeight > a4HeightMm;
+            const imageWidth = fitInA4
+              ? a4WidthMm * (a4HeightMm / rawImageHeight)
+              : a4WidthMm;
+            const imageHeight = fitInA4 ? a4HeightMm : rawImageHeight;
 
             if (!pdf) {
               pdf = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
-                format: [imageWidth, Math.max(297, imageHeight)],
+                format: [a4WidthMm, a4HeightMm],
               });
             } else {
-              pdf.addPage([imageWidth, Math.max(297, imageHeight)]);
+              pdf.addPage([a4WidthMm, a4HeightMm]);
             }
 
             pdf.addImage(
               imageData,
               "PNG",
-              0,
+              fitInA4 ? (a4WidthMm - imageWidth) / 2 : 0,
               0,
               imageWidth,
               imageHeight,
@@ -344,15 +343,7 @@ export function useCompileActions({
             styles.flexShrink = "0";
             styles.boxShadow = "none";
 
-            // Auto-fit: zoom down content that exceeds A4 height (1123px)
-            const a4HeightPxWb = 1123;
             const naturalHeight = element.scrollHeight;
-            const oZoomWb = styles.zoom;
-            let fitScaleWb = 1;
-            if (naturalHeight > a4HeightPxWb) {
-              fitScaleWb = a4HeightPxWb / naturalHeight;
-              styles.zoom = `${fitScaleWb}`;
-            }
 
             // Wait for reflow after style changes
             await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -397,28 +388,33 @@ export function useCompileActions({
             styles.minWidth = oMinWidth;
             styles.maxWidth = oMaxWidth;
             styles.flexShrink = oFlexShrink;
-            styles.zoom = oZoomWb;
             styles.boxShadow = oBoxShadowWb;
 
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
-            const imageWidth = a4WidthMm;
-            const imageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
+
+            const a4HeightMmWb = 297;
+            const rawImageHeightWb = (canvasHeight * a4WidthMm) / canvasWidth;
+            const fitInA4Wb = rawImageHeightWb > a4HeightMmWb;
+            const imageWidth = fitInA4Wb
+              ? a4WidthMm * (a4HeightMmWb / rawImageHeightWb)
+              : a4WidthMm;
+            const imageHeight = fitInA4Wb ? a4HeightMmWb : rawImageHeightWb;
 
             if (!pdf) {
               pdf = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
-                format: [imageWidth, Math.max(297, imageHeight)],
+                format: [a4WidthMm, a4HeightMmWb],
               });
             } else {
-              pdf.addPage([imageWidth, Math.max(297, imageHeight)]);
+              pdf.addPage([a4WidthMm, a4HeightMmWb]);
             }
 
             pdf.addImage(
               imageData,
               "PNG",
-              0,
+              fitInA4Wb ? (a4WidthMm - imageWidth) / 2 : 0,
               0,
               imageWidth,
               imageHeight,
