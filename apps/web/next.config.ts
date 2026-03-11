@@ -11,9 +11,9 @@ const cspDirectives = [
   // Styles: self + trusted font stylesheet CDNs + unsafe-inline (Next.js CSS)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hangeul.pstatic.net https://spoqa.github.io https://cdn.jsdelivr.net",
   // Images: self + data/blob (PDF) + Google/Firebase storage + OAuth avatars
-  "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com",
+  "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://vercel.com",
   // Fonts: self + trusted font CDNs used by template/font loader
-  "font-src 'self' https://fonts.gstatic.com https://fastly.jsdelivr.net https://cdn.jsdelivr.net https://hangeul.pstatic.net https://spoqa.github.io data:",
+  "font-src 'self' https://fonts.gstatic.com https://fastly.jsdelivr.net https://cdn.jsdelivr.net https://hangeul.pstatic.net https://spoqa.github.io https://vercel.live data:",
   // Connect: self + analytics + Toss SDK endpoints (sandbox/prod + logging)
   "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://*.tosspayments.com https://tosspayments.com https://*.toss.im https://toss.im",
   // Workers: self + blob (html2canvas, ONNX background removal)
