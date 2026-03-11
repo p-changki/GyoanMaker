@@ -145,7 +145,7 @@ export default function ControlPanel({
       <div className="flex-1 overflow-y-auto p-6">
         {activeTab === "actions" ? (
           <div className="space-y-8">
-            {/* Template Apply */}
+            {/* 1. Template Apply */}
             <section className="space-y-4">
               <div className="bg-purple-50 rounded-2xl p-5 border border-purple-100 shadow-sm">
                 {isApplying ? (
@@ -178,25 +178,7 @@ export default function ControlPanel({
               </div>
             </section>
 
-            {/* Handout Save — elevated position */}
-            {onSave && (
-              <section>
-                <button
-                  type="button"
-                  onClick={onSave}
-                  disabled={!isReady || isSaving}
-                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm transition-[transform,color,border-color,background-color,opacity] shadow-sm hover:scale-[1.02] active:scale-[0.98] ${
-                    saveSuccess
-                      ? "bg-emerald-50 border-2 border-emerald-400 text-emerald-600"
-                      : "bg-white border-2 border-[#5E35B1] text-[#5E35B1] hover:bg-purple-50"
-                  } disabled:opacity-40 disabled:hover:scale-100`}
-                >
-                  {isSaving ? "저장 중..." : saveSuccess ? "저장됨!" : "이 교안 저장하기"}
-                </button>
-              </section>
-            )}
-
-            {/* Illustration Apply */}
+            {/* 2. Illustration Apply */}
             <section className="space-y-3">
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
                 <button
@@ -288,10 +270,10 @@ export default function ControlPanel({
               </div>
             </section>
 
-            {/* Quick Actions */}
+            {/* 3. Workbook */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
-                빠른 실행
+                워크북
               </p>
               {hasWorkbook ? (
                 <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm space-y-3">
@@ -336,25 +318,27 @@ export default function ControlPanel({
                   워크북 생성
                 </button>
               )}
-              <button
-                type="button"
-                onClick={onCopyAll}
-                disabled={!isReady}
-                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
-              >
-                전체 텍스트 복사
-              </button>
-              <button
-                type="button"
-                onClick={onDownloadTxt}
-                disabled={!isReady}
-                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
-              >
-                TXT 다운로드
-              </button>
             </section>
 
-            {/* PDF Export */}
+            {/* 4. Save */}
+            {onSave && (
+              <section>
+                <button
+                  type="button"
+                  onClick={onSave}
+                  disabled={!isReady || isSaving}
+                  className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm transition-[transform,color,border-color,background-color,opacity] shadow-sm hover:scale-[1.02] active:scale-[0.98] ${
+                    saveSuccess
+                      ? "bg-emerald-50 border-2 border-emerald-400 text-emerald-600"
+                      : "bg-white border-2 border-[#5E35B1] text-[#5E35B1] hover:bg-purple-50"
+                  } disabled:opacity-40 disabled:hover:scale-100`}
+                >
+                  {isSaving ? "저장 중..." : saveSuccess ? "저장됨!" : "이 교안 저장하기"}
+                </button>
+              </section>
+            )}
+
+            {/* 5. PDF Export */}
             <section className="space-y-3">
               <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
                 PDF 내보내기
@@ -387,6 +371,29 @@ export default function ControlPanel({
                   진행 {exportCurrent} / {exportTotal}
                 </p>
               )}
+            </section>
+
+            {/* 6. Auxiliary */}
+            <section className="space-y-3">
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest pl-1">
+                보조 기능
+              </p>
+              <button
+                type="button"
+                onClick={onCopyAll}
+                disabled={!isReady}
+                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
+              >
+                전체 텍스트 복사
+              </button>
+              <button
+                type="button"
+                onClick={onDownloadTxt}
+                disabled={!isReady}
+                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:border-[#5E35B1] hover:text-[#5E35B1] disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:text-gray-700 transition-[color,border-color,background-color,opacity] shadow-sm"
+              >
+                TXT 다운로드
+              </button>
             </section>
           </div>
         ) : (

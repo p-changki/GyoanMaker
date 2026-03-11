@@ -14,11 +14,23 @@ interface HandoutMeta {
   updatedAt: string;
 }
 
+interface StorageQuota {
+  used: number;
+  limit: number | null;
+}
+
 async function fetchHandouts(): Promise<HandoutMeta[]> {
   const res = await fetch("/api/handouts");
   if (!res.ok) throw new Error("Failed to load handouts.");
   const data = await res.json();
   return data.handouts ?? [];
+}
+
+async function fetchStorageQuota(): Promise<StorageQuota> {
+  const res = await fetch("/api/quota");
+  if (!res.ok) throw new Error("Failed to load quota.");
+  const data = await res.json();
+  return { used: data.storage?.used ?? 0, limit: data.storage?.limit ?? null };
 }
 
 async function deleteHandoutApi(id: string): Promise<void> {
@@ -128,12 +140,23 @@ export default function DashboardPage() {
     queryFn: fetchHandouts,
   });
 
+  const { data: storageQuota } = useQuery({
+    queryKey: ["storage-quota"],
+    queryFn: fetchStorageQuota,
+    staleTime: 60_000,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: deleteHandoutApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["handouts"] });
       setDeletingId(null);
-      setCurrentPage((p) => Math.max(1, p));
+      // Adjust page if last item on current page was deleted
+      setCurrentPage((p) => {
+        const remaining = (handouts?.length ?? 1) - 1;
+        const maxPage = Math.max(1, Math.ceil(remaining / PAGE_SIZE));
+        return Math.min(p, maxPage);
+      });
     },
   });
 
@@ -188,6 +211,11 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-gray-900">내 교안</h2>
           <p className="text-sm text-gray-500 mt-1">
             저장된 교안을 관리하고 다시 열 수 있습니다.
+            {storageQuota && storageQuota.limit !== null && (
+              <span className={`ml-2 font-medium ${storageQuota.used >= storageQuota.limit ? "text-red-500" : "text-gray-400"}`}>
+                ({storageQuota.used}/{storageQuota.limit}개)
+              </span>
+            )}
           </p>
         </div>
         <Link
