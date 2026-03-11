@@ -157,8 +157,9 @@ export function useCompileData() {
   }, []);
 
   const handleSaveConfirm = useCallback(() => {
-    setShowSaveModal(false);
-    saveMutation.mutate();
+    saveMutation.mutate(undefined, {
+      onSettled: () => setShowSaveModal(false),
+    });
   }, [saveMutation]);
 
   const errorMessage = useMemo(() => {

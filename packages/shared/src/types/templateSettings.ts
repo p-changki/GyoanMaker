@@ -233,7 +233,8 @@ export interface SectionStyleConfig {
   titleColor: string;   // "" = theme primary
   bgColor: string;      // "" = transparent / default
   textColor: string;    // "" = #111827
-  fontFamily: FontFamily | "";   // "" = use global setting
+  fontFamily: FontFamily | "";     // "" = use global setting (EN)
+  fontFamilyKo: FontFamily | "";   // "" = inherit fontFamily (KO)
   titleWeight: TitleWeight | ""; // "" = use global setting
   textAlign: "left" | "center" | "right" | "justify" | ""; // "" = default (left)
   badgeShape?: "rounded-full" | "rounded-lg" | "rounded-none"; // badge corner style
@@ -254,6 +255,7 @@ export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
   bgColor: "",
   textColor: "",
   fontFamily: "",
+  fontFamilyKo: "",
   titleWeight: "",
   textAlign: "",
 };
@@ -342,6 +344,7 @@ export interface TemplateSettings {
   defaultSummaryTitle: string | null;
   fontScale: FontScale;
   fontFamily: FontFamily;
+  fontFamilyKo?: FontFamily;  // KO font; undefined = same as fontFamily
   titleWeight: TitleWeight;
   fontSizes: FontSizeConfig;
   // Phase 1 optional fields

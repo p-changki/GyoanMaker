@@ -226,7 +226,7 @@ export default function AccountDashboard() {
           <div className="flex items-center justify-between text-sm">
             <p className="font-semibold text-gray-900">일일 일러스트 테스트</p>
             <p className="font-medium text-gray-500">
-              {data.dailySampleUsage.used}/{data.dailySampleUsage.limit}
+              {data.dailySampleUsage.limit - data.dailySampleUsage.used}/{data.dailySampleUsage.limit}
             </p>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-100">

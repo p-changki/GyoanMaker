@@ -28,9 +28,9 @@ async function fetchQuota(): Promise<QuotaStatusResponse> {
   return res.json();
 }
 
-function getUsageRatio(data: ModelQuotaView): number {
-  if (data.limit <= 0) return 0;
-  return data.used / data.limit;
+function formatQuota(data: ModelQuotaView): string {
+  const effectiveTotal = data.limit + data.credits;
+  return `${data.remaining}/${effectiveTotal}`;
 }
 
 export default function QuotaIndicator() {
@@ -55,9 +55,11 @@ export default function QuotaIndicator() {
 
   if (isError || !data) return null;
 
-  const flashRatio = getUsageRatio(data.flash);
-  const proRatio = getUsageRatio(data.pro);
-  const isLow = flashRatio >= 0.8 || proRatio >= 0.8;
+  const flashTotal = data.flash.limit + data.flash.credits;
+  const proTotal = data.pro.limit + data.pro.credits;
+  const isLow =
+    (flashTotal > 0 && data.flash.remaining / flashTotal <= 0.2) ||
+    (proTotal > 0 && data.pro.remaining / proTotal <= 0.2);
   const isExhausted =
     !data.canGenerate || (data.flash.remaining <= 0 && data.pro.remaining <= 0);
 
@@ -79,16 +81,12 @@ export default function QuotaIndicator() {
       <div className="flex items-center gap-3">
         <span>
           속도{" "}
-          <strong>
-            {data.flash.remaining}/{data.flash.limit}
-          </strong>
+          <strong>{formatQuota(data.flash)}</strong>
         </span>
         <span className="text-gray-300">|</span>
         <span>
           정밀{" "}
-          <strong>
-            {data.pro.remaining}/{data.pro.limit}
-          </strong>
+          <strong>{formatQuota(data.pro)}</strong>
         </span>
       </div>
       {isExhausted && (

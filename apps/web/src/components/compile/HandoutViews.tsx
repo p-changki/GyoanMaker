@@ -29,6 +29,7 @@ function useTheme() {
   const themePreset = useTemplateSettingsStore((s) => s.themePreset);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
   const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
+  const fontFamilyKo = useTemplateSettingsStore((s) => s.fontFamilyKo);
   const titleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const useCustomTheme = useTemplateSettingsStore((s) => s.useCustomTheme);
   const customThemeColors = useTemplateSettingsStore(
@@ -45,6 +46,7 @@ function useTheme() {
     ...colors,
     fontSizes,
     fontCss: FONT_FAMILY_MAP[fontFamily].css,
+    fontCssKo: FONT_FAMILY_MAP[fontFamilyKo || fontFamily].css,
     titleFontWeight: TITLE_WEIGHT_MAP[titleWeight].value,
   };
 }
@@ -208,10 +210,14 @@ export function ParsedHandoutViewPage1({
   );
 
   const p1TitleColor = page1Style.titleColor || theme.primary;
+  const accentColor = theme.primaryDark ?? theme.primary;
   const p1TextColor = page1Style.textColor || "#111827";
   const p1FontFamily = page1Style.fontFamily
     ? FONT_FAMILY_MAP[page1Style.fontFamily].css
     : theme.fontCss;
+  const p1FontFamilyKo = page1Style.fontFamilyKo
+    ? FONT_FAMILY_MAP[page1Style.fontFamilyKo].css
+    : theme.fontCssKo;
   const p1TextAlign = (page1Style.textAlign || "justify") as
     | "left"
     | "center"
@@ -232,8 +238,8 @@ export function ParsedHandoutViewPage1({
 
   const tableBorderStyle = useMemo(
     () => ({
-      borderTop: `${borderWidth}px solid ${p1TitleColor}`,
-      borderBottom: `${borderWidth}px solid ${p1TitleColor}`,
+      borderTop: `${borderWidth}px solid ${accentColor}`,
+      borderBottom: `${borderWidth}px solid ${accentColor}`,
       paddingTop: page1Style.paddingTop
         ? `${page1Style.paddingTop}px`
         : undefined,
@@ -241,7 +247,7 @@ export function ParsedHandoutViewPage1({
         ? `${page1Style.paddingBottom}px`
         : undefined,
     }),
-    [borderWidth, p1TitleColor, page1Style.paddingTop, page1Style.paddingBottom]
+    [borderWidth, accentColor, page1Style.paddingTop, page1Style.paddingBottom]
   );
 
   const enTextStyle = useMemo(
@@ -259,11 +265,11 @@ export function ParsedHandoutViewPage1({
     () =>
       ({
         fontSize: `${theme.fontSizes.analysisKo}pt`,
-        fontFamily: p1FontFamily,
+        fontFamily: p1FontFamilyKo,
         color: p1TextColor,
         textAlign: p1TextAlign,
       }) as const,
-    [theme.fontSizes.analysisKo, p1FontFamily, p1TextColor, p1TextAlign]
+    [theme.fontSizes.analysisKo, p1FontFamilyKo, p1TextColor, p1TextAlign]
   );
 
   return (
@@ -502,7 +508,7 @@ export function ParsedHandoutViewPage2({
               borderTop:
                 page2HeaderStyle?.borderStyle &&
                 page2HeaderStyle.borderStyle !== "none"
-                  ? `1px ${page2HeaderStyle.borderStyle} ${page2HeaderStyle.borderColor || theme.primary}`
+                  ? `1px ${page2HeaderStyle.borderStyle} ${page2HeaderStyle.borderColor || theme.primaryDark || theme.primary}`
                   : undefined,
             }}
           >
@@ -544,7 +550,7 @@ export function ParsedHandoutViewPage2({
               paddingBottom: style?.paddingBottom ?? 0,
               borderTop:
                 style?.borderStyle && style.borderStyle !== "none"
-                  ? `1px ${style.borderStyle} ${style.borderColor || theme.primary}`
+                  ? `1px ${style.borderStyle} ${style.borderColor || theme.primaryDark || theme.primary}`
                   : undefined,
             };
             if (isCustomSectionKey(key)) {

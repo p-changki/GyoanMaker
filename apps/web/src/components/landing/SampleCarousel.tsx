@@ -15,49 +15,49 @@ const SAMPLES: Sample[] = [
   {
     label: "문장 분석",
     category: "분석",
-    image: "/images/samples/sample-1.png",
+    image: "/images/samples/sample-1.webp",
     color: "from-violet-500/20 to-indigo-500/20",
   },
   {
     label: "핵심 어휘",
     category: "어휘",
-    image: "/images/samples/sample-2.png",
+    image: "/images/samples/sample-2.webp",
     color: "from-blue-500/20 to-cyan-500/20",
   },
   {
     label: "수업 교안 (1)",
     category: "교안",
-    image: "/images/samples/sample-3.png",
+    image: "/images/samples/sample-3.webp",
     color: "from-emerald-500/20 to-teal-500/20",
   },
   {
     label: "수업 교안 (2)",
     category: "교안",
-    image: "/images/samples/sample-4.png",
+    image: "/images/samples/sample-4.webp",
     color: "from-amber-500/20 to-orange-500/20",
   },
   {
     label: "생성 페이지",
     category: "생성",
-    image: "/images/samples/sample-5.png",
+    image: "/images/samples/sample-5.webp",
     color: "from-rose-500/20 to-pink-500/20",
   },
   {
     label: "일러스트 교안 (1)",
     category: "교안",
-    image: "/images/samples/sample-6.png",
+    image: "/images/samples/sample-6.webp",
     color: "from-purple-500/20 to-violet-500/20",
   },
   {
     label: "일러스트 교안 (2)",
     category: "교안",
-    image: "/images/samples/sample-7.png",
+    image: "/images/samples/sample-7.webp",
     color: "from-sky-500/20 to-blue-500/20",
   },
   {
     label: "스타일 갤러리",
     category: "일러스트",
-    image: "/images/samples/sample-8.png",
+    image: "/images/samples/sample-8.webp",
     color: "from-fuchsia-500/20 to-pink-500/20",
   },
 ];
@@ -106,7 +106,8 @@ function CarouselCard({
             fill
             className="object-contain p-3"
             sizes="(min-width: 640px) 440px, 360px"
-            priority={index === 0}
+            quality={75}
+            loading="lazy"
           />
         </div>
 

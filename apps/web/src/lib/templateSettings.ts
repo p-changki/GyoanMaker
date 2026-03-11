@@ -108,6 +108,10 @@ function normalizeSectionStyle(raw: unknown): SectionStyleConfig {
     typeof obj.fontFamily === "string" && (obj.fontFamily === "" || VALID_FONT_FAMILIES.has(obj.fontFamily as FontFamily))
       ? (obj.fontFamily as FontFamily | "")
       : DEFAULT_SECTION_STYLE.fontFamily;
+  const fontFamilyKo =
+    typeof obj.fontFamilyKo === "string" && (obj.fontFamilyKo === "" || VALID_FONT_FAMILIES.has(obj.fontFamilyKo as FontFamily))
+      ? (obj.fontFamilyKo as FontFamily | "")
+      : DEFAULT_SECTION_STYLE.fontFamilyKo;
   const titleWeight =
     typeof obj.titleWeight === "string" && (obj.titleWeight === "" || VALID_TITLE_WEIGHTS.has(obj.titleWeight as TitleWeight))
       ? (obj.titleWeight as TitleWeight | "")
@@ -123,7 +127,7 @@ function normalizeSectionStyle(raw: unknown): SectionStyleConfig {
       ? obj.barWidth
       : undefined;
 
-  return { paddingTop, paddingBottom, borderStyle, borderColor, titleColor, bgColor, textColor, fontFamily, titleWeight, textAlign, ...(barWidth !== undefined && { barWidth }) };
+  return { paddingTop, paddingBottom, borderStyle, borderColor, titleColor, bgColor, textColor, fontFamily, fontFamilyKo, titleWeight, textAlign, ...(barWidth !== undefined && { barWidth }) };
 }
 
 function normalizeSectionStyles(raw: unknown): Partial<Record<Page2SectionKey, SectionStyleConfig>> | undefined {

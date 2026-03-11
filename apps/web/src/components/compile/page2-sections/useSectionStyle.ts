@@ -8,6 +8,7 @@ export function useSectionStyle(sectionKey: Page2SectionKey) {
   const customColors = useTemplateSettingsStore((s) => s.customThemeColors);
   const sectionStyles = useTemplateSettingsStore((s) => s.sectionStyles);
   const globalFontFamily = useTemplateSettingsStore((s) => s.fontFamily);
+  const globalFontFamilyKo = useTemplateSettingsStore((s) => s.fontFamilyKo);
   const globalTitleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
 
@@ -16,6 +17,7 @@ export function useSectionStyle(sectionKey: Page2SectionKey) {
   const style = sectionStyles?.[sectionKey] ?? DEFAULT_SECTION_STYLE;
 
   const fontFamily = style.fontFamily || globalFontFamily;
+  const fontFamilyKo = style.fontFamilyKo || globalFontFamilyKo || fontFamily;
   const titleWeight = style.titleWeight || globalTitleWeight;
 
   const textAlign = (style.textAlign || "justify") as "left" | "center" | "right" | "justify";
@@ -28,6 +30,7 @@ export function useSectionStyle(sectionKey: Page2SectionKey) {
     borderColor: style.borderColor || theme.primary,
     theme,
     fontFamily,
+    fontFamilyKo,
     titleWeight,
     fontSizes,
     textAlign,

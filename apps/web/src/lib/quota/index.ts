@@ -157,6 +157,38 @@ export async function setStorageUsed(email: string, used: number): Promise<void>
     );
 }
 
+/**
+ * Atomically check storage limit and reserve one slot.
+ * Returns true if reserved, false if limit exceeded.
+ */
+export async function reserveStorageSlot(email: string): Promise<boolean> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const state = normalizeUserState((snap.data() ?? {}) as UserDocLike, new Date());
+    const status = buildQuotaStatus(state);
+
+    if (
+      status.storage.limit !== null &&
+      status.storage.used >= status.storage.limit
+    ) {
+      return false;
+    }
+
+    tx.set(
+      docRef,
+      {
+        quota: { storageUsed: FieldValue.increment(1) },
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    return true;
+  });
+}
+
 export async function incrementStorageUsed(
   email: string,
   delta: number

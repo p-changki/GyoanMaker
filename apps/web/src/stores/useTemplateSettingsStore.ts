@@ -20,6 +20,7 @@ interface TemplateSettingsActions {
   setDefaultSummaryTitle: (text: string | null) => void;
   setFontScale: (scale: FontScale) => void;
   setFontFamily: (family: FontFamily) => void;
+  setFontFamilyKo: (family: FontFamily | undefined) => void;
   setTitleWeight: (weight: TitleWeight) => void;
   adjustFontSizeSlot: (key: keyof FontSizeConfig, direction: "up" | "down") => void;
   setFontSizeSlot: (key: keyof FontSizeConfig, value: number) => void;
@@ -102,6 +103,8 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
 
     setFontFamily: (fontFamily) => set({ fontFamily }),
 
+    setFontFamilyKo: (fontFamilyKo) => set({ fontFamilyKo }),
+
     setTitleWeight: (titleWeight) => set({ titleWeight }),
 
     adjustFontSizeSlot: (key, direction) =>
@@ -176,6 +179,7 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         summaryLanguage: undefined,
         logoDisplay: undefined,
         avatarDisplay: undefined,
+        fontFamilyKo: undefined,
         sectionTitles: undefined,
         subSectionTitles: undefined,
         subSectionColors: undefined,
@@ -348,6 +352,7 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     defaultSummaryTitle: state.defaultSummaryTitle,
     fontScale: state.fontScale,
     fontFamily: state.fontFamily,
+    fontFamilyKo: state.fontFamilyKo,
     titleWeight: state.titleWeight,
     fontSizes: state.fontSizes,
     page1Layout: state.page1Layout,

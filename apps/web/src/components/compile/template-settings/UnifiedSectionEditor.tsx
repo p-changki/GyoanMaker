@@ -201,6 +201,7 @@ function useEditorStyle(sectionKey: EditableSectionKey) {
     globalFontFamily,
     globalTitleWeight,
     effectiveFontFamily: style.fontFamily || globalFontFamily,
+    effectiveFontFamilyKo: style.fontFamilyKo || (style.fontFamily || globalFontFamily),
     effectiveTitleWeight: style.titleWeight || globalTitleWeight,
   };
 }
@@ -210,7 +211,7 @@ interface Props {
 }
 
 export default function UnifiedSectionEditor({ sectionKey }: Props) {
-  const { theme, style, handleChange, globalFontFamily, globalTitleWeight, effectiveFontFamily, effectiveTitleWeight } = useEditorStyle(sectionKey);
+  const { theme, style, handleChange, globalFontFamily, globalTitleWeight, effectiveFontFamily, effectiveFontFamilyKo, effectiveTitleWeight } = useEditorStyle(sectionKey);
   const sectionTitles = useTemplateSettingsStore((s) => s.sectionTitles);
   const subSectionTitles = useTemplateSettingsStore((s) => s.subSectionTitles);
   const setSubSectionTitle = useTemplateSettingsStore((s) => s.setSubSectionTitle);
@@ -358,9 +359,9 @@ export default function UnifiedSectionEditor({ sectionKey }: Props) {
       <div className="space-y-2">
         <p className="text-[10px] font-semibold text-gray-600">폰트</p>
 
-        {/* Font Family */}
+        {/* Font Family - EN */}
         <div className="space-y-0.5">
-          <label className="text-[10px] text-gray-500">폰트 패밀리</label>
+          <label className="text-[10px] text-gray-500">영어 폰트</label>
           <select
             value={style.fontFamily}
             onChange={(e) =>
@@ -378,11 +379,28 @@ export default function UnifiedSectionEditor({ sectionKey }: Props) {
               </option>
             ))}
           </select>
-          {style.fontFamily && (
-            <span className="text-[8px] font-bold text-[#5E35B1] bg-[#5E35B1]/10 px-1 py-px rounded">
-              커스텀
-            </span>
-          )}
+        </div>
+
+        {/* Font Family - KO */}
+        <div className="space-y-0.5">
+          <label className="text-[10px] text-gray-500">한글 폰트</label>
+          <select
+            value={style.fontFamilyKo}
+            onChange={(e) =>
+              handleChange({ fontFamilyKo: e.target.value as FontFamily | "" })
+            }
+            className="w-full py-1.5 px-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 focus:border-[#5E35B1] focus:outline-none appearance-none cursor-pointer"
+            style={{ fontFamily: FONT_FAMILY_MAP[effectiveFontFamilyKo].css }}
+          >
+            <option value="">
+              영어 폰트와 동일 ({FONT_FAMILY_MAP[effectiveFontFamily].label})
+            </option>
+            {(Object.keys(FONT_FAMILY_MAP) as FontFamily[]).map((key) => (
+              <option key={key} value={key} style={{ fontFamily: FONT_FAMILY_MAP[key].css }}>
+                {FONT_FAMILY_MAP[key].label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Title Weight */}

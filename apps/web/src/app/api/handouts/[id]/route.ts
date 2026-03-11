@@ -72,6 +72,22 @@ export async function PATCH(
     workbook?: WorkbookData | null;
   };
 
+  // Validate title length
+  if (title !== undefined && title.trim().length > 255) {
+    return NextResponse.json(
+      { error: { code: "INVALID_BODY", message: "Title must be 255 characters or less." } },
+      { status: 400 }
+    );
+  }
+
+  // Validate sections are non-empty if provided
+  if (sections !== undefined && Object.keys(sections).length === 0) {
+    return NextResponse.json(
+      { error: { code: "INVALID_BODY", message: "sections must not be empty." } },
+      { status: 400 }
+    );
+  }
+
   // Title-only update (legacy path from dashboard rename)
   const isFullUpdate =
     sections !== undefined ||

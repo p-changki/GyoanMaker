@@ -1,6 +1,12 @@
 /* Template fonts are loaded lazily in compile/preview to reduce first-load CSS cost. */
 @import "tailwindcss";
 
+/* Override Tailwind v4 preflight (color-scheme: light dark) to prevent FOUC on dark-mode OS */
+html {
+  color-scheme: light !important;
+  background-color: #ffffff;
+}
+
 @font-face {
   font-family: "GmarketSans";
   font-weight: 500;

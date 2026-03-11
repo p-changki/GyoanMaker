@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { createHandout, listHandouts } from "@/lib/handouts";
-import { getQuotaStatus, incrementStorageUsed } from "@/lib/quota";
+import { incrementStorageUsed, reserveStorageSlot } from "@/lib/quota";
 import type { HandoutIllustrations, WorkbookData } from "@gyoanmaker/shared/types";
 
 /**
@@ -76,14 +76,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use stored counter (O(1)) instead of listing all handouts
-    const quota = await getQuotaStatus(session.user.email);
-    const currentStorageUsed = quota.storage.used;
+    if (title && title.trim().length > 255) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "INVALID_BODY",
+            message: "Title must be 255 characters or less.",
+          },
+        },
+        { status: 400 }
+      );
+    }
 
-    if (
-      quota.storage.limit !== null &&
-      currentStorageUsed >= quota.storage.limit
-    ) {
+    // Atomic: check quota + reserve slot in one transaction
+    const reserved = await reserveStorageSlot(session.user.email);
+    if (!reserved) {
       return NextResponse.json(
         {
           error: {
@@ -95,20 +102,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const handout = await createHandout({
-      ownerEmail: session.user.email,
-      title: title || `Handout ${new Date().toLocaleDateString("en-US")}`,
-      sections,
-      level: level || "advanced",
-      model: model || "pro",
-      inputHash: typeof inputHash === "string" ? inputHash : undefined,
-      illustrations:
-        illustrations && typeof illustrations === "object" ? illustrations : undefined,
-      customTexts,
-      workbook: workbook ?? undefined,
-    });
-
-    await incrementStorageUsed(session.user.email, 1);
+    let handout;
+    try {
+      handout = await createHandout({
+        ownerEmail: session.user.email,
+        title: title || `Handout ${new Date().toLocaleDateString("en-US")}`,
+        sections,
+        level: level || "advanced",
+        model: model || "pro",
+        inputHash: typeof inputHash === "string" ? inputHash : undefined,
+        illustrations:
+          illustrations && typeof illustrations === "object" ? illustrations : undefined,
+        customTexts,
+        workbook: workbook ?? undefined,
+      });
+    } catch (err) {
+      // Rollback reserved slot on creation failure
+      await incrementStorageUsed(session.user.email, -1);
+      throw err;
+    }
 
     return NextResponse.json(handout, { status: 201 });
   } catch (error) {

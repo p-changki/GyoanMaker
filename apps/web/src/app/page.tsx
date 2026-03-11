@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import HeroSection from "@/components/landing/HeroSection";
-import SampleCarousel from "@/components/landing/SampleCarousel";
+import LazySampleCarousel from "@/components/landing/LazySampleCarousel";
 
 export const metadata: Metadata = {
   title: "교안메이커 | AI 영어 교안 자동 생성기",
@@ -15,7 +15,7 @@ export default function LandingPage() {
   return (
     <div className="w-full">
       <HeroSection />
-      <SampleCarousel />
+      <LazySampleCarousel />
     </div>
   );
 }
