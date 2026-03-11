@@ -116,11 +116,11 @@ function DeleteModal({
 }
 
 function levelLabel(level: string): string {
-  return level === "basic" ? "Basic" : "Advanced";
+  return level === "basic" ? "기본" : "심화";
 }
 
 function modelLabel(model: string): string {
-  return model === "flash" ? "Speed" : "Precision";
+  return model === "flash" ? "빠른 생성" : "정밀 생성";
 }
 
 export default function DashboardPage() {
@@ -328,6 +328,12 @@ export default function DashboardPage() {
                       className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
                     >
                       보카
+                    </Link>
+                    <Link
+                      href={`/pocket-voca?handoutId=${h.id}`}
+                      className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
+                    >
+                      포켓보카
                     </Link>
                     <button
                       type="button"

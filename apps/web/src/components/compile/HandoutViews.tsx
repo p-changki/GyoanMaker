@@ -185,10 +185,14 @@ export function ParsedHandoutViewPage1({
   section,
   sentencesChunk,
   pageNum,
+  globalPageNumber,
+  pageKey,
 }: {
   section: HandoutSection;
   sentencesChunk: { en: string; ko: string }[];
   pageNum: number;
+  globalPageNumber?: number;
+  pageKey?: string;
 }) {
   const theme = useTheme();
   const page1Layout =
@@ -310,7 +314,7 @@ export function ParsedHandoutViewPage1({
               }}
             >
               <span className="translate-y-px">
-                <EditableAnalysisTitle pageNum={pageNum} />
+                <EditableAnalysisTitle />
               </span>
             </div>
           </div>
@@ -404,7 +408,7 @@ export function ParsedHandoutViewPage1({
         </ClickZone>
       </section>
 
-      <HandoutFooter section={section} pageNum={pageNum} />
+      <HandoutFooter section={section} pageNum={pageNum} globalPageNumber={globalPageNumber} pageKey={pageKey} />
     </div>
   );
 }
@@ -445,9 +449,13 @@ function DiscoveryBanner() {
 export function ParsedHandoutViewPage2({
   section,
   pageNum,
+  globalPageNumber,
+  pageKey,
 }: {
   section: HandoutSection;
   pageNum: number;
+  globalPageNumber?: number;
+  pageKey?: string;
 }) {
   const theme = useTheme();
   const page2Sections = useTemplateSettingsStore((s) => s.page2Sections);
@@ -574,7 +582,7 @@ export function ParsedHandoutViewPage2({
         </div>
       </section>
 
-      <HandoutFooter section={section} pageNum={pageNum} />
+      <HandoutFooter section={section} pageNum={pageNum} globalPageNumber={globalPageNumber} pageKey={pageKey} />
     </div>
   );
 }

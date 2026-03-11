@@ -39,7 +39,7 @@ export default function HeroSection() {
         >
           영어 지문을 입력하면 문장 분석, 어휘, 요약을 자동 생성합니다.
           <br className="hidden sm:block" />
-          맞춤 교안을 PDF로 내보내고 단어 테스트까지 한번에.
+          워크북, 단어 테스트, 포켓보카까지 학원 수업에 필요한 모든 자료를 한번에.
         </motion.p>
 
         {/* Dual CTA */}

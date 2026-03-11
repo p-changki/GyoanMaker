@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EditorFocus } from "@/stores/useEditorFocusStore";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
@@ -75,19 +75,22 @@ function HeaderBadgeTextEditor() {
   const customHeaderText = useHandoutStore((s) => s.customHeaderText);
   const setCustomHeaderText = useHandoutStore((s) => s.setCustomHeaderText);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [localValue, setLocalValue] = useState(customHeaderText);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleChange = useCallback(
-    (value: string) => {
-      const next = normalizeHeaderText(value);
-      setCustomHeaderText(next);
-      sessionStorage.setItem(HEADER_TEXT_STORAGE_KEY, next);
-    },
-    [setCustomHeaderText],
-  );
+  const handleChange = useCallback((value: string) => {
+    setLocalValue(value.slice(0, 40));
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    const next = normalizeHeaderText(localValue);
+    setLocalValue(next);
+    setCustomHeaderText(next);
+    sessionStorage.setItem(HEADER_TEXT_STORAGE_KEY, next);
+  }, [localValue, setCustomHeaderText]);
 
   return (
     <div className="space-y-3 py-2">
@@ -97,9 +100,10 @@ function HeaderBadgeTextEditor() {
       <input
         ref={inputRef}
         type="text"
-        value={customHeaderText}
+        value={localValue}
         maxLength={40}
         onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleBlur}
         className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] text-center"
       />
     </div>
@@ -112,19 +116,22 @@ function AnalysisTitleTextEditor() {
   const analysisTitleText = useHandoutStore((s) => s.analysisTitleText);
   const setAnalysisTitleText = useHandoutStore((s) => s.setAnalysisTitleText);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [localValue, setLocalValue] = useState(analysisTitleText);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleChange = useCallback(
-    (value: string) => {
-      const next = normalizeAnalysisTitle(value);
-      setAnalysisTitleText(next);
-      sessionStorage.setItem(ANALYSIS_TITLE_STORAGE_KEY, next);
-    },
-    [setAnalysisTitleText],
-  );
+  const handleChange = useCallback((value: string) => {
+    setLocalValue(value.slice(0, 80));
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    const next = normalizeAnalysisTitle(localValue);
+    setLocalValue(next);
+    setAnalysisTitleText(next);
+    sessionStorage.setItem(ANALYSIS_TITLE_STORAGE_KEY, next);
+  }, [localValue, setAnalysisTitleText]);
 
   return (
     <div className="space-y-3 py-2">
@@ -134,9 +141,10 @@ function AnalysisTitleTextEditor() {
       <input
         ref={inputRef}
         type="text"
-        value={analysisTitleText}
+        value={localValue}
         maxLength={80}
         onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleBlur}
         className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] text-center"
       />
     </div>
@@ -149,19 +157,22 @@ function SummaryTitleTextEditor() {
   const summaryTitleText = useHandoutStore((s) => s.summaryTitleText);
   const setSummaryTitleText = useHandoutStore((s) => s.setSummaryTitleText);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [localValue, setLocalValue] = useState(summaryTitleText);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleChange = useCallback(
-    (value: string) => {
-      const next = normalizeSummaryTitle(value);
-      setSummaryTitleText(next);
-      sessionStorage.setItem(SUMMARY_TITLE_STORAGE_KEY, next);
-    },
-    [setSummaryTitleText],
-  );
+  const handleChange = useCallback((value: string) => {
+    setLocalValue(value.slice(0, 40));
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    const next = normalizeSummaryTitle(localValue);
+    setLocalValue(next);
+    setSummaryTitleText(next);
+    sessionStorage.setItem(SUMMARY_TITLE_STORAGE_KEY, next);
+  }, [localValue, setSummaryTitleText]);
 
   return (
     <div className="space-y-3 py-2">
@@ -171,9 +182,10 @@ function SummaryTitleTextEditor() {
       <input
         ref={inputRef}
         type="text"
-        value={summaryTitleText}
+        value={localValue}
         maxLength={40}
         onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleBlur}
         className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] text-center"
       />
     </div>

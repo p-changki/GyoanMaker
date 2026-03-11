@@ -19,6 +19,8 @@ interface HandoutStoreState {
   customHeaderText: string;
   analysisTitleText: string;
   summaryTitleText: string;
+  handoutModel: "flash" | "pro";
+  pageNumberOverrides: Record<string, string>;
 }
 
 interface HandoutStoreActions {
@@ -36,6 +38,8 @@ interface HandoutStoreActions {
   setCustomHeaderText: (text: string) => void;
   setAnalysisTitleText: (text: string) => void;
   setSummaryTitleText: (text: string) => void;
+  setHandoutModel: (model: "flash" | "pro") => void;
+  setPageNumberOverride: (key: string, value: string) => void;
 }
 
 type HandoutStore = HandoutStoreState & HandoutStoreActions;
@@ -50,6 +54,8 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
   customHeaderText: DEFAULT_CUSTOM_HEADER_TEXT,
   analysisTitleText: DEFAULT_ANALYSIS_TITLE_TEXT,
   summaryTitleText: DEFAULT_SUMMARY_TITLE_TEXT,
+  handoutModel: "pro",
+  pageNumberOverrides: {},
 
   setCompiledData: (sections, illustrations) => {
     set({
@@ -130,6 +136,15 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
   setSummaryTitleText: (summaryTitleText) => {
     set({ summaryTitleText });
   },
+
+  setHandoutModel: (handoutModel) => {
+    set({ handoutModel });
+  },
+
+  setPageNumberOverride: (key, value) =>
+    set((state) => ({
+      pageNumberOverrides: { ...state.pageNumberOverrides, [key]: value },
+    })),
 }));
 
 export function useSection(id: string): HandoutSection | undefined {

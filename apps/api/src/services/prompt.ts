@@ -8,12 +8,18 @@ const SECRET_PATHS = {
   basic: "/workspace/apps/api/secrets/system-prompt-basic/system-prompt-basic",
   workbook:
     "/workspace/apps/api/secrets/system-prompt-workbook/system-prompt-workbook",
+  vocabBank:
+    "/workspace/apps/api/secrets/system-prompt-vocab-bank/system-prompt-vocab-bank",
+  pocketVoca:
+    "/workspace/apps/api/secrets/system-prompt-pocket-voca/system-prompt-pocket-voca",
 } as const;
 
 const LOCAL_PATHS = {
   advanced: path.join(__dirname, "../../system-prompt.txt"),
   basic: path.join(__dirname, "../../system-prompt-basic.txt"),
   workbook: path.join(__dirname, "../../system-prompt-workbook.txt"),
+  vocabBank: path.join(__dirname, "../../system-prompt-vocab-bank.txt"),
+  pocketVoca: path.join(__dirname, "../../system-prompt-pocket-voca.txt"),
 } as const;
 
 const PROMPT_FILES = process.env.NODE_ENV === "production" ? SECRET_PATHS : LOCAL_PATHS;
@@ -45,6 +51,14 @@ function loadPromptFile(level: PromptLevel): PromptInfo | null {
 function getPromptInfo(level: PromptLevel = "advanced"): PromptInfo | null {
   if (level === "workbook") {
     return loadPromptFile("workbook");
+  }
+
+  if (level === "vocabBank") {
+    return loadPromptFile("vocabBank");
+  }
+
+  if (level === "pocketVoca") {
+    return loadPromptFile("pocketVoca");
   }
 
   if (level === "basic") {

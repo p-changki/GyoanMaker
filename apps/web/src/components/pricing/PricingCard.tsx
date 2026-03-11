@@ -44,7 +44,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
       {
         category: "교안 · 워크북 생성",
         items: [
-          { label: "속도 모드 지문 10개 / 월", tooltip: "지문당 10~20초" },
+          { label: "속도 모드 지문 20개 / 월", tooltip: "지문당 10~20초" },
           { label: "정밀 모드 지문 5개 / 월", tooltip: "지문당 30초~2분, 최고 품질" },
           { label: "교안당 최대 20개 지문", tooltip: "교안 1개에 최대 20개 지문 포함" },
           { label: "워크북 자동 생성", tooltip: "교안 할당량을 공유하여 차감됩니다 (지문 1개 = 1회)" },
@@ -53,7 +53,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
       {
         category: "일러스트",
         items: [
-          { label: "교안 일러스트 삽입 5회 / 월", tooltip: "교안에 AI 일러스트 추가" },
+          { label: "교안 일러스트 삽입 3회 / 월", tooltip: "교안에 AI 일러스트 추가" },
           { label: "일러스트 샘플 저장 10개", tooltip: "마음에 드는 화풍을 저장" },
           { label: "일러스트 미리보기 3회 / 일", tooltip: "화풍을 미리 테스트" },
         ],
@@ -64,6 +64,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
           { label: "교안 저장 최대 3개" },
           { label: "PDF 다운로드" },
           { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
+          { label: "포켓보카 생성", tooltip: "핵심 어휘 유의어·반의어 암기 시트 자동 생성" },
         ],
       },
     ],
@@ -97,6 +98,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
           { label: "무제한 저장" },
           { label: "PDF 다운로드" },
           { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
+          { label: "포켓보카 생성", tooltip: "핵심 어휘 유의어·반의어 암기 시트 자동 생성" },
           { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
         ],
       },
@@ -131,6 +133,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
           { label: "무제한 저장" },
           { label: "PDF 다운로드" },
           { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
+          { label: "포켓보카 생성", tooltip: "핵심 어휘 유의어·반의어 암기 시트 자동 생성" },
           { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
           { label: "우선 처리", tooltip: "생성 요청이 우선 큐에서 처리" },
         ],
@@ -166,6 +169,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
           { label: "무제한 저장" },
           { label: "PDF 다운로드" },
           { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
+          { label: "포켓보카 생성", tooltip: "핵심 어휘 유의어·반의어 암기 시트 자동 생성" },
           { label: "추가 크레딧 구매", tooltip: "사용량 초과 시 크레딧으로 추가 생성" },
           { label: "우선 처리", tooltip: "생성 요청이 우선 큐에서 처리" },
         ],

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { HandoutIllustrations, WorkbookData } from "@gyoanmaker/shared/types";
+import type {
+  HandoutIllustrations,
+  VocabBankData,
+  WorkbookData,
+} from "@gyoanmaker/shared/types";
 import { auth } from "@/auth";
 import {
   getHandout,
@@ -64,12 +68,13 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await req.json();
-  const { title, sections, illustrations, customTexts, workbook } = body as {
+  const { title, sections, illustrations, customTexts, workbook, vocabBank } = body as {
     title?: string;
     sections?: Record<string, string>;
     illustrations?: HandoutIllustrations;
     customTexts?: { headerText?: string; analysisTitleText?: string; summaryTitleText?: string };
     workbook?: WorkbookData | null;
+    vocabBank?: VocabBankData | null;
   };
 
   // Validate title length
@@ -93,7 +98,8 @@ export async function PATCH(
     sections !== undefined ||
     illustrations !== undefined ||
     customTexts !== undefined ||
-    workbook !== undefined;
+    workbook !== undefined ||
+    vocabBank !== undefined;
 
   if (!isFullUpdate) {
     if (!title || title.trim().length === 0) {
@@ -130,6 +136,7 @@ export async function PATCH(
       illustrations,
       customTexts,
       workbook,
+      vocabBank,
     });
     if (!ok) {
       return NextResponse.json(
