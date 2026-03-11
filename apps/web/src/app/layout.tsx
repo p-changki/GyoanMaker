@@ -56,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" className="bg-white" suppressHydrationWarning>
       <body>
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}

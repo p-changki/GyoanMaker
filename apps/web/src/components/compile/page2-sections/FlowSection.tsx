@@ -8,8 +8,8 @@ import { EditableText } from "../EditableText";
 import { updateFlowText } from "@/lib/sectionUpdaters";
 
 export function FlowSection({ section }: { section: HandoutSection }) {
-  const { titleColor, bgColor, textColor, sentenceBg, fontSizes, fontFamily, titleWeight, textAlign } = useSectionStyle("flow");
-  const fontCss = FONT_FAMILY_MAP[fontFamily].css;
+  const { titleColor, bgColor, textColor, sentenceBg, fontSizes, fontFamilyKo, titleWeight, textAlign } = useSectionStyle("flow");
+  const fontCssKo = FONT_FAMILY_MAP[fontFamilyKo].css;
   const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.flow || "내용 정리";
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
   const itemBg = bgColor || `${sentenceBg}99`;
@@ -44,7 +44,7 @@ export function FlowSection({ section }: { section: HandoutSection }) {
             themeColor={titleColor}
             onConfirm={(v) => handleEdit(i, v)}
             className="px-3 py-2 rounded-md font-bold"
-            style={{ backgroundColor: itemBg, fontSize: `${fontSizes.flowText}px`, fontFamily: fontCss, color: textColor, textAlign }}
+            style={{ backgroundColor: itemBg, fontSize: `${fontSizes.flowText}px`, fontFamily: fontCssKo, color: textColor, textAlign }}
             as="div"
           />
         ))}

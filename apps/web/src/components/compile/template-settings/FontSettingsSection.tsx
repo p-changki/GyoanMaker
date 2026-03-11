@@ -13,9 +13,13 @@ import { FONT_SCALE_OPTIONS, TITLE_WEIGHT_KEYS } from "./constants";
 
 const FONT_KEYS = Object.keys(FONT_FAMILY_MAP) as FontFamily[];
 
-function FontFamilyDropdown() {
-  const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
-  const setFontFamily = useTemplateSettingsStore((s) => s.setFontFamily);
+function FontFamilyDropdown({
+  value,
+  onChange,
+}: {
+  value: FontFamily;
+  onChange: (family: FontFamily) => void;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,9 +42,9 @@ function FontFamilyDropdown() {
         className={`w-full flex items-center justify-between py-2 px-3 rounded-lg border-2 bg-white text-xs text-gray-700 transition-colors cursor-pointer ${
           open ? "border-[#5E35B1] ring-1 ring-[#5E35B1]/20" : "border-gray-200 hover:border-gray-300"
         }`}
-        style={{ fontFamily: FONT_FAMILY_MAP[fontFamily].css }}
+        style={{ fontFamily: FONT_FAMILY_MAP[value].css }}
       >
-        <span className="font-medium">{FONT_FAMILY_MAP[fontFamily].label}</span>
+        <span className="font-medium">{FONT_FAMILY_MAP[value].label}</span>
         <svg
           className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -52,12 +56,12 @@ function FontFamilyDropdown() {
       {open && (
         <div className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg py-1 max-h-[240px] overflow-y-auto">
           {FONT_KEYS.map((key) => {
-            const isSelected = fontFamily === key;
+            const isSelected = value === key;
             return (
               <button
                 key={key}
                 type="button"
-                onClick={() => { setFontFamily(key); setOpen(false); }}
+                onClick={() => { onChange(key); setOpen(false); }}
                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-colors ${
                   isSelected
                     ? "bg-[#5E35B1]/5 text-[#5E35B1] font-bold"
@@ -88,9 +92,14 @@ interface FontSettingsSectionProps {
 export default function FontSettingsSection({ onOpenDetail }: FontSettingsSectionProps) {
   const fontScale = useTemplateSettingsStore((s) => s.fontScale);
   const setFontScale = useTemplateSettingsStore((s) => s.setFontScale);
+  const fontFamily = useTemplateSettingsStore((s) => s.fontFamily);
+  const setFontFamily = useTemplateSettingsStore((s) => s.setFontFamily);
+  const fontFamilyKo = useTemplateSettingsStore((s) => s.fontFamilyKo);
+  const setFontFamilyKo = useTemplateSettingsStore((s) => s.setFontFamilyKo);
   const titleWeight = useTemplateSettingsStore((s) => s.titleWeight);
   const setTitleWeight = useTemplateSettingsStore((s) => s.setTitleWeight);
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
+  const effectiveKoFont = fontFamilyKo || fontFamily;
 
   const totalModified = FONT_SIZE_GROUPS.flatMap((g) => g.keys).filter(
     (k) => fontSizes[k] !== FONT_SIZE_PRESETS[fontScale][k],
@@ -142,10 +151,25 @@ export default function FontSettingsSection({ onOpenDetail }: FontSettingsSectio
         </span>
       </button>
 
-      {/* Font Family */}
+      {/* Font Family - EN */}
       <div>
-        <label className="text-[10px] text-gray-500 mb-1 block">폰트</label>
-        <FontFamilyDropdown />
+        <label className="text-[10px] text-gray-500 mb-1 block">영어 폰트</label>
+        <FontFamilyDropdown value={fontFamily} onChange={setFontFamily} />
+      </div>
+
+      {/* Font Family - KO */}
+      <div>
+        <label className="text-[10px] text-gray-500 mb-1 block">한글 폰트</label>
+        <FontFamilyDropdown value={effectiveKoFont} onChange={(f) => setFontFamilyKo(f)} />
+        {fontFamilyKo && (
+          <button
+            type="button"
+            onClick={() => setFontFamilyKo(undefined)}
+            className="text-[9px] text-gray-400 hover:text-[#5E35B1] mt-1 transition-colors"
+          >
+            영어 폰트와 동일하게
+          </button>
+        )}
       </div>
 
       {/* Title Weight */}

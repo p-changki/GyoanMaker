@@ -189,16 +189,18 @@ export default function CompileOrchestrator() {
               <button
                 type="button"
                 onClick={() => setShowSaveModal(false)}
-                className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                disabled={isSaving}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
               >
                 취소
               </button>
               <button
                 type="button"
                 onClick={handleSaveConfirm}
-                className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
+                disabled={isSaving}
+                className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
-                저장
+                {isSaving ? "저장 중..." : "저장"}
               </button>
             </div>
           </div>

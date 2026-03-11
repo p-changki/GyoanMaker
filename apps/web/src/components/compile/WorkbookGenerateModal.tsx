@@ -1,9 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import { useWorkbookStore } from "@/stores/useWorkbookStore";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useWorkbookGenerator } from "@/app/workbook/_hooks/useWorkbookGenerator";
+
+interface ModelQuotaView {
+  limit: number;
+  used: number;
+  remaining: number;
+  credits: number;
+}
+
+interface QuotaStatusResponse {
+  flash: ModelQuotaView;
+  pro: ModelQuotaView;
+}
 
 interface WorkbookGenerateModalProps {
   onClose: () => void;
@@ -22,6 +36,18 @@ export default function WorkbookGenerateModal({
   const setIncludeInCompile = useWorkbookStore((state) => state.setIncludeInCompile);
 
   const { generate } = useWorkbookGenerator();
+  const { status } = useSession();
+  const { data: quota } = useQuery<QuotaStatusResponse>({
+    queryKey: ["quota"],
+    queryFn: async () => {
+      const res = await fetch("/api/quota");
+      if (!res.ok) throw new Error("Failed to fetch quota");
+      return res.json();
+    },
+    staleTime: 30_000,
+    enabled: status === "authenticated",
+    retry: false,
+  });
 
   // Clear error when modal opens
   useEffect(() => {
@@ -69,10 +95,17 @@ export default function WorkbookGenerateModal({
                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                 }`}
               >
-                {model === "flash" ? "⚡ Flash" : "✦ Pro"}
+                {model === "flash" ? "⚡ 빠른 생성" : "✦ 정밀 생성"}
                 <p className="mt-0.5 text-[10px] font-medium opacity-70">
                   {model === "flash" ? "빠름 · 경제적" : "정확 · 고품질"}
                 </p>
+                {quota && (
+                  <p className={`mt-1 text-[10px] font-bold ${
+                    quota[model].remaining <= 0 ? "text-red-400" : "opacity-50"
+                  }`}>
+                    잔여 {quota[model].remaining}/{quota[model].limit + quota[model].credits}회
+                  </p>
+                )}
               </button>
             ))}
           </div>

@@ -93,7 +93,7 @@ export default function WorkbookConfigPanel({
               checked={selectedModel === "flash"}
               onChange={() => setSelectedModel("flash")}
             />
-            Flash
+            ⚡ 빠른 생성
           </label>
           <label
             className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-xs font-bold transition ${
@@ -108,7 +108,7 @@ export default function WorkbookConfigPanel({
               checked={selectedModel === "pro"}
               onChange={() => setSelectedModel("pro")}
             />
-            Pro
+            ✦ 정밀 생성
           </label>
         </div>
       </div>
