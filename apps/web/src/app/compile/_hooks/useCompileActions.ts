@@ -158,6 +158,8 @@ export function useCompileActions({
       try {
         if (document.fonts?.ready) {
           await document.fonts.ready;
+          // Wait one extra tick for fonts to paint
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
 
         const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
@@ -165,7 +167,7 @@ export function useCompileActions({
           import("jspdf"),
         ]);
 
-        const scale = Math.max(2, window.devicePixelRatio || 1);
+        const scale = 2; // Fixed scale for consistent PDF output across devices
         let capturedCount = 0;
         let pdf: typeof jsPDF.prototype | null = null;
         const a4WidthMm = 210;
@@ -185,25 +187,39 @@ export function useCompileActions({
             const oMinWidth = styles.minWidth;
             const oMaxWidth = styles.maxWidth;
             const oFlexShrink = styles.flexShrink;
+            const oBoxShadow = styles.boxShadow;
 
             styles.width = "794px";
             styles.minWidth = "794px";
             styles.maxWidth = "794px";
             styles.flexShrink = "0";
+            styles.boxShadow = "none"; // Remove shadow from PDF output
 
-            // Auto-fit: scale down content that exceeds A4 height (1123px)
+            // Auto-fit: zoom down content that exceeds A4 height (1123px)
             const a4HeightPx = 1123;
             const naturalHeight = element.scrollHeight;
-            const oTransform = styles.transform;
-            const oTransformOrigin = styles.transformOrigin;
-            const oHeight = styles.height;
+            const oZoom = styles.zoom;
             let fitScale = 1;
             if (naturalHeight > a4HeightPx) {
               fitScale = a4HeightPx / naturalHeight;
-              styles.transform = `scale(${fitScale})`;
-              styles.transformOrigin = "top left";
-              styles.height = `${a4HeightPx}px`;
+              styles.zoom = `${fitScale}`;
             }
+
+            // Wait for reflow after style changes
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+
+            // Wait for all images to finish loading
+            const imgs = Array.from(element.querySelectorAll<HTMLImageElement>("img"));
+            await Promise.all(
+              imgs.map((img) =>
+                img.complete
+                  ? Promise.resolve()
+                  : new Promise<void>((res) => {
+                      img.onload = () => res();
+                      img.onerror = () => res();
+                    })
+              )
+            );
 
             const canvas = await html2canvas(element, {
               scale,
@@ -211,7 +227,7 @@ export function useCompileActions({
               allowTaint: true,
               backgroundColor: "#ffffff",
               windowWidth: 794,
-              windowHeight: fitScale < 1 ? a4HeightPx : naturalHeight,
+              windowHeight: naturalHeight,
               ignoreElements: (el) => {
                 // Exclude devtools elements that cause 404 errors in iframe cloning
                 const tag = el.tagName?.toLowerCase();
@@ -228,9 +244,8 @@ export function useCompileActions({
             styles.minWidth = oMinWidth;
             styles.maxWidth = oMaxWidth;
             styles.flexShrink = oFlexShrink;
-            styles.transform = oTransform;
-            styles.transformOrigin = oTransformOrigin;
-            styles.height = oHeight;
+            styles.zoom = oZoom;
+            styles.boxShadow = oBoxShadow;
 
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
@@ -289,25 +304,39 @@ export function useCompileActions({
             const oMinWidth = styles.minWidth;
             const oMaxWidth = styles.maxWidth;
             const oFlexShrink = styles.flexShrink;
+            const oBoxShadowWb = styles.boxShadow;
 
             styles.width = "794px";
             styles.minWidth = "794px";
             styles.maxWidth = "794px";
             styles.flexShrink = "0";
+            styles.boxShadow = "none";
 
-            // Auto-fit: scale down content that exceeds A4 height (1123px)
+            // Auto-fit: zoom down content that exceeds A4 height (1123px)
             const a4HeightPxWb = 1123;
             const naturalHeight = element.scrollHeight;
-            const oTransformWb = styles.transform;
-            const oTransformOriginWb = styles.transformOrigin;
-            const oHeightWb = styles.height;
+            const oZoomWb = styles.zoom;
             let fitScaleWb = 1;
             if (naturalHeight > a4HeightPxWb) {
               fitScaleWb = a4HeightPxWb / naturalHeight;
-              styles.transform = `scale(${fitScaleWb})`;
-              styles.transformOrigin = "top left";
-              styles.height = `${a4HeightPxWb}px`;
+              styles.zoom = `${fitScaleWb}`;
             }
+
+            // Wait for reflow after style changes
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+
+            // Wait for all images to finish loading
+            const imgsWb = Array.from(element.querySelectorAll<HTMLImageElement>("img"));
+            await Promise.all(
+              imgsWb.map((img) =>
+                img.complete
+                  ? Promise.resolve()
+                  : new Promise<void>((res) => {
+                      img.onload = () => res();
+                      img.onerror = () => res();
+                    })
+              )
+            );
 
             const canvas = await html2canvas(element, {
               scale,
@@ -315,7 +344,7 @@ export function useCompileActions({
               allowTaint: true,
               backgroundColor: "#ffffff",
               windowWidth: 794,
-              windowHeight: fitScaleWb < 1 ? a4HeightPxWb : naturalHeight,
+              windowHeight: naturalHeight,
               ignoreElements: (el) => {
                 const tag = el.tagName?.toLowerCase();
                 if (tag === "script" || tag === "link") {
@@ -331,9 +360,8 @@ export function useCompileActions({
             styles.minWidth = oMinWidth;
             styles.maxWidth = oMaxWidth;
             styles.flexShrink = oFlexShrink;
-            styles.transform = oTransformWb;
-            styles.transformOrigin = oTransformOriginWb;
-            styles.height = oHeightWb;
+            styles.zoom = oZoomWb;
+            styles.boxShadow = oBoxShadowWb;
 
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;

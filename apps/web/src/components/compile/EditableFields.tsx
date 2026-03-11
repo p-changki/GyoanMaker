@@ -152,14 +152,19 @@ export const EditableHeaderText = memo(function EditableHeaderText() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] hover:opacity-90 transition-opacity whitespace-nowrap relative"
         style={{ fontFamily: "inherit", fontWeight: "inherit" }}
         aria-label="헤더 텍스트 편집"
       >
         <span className="border-b border-dashed border-transparent group-hover/edit:border-current/60 transition-colors">
           {customHeaderText}
         </span>
-        <PencilHintIcon className="opacity-0 group-hover/edit:opacity-70" />
+        <span
+          className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/edit:opacity-70 pointer-events-none"
+          data-html2canvas-ignore="true"
+        >
+          <PencilHintIcon />
+        </span>
       </button>
       {isOpen && (
         <EditFieldModal
@@ -203,14 +208,19 @@ export const EditableAnalysisTitle = memo(function EditableAnalysisTitle({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group/edit bg-transparent border-0 p-0 m-0 font-bold hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
+        className="group/edit bg-transparent border-0 p-0 m-0 font-bold hover:opacity-80 transition-opacity relative"
         style={{ color: "inherit" }}
         aria-label="분석 제목 편집"
       >
         <span className="border-b border-dashed border-transparent group-hover/edit:border-current/40 transition-colors">
           {analysisTitleText} {pageNum > 1 ? "(cont.)" : ""}
         </span>
-        <PencilHintIcon className="opacity-0 group-hover/edit:opacity-50" />
+        <span
+          className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/edit:opacity-50 pointer-events-none"
+          data-html2canvas-ignore="true"
+        >
+          <PencilHintIcon />
+        </span>
       </button>
       {isOpen && (
         <EditFieldModal
@@ -250,14 +260,19 @@ export const EditableSummaryTitleText = memo(function EditableSummaryTitleText()
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap inline-flex items-center gap-1.5"
+        className="group/edit bg-transparent border-0 p-0 m-0 text-[inherit] text-[1em] tracking-wide hover:opacity-90 transition-opacity whitespace-nowrap relative"
         style={{ fontWeight: "inherit" }}
         aria-label="요약 제목 편집"
       >
         <span className="border-b border-dashed border-transparent group-hover/edit:border-current/60 transition-colors">
           {summaryTitleText}
         </span>
-        <PencilHintIcon className="opacity-0 group-hover/edit:opacity-70" />
+        <span
+          className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/edit:opacity-70 pointer-events-none"
+          data-html2canvas-ignore="true"
+        >
+          <PencilHintIcon />
+        </span>
       </button>
       {isOpen && (
         <EditFieldModal

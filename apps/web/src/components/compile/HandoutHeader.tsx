@@ -249,7 +249,7 @@ export function HandoutHeader({
               <button
                 type="button"
                 onClick={() => setIsNameModalOpen(true)}
-                className="group/edit bg-transparent border-0 p-0 m-0 hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
+                className="group/edit bg-transparent border-0 p-0 m-0 hover:opacity-80 transition-opacity relative"
                 style={{ color: hTitleColor }}
                 aria-label="학원명 편집"
               >
@@ -283,7 +283,12 @@ export function HandoutHeader({
                     </span>
                   </span>
                 )}
-                <PencilHintIcon className="opacity-0 group-hover/edit:opacity-50" />
+                <span
+                  className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover/edit:opacity-50 pointer-events-none"
+                  data-html2canvas-ignore="true"
+                >
+                  <PencilHintIcon />
+                </span>
               </button>
             </h1>
           </div>

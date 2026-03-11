@@ -240,6 +240,7 @@ export interface SectionStyleConfig {
   badgeBgColor?: string;   // badge background color ("" = transparent/white)
   badgeFontSize?: number;  // badge font size in px
   badgeAlign?: "left" | "center" | "right"; // badge alignment
+  barWidth?: number; // bar width as percentage (20~100), default 95
 }
 
 export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {

@@ -69,17 +69,17 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
               {mainTitle}
             </h3>
           </div>
-          <div className="flex-1 overflow-hidden rounded-xl">
+          <div className="overflow-hidden rounded-xl">
             {illustration?.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={illustration.imageUrl}
                 alt={`${section.passageId} visual summary`}
                 width={560}
-                height={280}
+                height={220}
                 crossOrigin="anonymous"
                 loading="lazy"
-                className="block w-full max-h-[280px] rounded-xl object-contain"
+                className="block w-full max-h-55 rounded-xl object-contain"
               />
             ) : (
               <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 text-center text-xs text-gray-500">
@@ -118,7 +118,7 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
                 section.flow.map((step) => (
                   <div
                     key={step.text}
-                    className="px-2 py-2.5 rounded-md font-semibold text-center whitespace-nowrap overflow-hidden text-ellipsis text-xs"
+                    className="px-2 py-2.5 rounded-md font-semibold text-center break-keep text-xs"
                     style={flowItemStyle}
                   >
                     {step.text}

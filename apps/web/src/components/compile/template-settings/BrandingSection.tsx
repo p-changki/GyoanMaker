@@ -107,6 +107,9 @@ export default function BrandingSection({ fileInputRef, avatarInputRef, onLogoUp
   const avatarDisplay = useTemplateSettingsStore((s) => s.avatarDisplay) ?? DEFAULT_IMAGE_DISPLAY;
   const setLogoDisplay = useTemplateSettingsStore((s) => s.setLogoDisplay);
   const setAvatarDisplay = useTemplateSettingsStore((s) => s.setAvatarDisplay);
+  const page2HeaderStyle = useTemplateSettingsStore((s) => s.page2HeaderStyle);
+  const setPage2HeaderStyle = useTemplateSettingsStore((s) => s.setPage2HeaderStyle);
+  const barWidth = page2HeaderStyle?.barWidth ?? 95;
   const [removingLogoBg, setRemovingLogoBg] = useState(false);
   const [removingAvatarBg, setRemovingAvatarBg] = useState(false);
 
@@ -260,6 +263,26 @@ export default function BrandingSection({ fileInputRef, avatarInputRef, onLogoUp
               </button>
             </div>
           </div>
+      </div>
+
+      {/* Summary Bar Width */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
+          요약바 너비
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] text-gray-400 w-6 shrink-0">너비</span>
+          <input
+            type="range"
+            min={20}
+            max={100}
+            step={1}
+            value={barWidth}
+            onChange={(e) => setPage2HeaderStyle({ barWidth: Number(e.target.value) })}
+            className="flex-1 h-1 accent-[#5E35B1]"
+          />
+          <span className="text-[9px] text-gray-500 w-8 text-right">{barWidth}%</span>
+        </div>
       </div>
     </>
   );
