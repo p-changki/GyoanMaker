@@ -18,6 +18,7 @@ interface HandoutStoreState {
   total: number;
   customHeaderText: string;
   analysisTitleText: string;
+  analysisTitleTexts: Record<string, string>;
   summaryTitleText: string;
   handoutModel: "flash" | "pro";
   pageNumberOverrides: Record<string, string>;
@@ -37,6 +38,7 @@ interface HandoutStoreActions {
   setProgress: (progress: number) => void;
   setCustomHeaderText: (text: string) => void;
   setAnalysisTitleText: (text: string) => void;
+  setPassageAnalysisTitleText: (passageId: string, text: string) => void;
   setSummaryTitleText: (text: string) => void;
   setHandoutModel: (model: "flash" | "pro") => void;
   setPageNumberOverride: (key: string, value: string) => void;
@@ -53,6 +55,7 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
   total: 20,
   customHeaderText: DEFAULT_CUSTOM_HEADER_TEXT,
   analysisTitleText: DEFAULT_ANALYSIS_TITLE_TEXT,
+  analysisTitleTexts: {},
   summaryTitleText: DEFAULT_SUMMARY_TITLE_TEXT,
   handoutModel: "pro",
   pageNumberOverrides: {},
@@ -132,6 +135,11 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
   setAnalysisTitleText: (analysisTitleText) => {
     set({ analysisTitleText });
   },
+
+  setPassageAnalysisTitleText: (passageId, text) =>
+    set((state) => ({
+      analysisTitleTexts: { ...state.analysisTitleTexts, [passageId]: text },
+    })),
 
   setSummaryTitleText: (summaryTitleText) => {
     set({ summaryTitleText });

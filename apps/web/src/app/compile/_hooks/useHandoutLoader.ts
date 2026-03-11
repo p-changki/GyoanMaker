@@ -43,6 +43,7 @@ interface CompileInitResponse {
     customTexts?: {
       headerText?: string;
       analysisTitleText?: string;
+      analysisTitleTexts?: Record<string, string>;
       summaryTitleText?: string;
     };
   };
@@ -134,6 +135,11 @@ export function useHandoutLoader() {
     store.setAnalysisTitleText(
       initData.handout.customTexts?.analysisTitleText || DEFAULT_ANALYSIS_TITLE_TEXT
     );
+    if (initData.handout.customTexts?.analysisTitleTexts) {
+      for (const [pid, text] of Object.entries(initData.handout.customTexts.analysisTitleTexts)) {
+        store.setPassageAnalysisTitleText(pid, text);
+      }
+    }
     store.setSummaryTitleText(
       initData.handout.customTexts?.summaryTitleText || DEFAULT_SUMMARY_TITLE_TEXT
     );

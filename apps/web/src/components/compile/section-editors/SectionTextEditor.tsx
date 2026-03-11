@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { EditorFocus } from "@/stores/useEditorFocusStore";
+import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import {
@@ -113,10 +114,18 @@ function HeaderBadgeTextEditor() {
 /* ─── Analysis Title ─── */
 
 function AnalysisTitleTextEditor() {
+  const passageId = useEditorFocusStore((s) => s.modalPassageId);
   const analysisTitleText = useHandoutStore((s) => s.analysisTitleText);
+  const analysisTitleTexts = useHandoutStore((s) => s.analysisTitleTexts);
   const setAnalysisTitleText = useHandoutStore((s) => s.setAnalysisTitleText);
+  const setPassageAnalysisTitleText = useHandoutStore((s) => s.setPassageAnalysisTitleText);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [localValue, setLocalValue] = useState(analysisTitleText);
+
+  const currentValue = passageId
+    ? (analysisTitleTexts[passageId] ?? analysisTitleText)
+    : analysisTitleText;
+
+  const [localValue, setLocalValue] = useState(currentValue);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -129,14 +138,18 @@ function AnalysisTitleTextEditor() {
   const handleBlur = useCallback(() => {
     const next = normalizeAnalysisTitle(localValue);
     setLocalValue(next);
-    setAnalysisTitleText(next);
-    sessionStorage.setItem(ANALYSIS_TITLE_STORAGE_KEY, next);
-  }, [localValue, setAnalysisTitleText]);
+    if (passageId) {
+      setPassageAnalysisTitleText(passageId, next);
+    } else {
+      setAnalysisTitleText(next);
+      sessionStorage.setItem(ANALYSIS_TITLE_STORAGE_KEY, next);
+    }
+  }, [localValue, passageId, setAnalysisTitleText, setPassageAnalysisTitleText]);
 
   return (
     <div className="space-y-3 py-2">
       <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wide block">
-        분석 타이틀
+        분석 타이틀{passageId ? ` (${passageId})` : ""}
       </label>
       <input
         ref={inputRef}
@@ -147,6 +160,23 @@ function AnalysisTitleTextEditor() {
         onBlur={handleBlur}
         className="w-full px-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:border-[#5E35B1] focus:ring-1 focus:ring-[#5E35B1] text-center"
       />
+      {passageId && analysisTitleTexts[passageId] && (
+        <div className="flex items-center justify-between">
+          <span className="text-[8px] font-bold text-[#5E35B1] bg-[#5E35B1]/10 px-1 py-px rounded">
+            개별 설정
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setPassageAnalysisTitleText(passageId, "");
+              setLocalValue(analysisTitleText);
+            }}
+            className="text-[9px] text-gray-400 hover:text-gray-600"
+          >
+            전체 기본값으로
+          </button>
+        </div>
+      )}
     </div>
   );
 }

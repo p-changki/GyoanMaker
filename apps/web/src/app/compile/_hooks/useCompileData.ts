@@ -79,6 +79,7 @@ export function useCompileData() {
           customTexts: {
             headerText: state.customHeaderText,
             analysisTitleText: state.analysisTitleText,
+            analysisTitleTexts: state.analysisTitleTexts,
             summaryTitleText: state.summaryTitleText,
           },
           workbook: workbookState.workbookData ?? undefined,

@@ -13,8 +13,10 @@ interface EditorFocusStore {
 
   /** Currently open modal section key. null = no modal. */
   modalKey: EditorFocus | null;
-  /** Open the section edit modal for the given key. */
-  openModal: (key: EditorFocus) => void;
+  /** passageId for per-passage editors (e.g. page1-title). null = global. */
+  modalPassageId: string | null;
+  /** Open the section edit modal for the given key, optionally scoped to a passage. */
+  openModal: (key: EditorFocus, passageId?: string) => void;
   /** Close the section edit modal. */
   closeModal: () => void;
 }
@@ -24,6 +26,7 @@ export const useEditorFocusStore = create<EditorFocusStore>((set) => ({
   setFocus: (focus) => set({ focus }),
 
   modalKey: null,
-  openModal: (key) => set({ modalKey: key }),
-  closeModal: () => set({ modalKey: null }),
+  modalPassageId: null,
+  openModal: (key, passageId) => set({ modalKey: key, modalPassageId: passageId ?? null }),
+  closeModal: () => set({ modalKey: null, modalPassageId: null }),
 }));
