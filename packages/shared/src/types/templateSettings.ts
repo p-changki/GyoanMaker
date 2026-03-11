@@ -235,7 +235,7 @@ export interface SectionStyleConfig {
   textColor: string;    // "" = #111827
   fontFamily: FontFamily | "";   // "" = use global setting
   titleWeight: TitleWeight | ""; // "" = use global setting
-  textAlign: "left" | "center" | "right" | ""; // "" = default (left)
+  textAlign: "left" | "center" | "right" | "justify" | ""; // "" = default (left)
   badgeShape?: "rounded-full" | "rounded-lg" | "rounded-none"; // badge corner style
   badgeBgColor?: string;   // badge background color ("" = transparent/white)
   badgeFontSize?: number;  // badge font size in px
