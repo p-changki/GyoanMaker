@@ -84,6 +84,8 @@ export default function CompileOrchestrator() {
     handleExportPDF,
     handleSave,
     handleSaveConfirm,
+    storageLimitError,
+    setStorageLimitError,
     activeSample,
   } = useCompileData();
 
@@ -201,6 +203,37 @@ export default function CompileOrchestrator() {
                 className="px-5 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 {isSaving ? "저장 중..." : "저장"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {storageLimitError && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="px-6 py-8 text-center">
+              <div className="text-4xl mb-4">📦</div>
+              <h3 className="text-lg font-black text-gray-900">저장 한도 초과</h3>
+              <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                현재 플랜의 교안 저장 한도에 도달했습니다.<br />
+                기존 교안을 삭제하거나 플랜을 업그레이드해주세요.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStorageLimitError(false)}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/pricing")}
+                className="px-5 py-2.5 text-sm font-bold text-white bg-[#5E35B1] rounded-xl hover:bg-[#4527A0] transition-colors"
+              >
+                플랜 업그레이드
               </button>
             </div>
           </div>
