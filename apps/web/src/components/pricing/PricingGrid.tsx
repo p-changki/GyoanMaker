@@ -14,7 +14,7 @@ export default function PricingGrid({ currentPlan }: PricingGridProps) {
   const router = useRouter();
 
   const handleSelect = (planId: PlanId) => {
-    router.push(`/account?targetPlan=${planId}`);
+    router.push(`/billing?tab=plan&target=${planId}`);
   };
 
   return (

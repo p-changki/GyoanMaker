@@ -7,6 +7,7 @@ import { getDb } from "@/lib/firebase-admin";
 
 const VALID_STATUSES = new Set([
   "pending",
+  "awaiting_deposit",
   "confirmed",
   "failed",
   "paid_not_applied",
@@ -54,6 +55,11 @@ export async function GET(req: NextRequest) {
         failedAt: d.failedAt ?? null,
         paidNotAppliedAt: d.paidNotAppliedAt ?? null,
         errorMessage: d.errorMessage ?? null,
+        checkoutFlow: d.checkoutFlow ?? null,
+        depositorName: d.depositorName ?? null,
+        receiptType: d.receiptType ?? null,
+        receiptPhone: d.receiptPhone ?? null,
+        taxInvoiceInfo: d.taxInvoiceInfo ?? null,
       };
     });
 

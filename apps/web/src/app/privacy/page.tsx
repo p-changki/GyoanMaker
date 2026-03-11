@@ -85,7 +85,7 @@ export default function PrivacyPage() {
                     유료 서비스 결제 및 환불 처리
                   </td>
                   <td className="border border-gray-200 px-3 py-2">
-                    결제 수단 정보(카드사명, 승인번호 등),
+                    결제 수단 정보(카드사명, 승인번호, 입금자명, 입금 계좌 등),
                     결제 일시, 결제 금액
                   </td>
                   <td className="border border-gray-200 px-3 py-2">
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
                     서비스 이용 통계 (익명화 처리)
                   </td>
                   <td className="border border-gray-200 px-3 py-2">
-                    교안 생성 횟수, 모델 사용 이력
+                    교안 생성 횟수, 워크북 생성 횟수, 모델 사용 이력
                   </td>
                 </tr>
               </tbody>
@@ -429,8 +429,8 @@ export default function PrivacyPage() {
           </h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              교안 생성을 위해 이용자가 입력한 영어 지문은 Google Gemini
-              API로 전송됩니다.
+              교안 및 워크북(문제지) 생성을 위해 이용자가 입력한 영어 지문은
+              Google Gemini API로 전송됩니다.
             </li>
             <li>
               전송된 입력 텍스트는 서비스 서버에 별도 보관하지 않으며, AI

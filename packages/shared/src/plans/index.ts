@@ -11,9 +11,9 @@ export type TopUpPackageId =
   | "pro_60"
   | "flash_100";
 export type OrderType = "plan" | "topup";
-export type OrderStatus = "pending" | "confirmed" | "failed" | "paid_not_applied";
+export type OrderStatus = "pending" | "awaiting_deposit" | "confirmed" | "failed" | "paid_not_applied";
 export type RefundStatus = "none" | "requested" | "processed" | "rejected";
-export type CheckoutFlow = "widget" | "paylink";
+export type CheckoutFlow = "widget" | "paylink" | "bank_transfer";
 
 export interface PendingOrder {
   orderId: string;
@@ -49,6 +49,20 @@ export interface PendingOrder {
   refundRequestedAt?: string;
   refundProcessedAt?: string;
   refundAmount?: number;
+  depositorName?: string;
+  approvedBy?: string;
+  /** 현금영수증/세금계산서 요청 */
+  receiptType?: "none" | "cash_receipt" | "tax_invoice";
+  receiptPhone?: string;
+  taxInvoiceInfo?: {
+    businessNumber: string;
+    companyName: string;
+    representative: string;
+    email: string;
+    businessType?: string;
+    businessItem?: string;
+    address?: string;
+  };
 }
 
 export interface PlanDefinition {

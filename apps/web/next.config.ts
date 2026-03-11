@@ -19,7 +19,7 @@ const cspDirectives = [
   // Workers: self + blob (html2canvas, ONNX background removal)
   "worker-src 'self' blob:",
   // Frame: allow Toss hosted payment windows/widgets when needed
-  "frame-src 'self' https://*.tosspayments.com https://*.toss.im",
+  "frame-src 'self' https://*.tosspayments.com https://*.toss.im https://vercel.live",
   // Object: none
   "object-src 'none'",
   // Base: self
