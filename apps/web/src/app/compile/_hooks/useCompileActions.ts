@@ -274,29 +274,24 @@ export function useCompileActions({
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
 
-            // Scale image to fit A4 page (scale down if taller than A4)
-            const a4HeightMm = 297;
-            const rawImageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
-            const fitInA4 = rawImageHeight > a4HeightMm;
-            const imageWidth = fitInA4
-              ? a4WidthMm * (a4HeightMm / rawImageHeight)
-              : a4WidthMm;
-            const imageHeight = fitInA4 ? a4HeightMm : rawImageHeight;
+            // Keep full width, allow variable page height for oversized content
+            const imageWidth = a4WidthMm;
+            const imageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
 
             if (!pdf) {
               pdf = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
-                format: [a4WidthMm, a4HeightMm],
+                format: [imageWidth, Math.max(297, imageHeight)],
               });
             } else {
-              pdf.addPage([a4WidthMm, a4HeightMm]);
+              pdf.addPage([imageWidth, Math.max(297, imageHeight)]);
             }
 
             pdf.addImage(
               imageData,
               "PNG",
-              fitInA4 ? (a4WidthMm - imageWidth) / 2 : 0,
+              0,
               0,
               imageWidth,
               imageHeight,
@@ -393,28 +388,23 @@ export function useCompileActions({
             const canvasWidth = canvas.width;
             const canvasHeight = canvas.height;
 
-            const a4HeightMmWb = 297;
-            const rawImageHeightWb = (canvasHeight * a4WidthMm) / canvasWidth;
-            const fitInA4Wb = rawImageHeightWb > a4HeightMmWb;
-            const imageWidth = fitInA4Wb
-              ? a4WidthMm * (a4HeightMmWb / rawImageHeightWb)
-              : a4WidthMm;
-            const imageHeight = fitInA4Wb ? a4HeightMmWb : rawImageHeightWb;
+            const imageWidth = a4WidthMm;
+            const imageHeight = (canvasHeight * a4WidthMm) / canvasWidth;
 
             if (!pdf) {
               pdf = new jsPDF({
                 orientation: "portrait",
                 unit: "mm",
-                format: [a4WidthMm, a4HeightMmWb],
+                format: [imageWidth, Math.max(297, imageHeight)],
               });
             } else {
-              pdf.addPage([a4WidthMm, a4HeightMmWb]);
+              pdf.addPage([imageWidth, Math.max(297, imageHeight)]);
             }
 
             pdf.addImage(
               imageData,
               "PNG",
-              fitInA4Wb ? (a4WidthMm - imageWidth) / 2 : 0,
+              0,
               0,
               imageWidth,
               imageHeight,

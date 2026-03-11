@@ -433,14 +433,14 @@ export default function UnifiedSectionEditor({ sectionKey }: Props) {
         <div className="space-y-0.5">
           <label className="text-[10px] text-gray-500">텍스트 정렬</label>
           <div className="flex gap-1">
-            {([["left", "왼쪽"], ["center", "가운데"], ["right", "오른쪽"]] as const).map(([value, label]) => {
-              const current = style.textAlign || "left";
+            {([["left", "왼쪽"], ["center", "가운데"], ["right", "오른쪽"], ["justify", "양쪽"]] as const).map(([value, label]) => {
+              const current = style.textAlign || "justify";
               const isSelected = current === value;
               return (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => handleChange({ textAlign: value === "left" ? "" : value })}
+                  onClick={() => handleChange({ textAlign: value === "justify" ? "" : value })}
                   className={`flex-1 py-1 rounded-lg text-[10px] border transition-all ${
                     isSelected
                       ? "border-gray-800 bg-white shadow-sm text-gray-800"

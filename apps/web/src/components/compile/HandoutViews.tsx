@@ -212,9 +212,10 @@ export function ParsedHandoutViewPage1({
   const p1FontFamily = page1Style.fontFamily
     ? FONT_FAMILY_MAP[page1Style.fontFamily].css
     : theme.fontCss;
-  const p1TextAlign = (page1Style.textAlign || "left") as
+  const p1TextAlign = (page1Style.textAlign || "justify") as
     | "left"
     | "center"
+    | "justify"
     | "right";
   const badgeShape = page1Style.badgeShape || "rounded-full";
   const badgeBgColor = page1Style.badgeBgColor || "transparent";
