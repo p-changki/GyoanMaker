@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP, THEME_PRESETS } from "@gyoanmaker/shared/types";
+import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import { useIllustration } from "@/stores/useHandoutStore";
@@ -20,19 +20,18 @@ function statusLabel(status: string | undefined): string {
 
 export function VisualSummarySection({ section }: { section: HandoutSection }) {
   const illustration = useIllustration(section.passageId);
-  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight, textAlign } =
+  const { titleColor, bgColor, textColor, fontSizes, fontFamily, fontFamilyKo, titleWeight, textAlign, theme } =
     useSectionStyle("visual_summary");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
+  const fontCssKo = FONT_FAMILY_MAP[fontFamilyKo].css;
   const customTitles = useTemplateSettingsStore((s) => s.sectionTitles);
   const subSectionTitles = useTemplateSettingsStore((s) => s.subSectionTitles);
   const subSectionColors = useTemplateSettingsStore((s) => s.subSectionColors);
-  const themePreset = useTemplateSettingsStore((s) => s.themePreset);
-  const themeColor = THEME_PRESETS[themePreset].primary;
 
   const mainTitle = customTitles?.visual_summary || "VISUAL SUMMARY";
   const flowSubTitle = subSectionTitles?.visual_summary_flow || "내용 정리";
   const flowHeaderColor = subSectionColors?.visual_summary_flow_header || titleColor;
-  const flowItemColor = subSectionColors?.visual_summary_flow_item || `${themeColor}12`;
+  const flowItemColor = subSectionColors?.visual_summary_flow_item || `${theme.sentenceBg}99`;
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
   const titleStyle = useMemo(() => ({
@@ -44,9 +43,9 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
   const flowItemStyle = useMemo(() => ({
     backgroundColor: flowItemColor,
     fontSize: `${Math.max(9, (fontSizes.flowText ?? fontSizes.visualEn) * 0.85)}px`,
-    fontFamily: fontCss,
+    fontFamily: fontCssKo,
     color: textColor,
-  }), [flowItemColor, fontSizes.flowText, fontSizes.visualEn, fontCss, textColor]);
+  }), [flowItemColor, fontSizes.flowText, fontSizes.visualEn, fontCssKo, textColor]);
 
   return (
     <div

@@ -7,7 +7,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 const cspDirectives = [
   "default-src 'self'",
   // Scripts: self + Google Analytics + unsafe-inline/eval (Next.js hydration)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://vercel.live https://static.cloudflareinsights.com https://js.tosspayments.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.googletagmanager.com https://vercel.live https://static.cloudflareinsights.com https://js.tosspayments.com",
   // Styles: self + trusted font stylesheet CDNs + unsafe-inline (Next.js CSS)
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://hangeul.pstatic.net https://spoqa.github.io https://cdn.jsdelivr.net",
   // Images: self + data/blob (PDF) + Google/Firebase storage + OAuth avatars
@@ -15,7 +15,7 @@ const cspDirectives = [
   // Fonts: self + trusted font CDNs used by template/font loader
   "font-src 'self' https://fonts.gstatic.com https://fastly.jsdelivr.net https://cdn.jsdelivr.net https://hangeul.pstatic.net https://spoqa.github.io https://vercel.live data:",
   // Connect: self + analytics + Toss SDK endpoints (sandbox/prod + logging)
-  "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://*.tosspayments.com https://tosspayments.com https://*.toss.im https://toss.im",
+  "connect-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com https://*.tosspayments.com https://tosspayments.com https://*.toss.im https://toss.im https://cdn.jsdelivr.net https://vercel.live https://staticimgly.com",
   // Workers: self + blob (html2canvas, ONNX background removal)
   "worker-src 'self' blob:",
   // Frame: allow Toss hosted payment windows/widgets when needed

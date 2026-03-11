@@ -1,8 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import type { IllustrationBubbleStyle, IllustrationConceptMode } from "@gyoanmaker/shared/types";
 import { useHandoutStore } from "@/stores/useHandoutStore";
+
+interface IlluQuotaView {
+  limit: number;
+  remaining: number;
+  credits: number;
+}
 
 interface ActiveConceptSample {
   imageUrl: string;
@@ -34,6 +42,19 @@ export default function IllustrationOptionsModal({
   onClose,
 }: IllustrationOptionsModalProps) {
   const sections = useHandoutStore((state) => state.sections);
+  const { status } = useSession();
+  const { data: illuQuota } = useQuery<IlluQuotaView>({
+    queryKey: ["quota", "illustration"],
+    queryFn: async () => {
+      const res = await fetch("/api/quota");
+      if (!res.ok) throw new Error("Failed to fetch quota");
+      const data = await res.json();
+      return data.illustration;
+    },
+    staleTime: 30_000,
+    enabled: status === "authenticated",
+    retry: false,
+  });
 
   const passageIds = useMemo(
     () =>
@@ -115,11 +136,16 @@ export default function IllustrationOptionsModal({
             <p className="mt-1 text-sm text-gray-500">
               각 지문에 맞는 일러스트를 AI가 자동으로 생성합니다
             </p>
+            {illuQuota && (
+              <p className={`mt-1.5 text-xs font-bold ${
+                illuQuota.remaining <= 0 ? "text-red-500" : "text-amber-600"
+              }`}>
+                잔여 {illuQuota.remaining}/{illuQuota.limit + illuQuota.credits}회
+              </p>
+            )}
           </div>
           <a
             href="/illustrations/concept"
-            target="_blank"
-            rel="noopener noreferrer"
             className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors"
           >
             스타일 설정 →

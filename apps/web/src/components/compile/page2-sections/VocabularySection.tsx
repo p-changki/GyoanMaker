@@ -45,10 +45,11 @@ function useVocabEdit({ section, vocabIndex }: Omit<VocabEditProps, "titleColor"
 
 function VocabRow4({
   vocab,
-  index,
+  index: _index,
   vocabIndex,
   fontSizes,
   fontCss,
+  fontCssKo,
   textColor,
   titleColor,
   showSynonyms,
@@ -60,6 +61,7 @@ function VocabRow4({
   vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
+  fontCssKo: string;
   textColor: string;
   titleColor: string;
   showSynonyms: boolean;
@@ -70,13 +72,13 @@ function VocabRow4({
 
   return (
     <tr
-      className={`border-b border-current/20 ${index % 2 === 1 ? "bg-[#F9FAFB]/50" : ""}`}
+      className="border-b border-current/20"
       style={{ fontSize: `${fontSizes.vocabText}px`, fontFamily: fontCss, color: textColor }}
     >
       <td className="px-3 py-2 text-[#111827] font-bold border-r border-current/20">
         <EditableText value={vocab.word} label="어휘" themeColor={titleColor} onConfirm={(v) => editField("word", v)} />
       </td>
-      <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20">
+      <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20" style={{ fontFamily: fontCssKo }}>
         <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} />
       </td>
       {showSynonyms && (
@@ -121,10 +123,11 @@ function VocabRow4({
 
 function VocabRow3({
   vocab,
-  index,
+  index: _index,
   vocabIndex,
   fontSizes,
   fontCss,
+  fontCssKo,
   textColor,
   titleColor,
   section,
@@ -134,6 +137,7 @@ function VocabRow3({
   vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
+  fontCssKo: string;
   textColor: string;
   titleColor: string;
   section: HandoutSection;
@@ -146,13 +150,13 @@ function VocabRow3({
   ];
   return (
     <tr
-      className={`border-b border-current/20 ${index % 2 === 1 ? "bg-[#F9FAFB]/50" : ""}`}
+      className="border-b border-current/20"
       style={{ fontSize: `${fontSizes.vocabText}px`, fontFamily: fontCss, color: textColor }}
     >
       <td className="px-3 py-2 text-[#111827] font-bold border-r border-current/20 w-[25%]">
         <EditableText value={vocab.word} label="어휘" themeColor={titleColor} onConfirm={(v) => editField("word", v)} />
       </td>
-      <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20 w-[30%]">
+      <td className="px-3 py-2 text-[#1F2937] font-medium border-r border-current/20 w-[30%]" style={{ fontFamily: fontCssKo }}>
         <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} />
       </td>
       <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
@@ -172,10 +176,11 @@ function VocabRow3({
 
 function VocabRow2({
   vocab,
-  index,
+  index: _index,
   vocabIndex,
   fontSizes,
   fontCss,
+  fontCssKo,
   textColor,
   titleColor,
   section,
@@ -185,6 +190,7 @@ function VocabRow2({
   vocabIndex: number;
   fontSizes: FontSizeConfig;
   fontCss: string;
+  fontCssKo: string;
   textColor: string;
   titleColor: string;
   section: HandoutSection;
@@ -197,12 +203,12 @@ function VocabRow2({
   ];
   return (
     <tr
-      className={`border-b border-current/20 ${index % 2 === 1 ? "bg-[#F9FAFB]/50" : ""}`}
+      className="border-b border-current/20"
       style={{ fontSize: `${fontSizes.vocabText}px`, fontFamily: fontCss, color: textColor }}
     >
       <td className="px-3 py-2 font-bold text-[#111827] border-r border-current/20 w-[40%]">
         <EditableText value={vocab.word} label="어휘" themeColor={titleColor} onConfirm={(v) => editField("word", v)} as="span" className="font-bold" />{" "}
-        <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} as="span" className="font-normal text-[#1F2937]" />
+        <EditableText value={vocab.meaning} label="뜻" themeColor={titleColor} onConfirm={(v) => editField("meaning", v)} as="span" className="font-normal text-[#1F2937]" style={{ fontFamily: fontCssKo }} />
       </td>
       <td className="px-3 py-2 text-[#4B5563] align-middle font-normal">
         {related.length > 0
@@ -220,12 +226,14 @@ function VocabRow2({
 /* ─── Main Section ─── */
 
 export function VocabularySection({ section }: { section: HandoutSection }) {
-  const { titleColor, bgColor, textColor, fontSizes, fontFamily, titleWeight } = useSectionStyle("vocabulary");
+  const { titleColor, bgColor, textColor, theme, fontSizes, fontFamily, fontFamilyKo, titleWeight } = useSectionStyle("vocabulary");
+  const headerBgColor = theme.primaryDark || titleColor;
   const vocabColumnLayout = useTemplateSettingsStore((s) => s.vocabColumnLayout) ?? 4;
   const vocabDisplay = useTemplateSettingsStore((s) => s.vocabDisplay);
   const showSynonyms = vocabDisplay?.showSynonyms ?? true;
   const showAntonyms = vocabDisplay?.showAntonyms ?? true;
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
+  const fontCssKo = FONT_FAMILY_MAP[fontFamilyKo].css;
   const sectionTitle = useTemplateSettingsStore((s) => s.sectionTitles)?.vocabulary || "핵심 어휘";
   const titleFontWeight = TITLE_WEIGHT_MAP[titleWeight].value;
 
@@ -252,7 +260,7 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
         <thead>
           <tr
             className="text-white"
-            style={{ backgroundColor: titleColor, fontFamily: "GmarketSans, sans-serif", fontSize: `${fontSizes.vocabText}px`, fontWeight: titleFontWeight }}
+            style={{ backgroundColor: headerBgColor, fontFamily: "GmarketSans, sans-serif", fontSize: `${fontSizes.vocabText}px`, fontWeight: titleFontWeight }}
           >
             {vocabColumnLayout === 4 && (
               <>
@@ -290,6 +298,7 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
                   vocabIndex={vocabIndex}
                   fontSizes={fontSizes}
                   fontCss={fontCss}
+                  fontCssKo={fontCssKo}
                   textColor={textColor}
                   titleColor={titleColor}
                   showSynonyms={showSynonyms}
@@ -307,6 +316,7 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
                   vocabIndex={vocabIndex}
                   fontSizes={fontSizes}
                   fontCss={fontCss}
+                  fontCssKo={fontCssKo}
                   textColor={textColor}
                   titleColor={titleColor}
                   section={section}
@@ -321,6 +331,7 @@ export function VocabularySection({ section }: { section: HandoutSection }) {
                 vocabIndex={vocabIndex}
                 fontSizes={fontSizes}
                 fontCss={fontCss}
+                fontCssKo={fontCssKo}
                 textColor={textColor}
                 titleColor={titleColor}
                 section={section}
