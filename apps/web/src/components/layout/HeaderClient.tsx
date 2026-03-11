@@ -154,9 +154,11 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
             />
           </Link>
 
-          {/* Desktop inline nav pill */}
+          {/* Desktop inline nav pill — absolute center so it stays centered regardless of logo/menu width */}
           {mounted && (
-            <div className="hidden md:flex">{navPill}</div>
+            <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex">
+              {navPill}
+            </div>
           )}
 
           {/* Right: CTA or UserMenu */}
