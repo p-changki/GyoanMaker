@@ -5,9 +5,11 @@ import { ContentLevel, ModelTier, OutputOptionState } from "@gyoanmaker/shared/t
 interface GenerateOptionsPanelProps {
   contentLevel: ContentLevel;
   modelTier: ModelTier;
+  vocabCount: "standard" | "extended";
   options: OutputOptionState;
   onContentLevelChange: (value: ContentLevel) => void;
   onModelTierChange: (value: ModelTier) => void;
+  onVocabCountChange: (value: "standard" | "extended") => void;
   onOptionsChange: (value: OutputOptionState) => void;
   onGuideOpen: () => void;
 }
@@ -15,9 +17,11 @@ interface GenerateOptionsPanelProps {
 export default function GenerateOptionsPanel({
   contentLevel,
   modelTier,
+  vocabCount,
   options,
   onContentLevelChange,
   onModelTierChange,
+  onVocabCountChange,
   onOptionsChange,
   onGuideOpen,
 }: GenerateOptionsPanelProps) {
@@ -184,6 +188,58 @@ export default function GenerateOptionsPanel({
               </div>
             </label>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-200/60 rounded-2xl p-6 shadow-premium space-y-4">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <title>Vocabulary icon</title>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h6m-6 4h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+            </svg>
+          </div>
+          <h3 className="text-sm font-bold text-gray-900">핵심어휘 수</h3>
+        </div>
+        <div className="space-y-3">
+          <label
+            className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-amber-300 ${
+              vocabCount === "standard"
+                ? "border-amber-400 bg-amber-50/40 ring-1 ring-amber-400/30"
+                : "border-gray-200"
+            }`}
+          >
+            <input
+              type="radio"
+              name="vocabCount"
+              checked={vocabCount === "standard"}
+              onChange={() => onVocabCountChange("standard")}
+              className="w-4 h-4 mt-0.5 text-amber-600 border-gray-300 focus:ring-amber-500"
+            />
+            <div className="ml-3 min-w-0">
+              <span className="block text-sm font-bold text-gray-900">기본 (4개)</span>
+              <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">교안 레이아웃 최적화</span>
+            </div>
+          </label>
+          <label
+            className={`flex items-start p-3.5 rounded-xl border cursor-pointer transition-all hover:border-amber-300 ${
+              vocabCount === "extended"
+                ? "border-amber-400 bg-amber-50/40 ring-1 ring-amber-400/30"
+                : "border-gray-200"
+            }`}
+          >
+            <input
+              type="radio"
+              name="vocabCount"
+              checked={vocabCount === "extended"}
+              onChange={() => onVocabCountChange("extended")}
+              className="w-4 h-4 mt-0.5 text-amber-600 border-gray-300 focus:ring-amber-500"
+            />
+            <div className="ml-3 min-w-0">
+              <span className="block text-sm font-bold text-gray-900">확장 (7~10개)</span>
+              <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">시험 대비 심화 어휘</span>
+            </div>
+          </label>
         </div>
       </div>
 

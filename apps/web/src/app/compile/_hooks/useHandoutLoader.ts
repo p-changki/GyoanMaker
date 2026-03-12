@@ -87,8 +87,14 @@ export function useHandoutLoader() {
     if (!didInvalidateRef.current) {
       didInvalidateRef.current = true;
       queryClient.invalidateQueries({ queryKey: ["templateSettings"] });
+
+      // Clear stale workbook/vocabBank from previous session when starting a new handout
+      if (!handoutId) {
+        useWorkbookStore.setState({ workbookData: null });
+        useVocabBankStore.setState({ vocabBankData: null });
+      }
     }
-  }, [queryClient]);
+  }, [queryClient, handoutId]);
 
   const setCompiledData = useHandoutStore((state) => state.setCompiledData);
   const setWorkbookData = useWorkbookStore((state) => state.setWorkbookData);
@@ -235,14 +241,16 @@ export function useHandoutLoader() {
         );
         if (passages.length === 0) return null;
 
-        const hash = await hashPassages(passages);
-        const fullParsed = JSON.parse(stored) as { level?: string; model?: string };
+        const fullParsed = JSON.parse(stored) as { level?: string; model?: string; vocabCount?: string };
+        const vocabCount = typeof fullParsed.vocabCount === "string" ? fullParsed.vocabCount : "standard";
+        const hash = await hashPassages(passages, vocabCount);
 
         return {
           passages,
           hash,
           level: typeof fullParsed.level === "string" ? fullParsed.level : "advanced",
           model: typeof fullParsed.model === "string" ? fullParsed.model : "pro",
+          vocabCount,
         };
       } catch (error) {
         console.error("Failed to parse compile input", error);
@@ -288,7 +296,7 @@ export function useHandoutLoader() {
       }
 
       if (!cachedResult) {
-        const response = await generatePassages(input.passages);
+        const response = await generatePassages(input.passages, undefined, { vocabCount: input.vocabCount });
         setCachedResult(input.hash, response.results);
         cachedResult = {
           version: 2,

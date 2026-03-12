@@ -15,7 +15,7 @@ import {
   normalizeSummaryTitle,
 } from "./EditableFields";
 import EmptyHandoutView from "./EmptyHandoutView";
-import { ParsedHandoutViewPage1, ParsedHandoutViewPage2 } from "./HandoutViews";
+import { ParsedHandoutViewPage1, ParsedHandoutViewPage2, ParsedHandoutViewPage3 } from "./HandoutViews";
 import WorkbookSheetsForCompile from "./WorkbookSheetsForCompile";
 import VocabBankSheetsForCompile, {
   getVocabBankPageCount,
@@ -77,7 +77,8 @@ export default function PreviewCanvas() {
       Object.values(parsedSections).reduce((count, section) => {
         const sentenceCount = section.sentences.length;
         const page1Count = Math.max(1, Math.ceil(sentenceCount / 7));
-        return count + page1Count + 1;
+        const needsPage3 = section.vocabulary.filter((v) => v.word !== "핵심 어휘 및 확장").length > 4;
+        return count + page1Count + 1 + (needsPage3 ? 1 : 0);
       }, 0),
     [parsedSections]
   );
@@ -105,7 +106,8 @@ export default function PreviewCanvas() {
             const s = parsedSections[prevId];
             if (!s) return count;
             const page1Count = Math.max(1, Math.ceil(s.sentences.length / 7));
-            return count + page1Count + 1; // page1 chunks + 1 page2
+            const needsPage3 = s.vocabulary.filter((v) => v.word !== "핵심 어휘 및 확장").length > 4;
+            return count + page1Count + 1 + (needsPage3 ? 1 : 0); // page1 chunks + page2 + optional page3
           }, 0);
           const globalPageStart = vocabBankPageCount + precedingPages + 1;
           return (
@@ -158,6 +160,8 @@ const SectionCanvasItem = memo(function SectionCanvasItem({ id, globalPageStart 
     pageNum: chunkIdx + 1,
   }));
 
+  const needsPage3 = section.vocabulary.filter((v) => v.word !== "핵심 어휘 및 확장").length > 4;
+
   return (
     <div
       id={`section-${id}`}
@@ -195,8 +199,25 @@ const SectionCanvasItem = memo(function SectionCanvasItem({ id, globalPageStart 
           pageNum={sentenceChunks.length + 1}
           globalPageNumber={globalPageStart + sentenceChunks.length}
           pageKey={`handout-${id}-p2`}
+          hideVocab={needsPage3}
         />
       </div>
+
+      {needsPage3 && (
+        <div
+          id={`section-${id}-page3`}
+          data-pdf-part="page3"
+          className="bg-white rounded-[2px] overflow-hidden min-h-[1123px] flex flex-col relative"
+          style={{ boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}
+        >
+          <ParsedHandoutViewPage3
+            section={section}
+            pageNum={sentenceChunks.length + 2}
+            globalPageNumber={globalPageStart + sentenceChunks.length + 1}
+            pageKey={`handout-${id}-p3`}
+          />
+        </div>
+      )}
     </div>
   );
 });

@@ -32,8 +32,8 @@ export interface CachedResult {
 /**
  * passages 배열을 SHA-256 해시로 변환하여 짧은 캐시 키를 생성한다.
  */
-export async function hashPassages(passages: string[]): Promise<string> {
-  const raw = JSON.stringify(passages);
+export async function hashPassages(passages: string[], vocabCount?: string): Promise<string> {
+  const raw = JSON.stringify({ passages, vocabCount: vocabCount ?? "standard" });
   const subtle = globalThis.crypto?.subtle;
 
   if (!subtle) {

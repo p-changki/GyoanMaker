@@ -13,6 +13,7 @@ export default function GenerateForm({
   cards,
   contentLevel,
   modelTier,
+  vocabCount,
   options,
   isSubmitting,
   isGuideOpen,
@@ -24,6 +25,7 @@ export default function GenerateForm({
   onTextBlockChange,
   onContentLevelChange,
   onModelTierChange,
+  onVocabCountChange,
   onOptionsChange,
   onGuideOpenChange,
   onToggleMode,
@@ -61,9 +63,11 @@ export default function GenerateForm({
       <GenerateOptionsPanel
         contentLevel={contentLevel}
         modelTier={modelTier}
+        vocabCount={vocabCount}
         options={options}
         onContentLevelChange={onContentLevelChange}
         onModelTierChange={onModelTierChange}
+        onVocabCountChange={onVocabCountChange}
         onOptionsChange={onOptionsChange}
         onGuideOpen={() => onGuideOpenChange(true)}
       />

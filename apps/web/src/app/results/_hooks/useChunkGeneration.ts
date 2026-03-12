@@ -135,7 +135,7 @@ export function useChunkGeneration() {
 
       const cachedMap = new Map<number, string>();
       try {
-        const hash = await hashPassages(parsed.passages);
+        const hash = await hashPassages(parsed.passages, parsed.vocabCount);
         cacheHashRef.current = hash;
 
         const cached = getCachedResult(hash);
@@ -187,6 +187,7 @@ export function useChunkGeneration() {
             concurrency,
             level: parsed.level,
             model: parsed.model,
+            vocabCount: parsed.vocabCount,
             onChunkComplete: (progress) => {
               if (!isStillMounted) {
                 return;

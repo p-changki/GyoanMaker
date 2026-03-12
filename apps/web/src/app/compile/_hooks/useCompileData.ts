@@ -33,6 +33,8 @@ export function useCompileData() {
 
   // Ref tracks handoutId immediately — avoids stale searchParams after save
   const handoutIdRef = useRef<string | null>(handoutId);
+  // Ref guard — prevents duplicate save on double-click or Enter+click race
+  const isSavingRef = useRef(false);
   useEffect(() => {
     handoutIdRef.current = handoutId;
   }, [handoutId]);
@@ -180,8 +182,13 @@ export function useCompileData() {
   }, []);
 
   const handleSaveConfirm = useCallback(() => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
     saveMutation.mutate(undefined, {
-      onSettled: () => setShowSaveModal(false),
+      onSettled: () => {
+        isSavingRef.current = false;
+        setShowSaveModal(false);
+      },
       onError: (error: Error) => {
         if (error.message === "STORAGE_LIMIT_EXCEEDED") {
           setStorageLimitError(true);

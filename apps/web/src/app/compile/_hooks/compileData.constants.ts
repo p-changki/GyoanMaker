@@ -11,6 +11,7 @@ export interface CompileInputData {
   hash: string;
   level: string;
   model: string;
+  vocabCount?: string;
 }
 
 export function normalizeRawExportText(text: string): string {
