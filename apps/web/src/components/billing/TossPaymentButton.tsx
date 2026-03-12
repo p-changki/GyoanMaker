@@ -81,6 +81,7 @@ export default function TossPaymentButton({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isPaylinkEnabled = process.env.NEXT_PUBLIC_PAYLINK_ENABLED === "true";
+  const isWidgetEnabled = process.env.NEXT_PUBLIC_TOSS_WIDGET_ENABLED === "true";
 
   const handleClick = async () => {
     if (isLoading || disabled) {
@@ -163,12 +164,14 @@ export default function TossPaymentButton({
     setIsLoading(false);
   };
 
+  const isWidgetBlocked = checkoutFlow === "widget" && !isWidgetEnabled;
+
   return (
     <div className="space-y-1">
       <button
         type="button"
         onClick={handleClick}
-        disabled={disabled || isLoading}
+        disabled={disabled || isLoading || isWidgetBlocked}
         className={cn(
           "rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition-colors",
           "hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300",
@@ -177,7 +180,11 @@ export default function TossPaymentButton({
       >
         {isLoading ? "이동 중..." : label}
       </button>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {isWidgetBlocked ? (
+        <p className="text-xs text-amber-600">카드결제는 오픈 예정입니다.</p>
+      ) : error ? (
+        <p className="text-xs text-red-600">{error}</p>
+      ) : null}
     </div>
   );
 }
