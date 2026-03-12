@@ -100,6 +100,7 @@ function BillingPageContent() {
           <Link
             key={key}
             href={`/billing?tab=${key}`}
+            prefetch={false}
             className={`flex-1 rounded-md px-4 py-2 text-center text-sm font-semibold transition-colors ${
               activeTab === key
                 ? "bg-white text-gray-900 shadow-sm"

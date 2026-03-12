@@ -72,6 +72,7 @@ export default function PostList({
           <Link
             key={post.id}
             href={`/board/${post.id}`}
+            prefetch={false}
             className="flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50"
           >
             <TypeBadge type={post.type} />
