@@ -64,6 +64,7 @@ export default function PaymentHistorySection({ embedded }: { embedded?: boolean
   const { data: orders, isLoading } = useQuery({
     queryKey: ["billing-orders"],
     queryFn: fetchOrders,
+    staleTime: 5 * 60_000,
   });
 
   const [selectedMonth, setSelectedMonth] = useState("all");

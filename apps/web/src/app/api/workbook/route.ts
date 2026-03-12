@@ -373,21 +373,21 @@ export async function POST(req: NextRequest) {
             : passageCount;
 
           try {
-            await Promise.all([
-              incrementUsage(userEmail, parsed.model, successCount),
-              totalUsage
-                ? logUsage({
-                    email: userEmail,
-                    requestId,
-                    passageCount: successCount,
-                    model: parsed.model,
-                    level: "workbook",
-                    inputTokens: totalUsage.inputTokens ?? 0,
-                    outputTokens: totalUsage.outputTokens ?? 0,
-                    totalTokens: totalUsage.totalTokens ?? 0,
-                  })
-                : Promise.resolve(),
-            ]);
+            await incrementUsage(userEmail, parsed.model, successCount);
+            if (totalUsage) {
+              logUsage({
+                email: userEmail,
+                requestId,
+                passageCount: successCount,
+                model: parsed.model,
+                level: "workbook",
+                inputTokens: totalUsage.inputTokens ?? 0,
+                outputTokens: totalUsage.outputTokens ?? 0,
+                totalTokens: totalUsage.totalTokens ?? 0,
+              }).catch((err) =>
+                console.error(`[api/workbook][${requestId}] logUsage failed:`, err)
+              );
+            }
           } catch (quotaErr) {
             if (quotaErr instanceof QuotaExceededError) {
               console.warn(

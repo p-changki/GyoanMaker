@@ -138,6 +138,7 @@ export default function DashboardPage() {
   } = useQuery({
     queryKey: ["handouts"],
     queryFn: fetchHandouts,
+    staleTime: 5 * 60_000,
   });
 
   const { data: storageQuota } = useQuery({

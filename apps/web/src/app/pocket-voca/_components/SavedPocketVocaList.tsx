@@ -59,6 +59,7 @@ export default function SavedPocketVocaList() {
     queryKey: ["pocket-vocas"],
     queryFn: fetchSavedList,
     enabled: isOpen,
+    staleTime: 2 * 60_000,
   });
 
   const deleteMutation = useMutation({

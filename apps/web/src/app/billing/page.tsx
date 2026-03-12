@@ -53,6 +53,7 @@ function BillingPageContent() {
   const { data, isLoading } = useQuery({
     queryKey: ["billing-status"],
     queryFn: fetchBillingStatus,
+    staleTime: 60_000,
   });
 
   const currentPlan = data?.subscription?.tier ?? "free";
