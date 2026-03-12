@@ -14,6 +14,7 @@ type ProductValue = `plan:${PlanId}` | `topup:${TopUpPackageId}`;
 interface ProductOption {
   value: ProductValue;
   label: string;
+  subtitle?: string;
   price: number;
   totalAmount: number;
 }
@@ -31,11 +32,18 @@ const PLAN_OPTIONS: ProductOption[] = (
   };
 });
 
+const TOPUP_SUBTITLE: Record<string, string> = {
+  flash: "속도 분석",
+  pro: "정밀 분석",
+  illustration: "삽화 크레딧",
+};
+
 const TOPUP_OPTIONS: ProductOption[] = TOP_UP_PACKAGES.map((pkg) => {
   const vat = toVatInclusiveAmount(pkg.price);
   return {
     value: `topup:${pkg.id}`,
     label: pkg.label,
+    subtitle: `${TOPUP_SUBTITLE[pkg.type] ?? pkg.type} ${pkg.amount}회`,
     price: pkg.price,
     totalAmount: vat.totalAmount,
   };
@@ -250,8 +258,13 @@ export default function BankTransferSection() {
                       selectedProduct === opt.value ? "bg-gray-50 font-semibold text-gray-900" : "text-gray-700"
                     }`}
                   >
-                    <span>{opt.label}</span>
-                    <span className="font-semibold text-gray-900">₩{opt.totalAmount.toLocaleString()}</span>
+                    <span className="flex flex-col">
+                      <span>{opt.label}</span>
+                      {opt.subtitle && (
+                        <span className="text-[11px] text-gray-400 font-normal">{opt.subtitle}</span>
+                      )}
+                    </span>
+                    <span className="font-semibold text-gray-900 shrink-0 ml-2">₩{opt.totalAmount.toLocaleString()}</span>
                   </button>
                 ))}
                 <div className="h-1" />
