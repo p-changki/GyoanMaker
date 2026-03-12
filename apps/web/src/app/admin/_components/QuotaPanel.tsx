@@ -89,19 +89,19 @@ export default function QuotaPanel({ email }: { email: string }) {
     const illustrationMonthlyLimit = parseInt(editIllustration, 10);
 
     if (!Number.isFinite(flashMonthlyLimit) || flashMonthlyLimit < 0) {
-      setSaveMsg("Please enter a valid Flash limit.");
+      setSaveMsg("올바른 속도 한도를 입력하세요.");
       return;
     }
     if (!Number.isFinite(proMonthlyLimit) || proMonthlyLimit < 0) {
-      setSaveMsg("Please enter a valid Pro limit.");
+      setSaveMsg("올바른 정밀 한도를 입력하세요.");
       return;
     }
     if (storageLimit !== null && (!Number.isFinite(storageLimit) || storageLimit < 0)) {
-      setSaveMsg("Please enter a valid storage limit.");
+      setSaveMsg("올바른 저장소 한도를 입력하세요.");
       return;
     }
     if (!Number.isFinite(illustrationMonthlyLimit) || illustrationMonthlyLimit < 0) {
-      setSaveMsg("Please enter a valid illustration limit.");
+      setSaveMsg("올바른 삽화 한도를 입력하세요.");
       return;
     }
 
@@ -125,10 +125,10 @@ export default function QuotaPanel({ email }: { email: string }) {
       setEditPro(String(data.pro.limit));
       setEditStorage(data.storage.limit === null ? "" : String(data.storage.limit));
       setEditIllustration(String(data.illustration.limit));
-      setSaveMsg("Saved");
+      setSaveMsg("저장됨");
       setTimeout(() => setSaveMsg(null), 2000);
     } catch (err) {
-      setSaveMsg(err instanceof Error ? err.message : "Save failed");
+      setSaveMsg(err instanceof Error ? err.message : "저장 실패");
     } finally {
       setSaving(false);
     }
@@ -146,11 +146,11 @@ export default function QuotaPanel({ email }: { email: string }) {
       if (!res.ok) throw new Error("Failed to update plan");
       const data = (await res.json()) as { subscription: SubscriptionInfo };
       setSubscription(data.subscription);
-      setSaveMsg("Plan saved");
+      setSaveMsg("요금제 저장됨");
       setTimeout(() => setSaveMsg(null), 2000);
       await fetchQuota();
     } catch (err) {
-      setSaveMsg(err instanceof Error ? err.message : "Plan save failed");
+      setSaveMsg(err instanceof Error ? err.message : "요금제 저장 실패");
     } finally {
       setSaving(false);
     }
@@ -189,7 +189,7 @@ export default function QuotaPanel({ email }: { email: string }) {
   };
 
   if (loading) {
-    return <div className="text-xs text-gray-400 py-2">Loading quota...</div>;
+    return <div className="text-xs text-gray-400 py-2">할당량 로딩 중...</div>;
   }
 
   if (error) {
@@ -203,42 +203,42 @@ export default function QuotaPanel({ email }: { email: string }) {
       {/* Usage Overview */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Speed Usage</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">속도 사용량</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.flash.used} <span className="text-gray-400 font-normal">/ {quota.flash.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Credits: {quota.flash.credits}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">크레딧: {quota.flash.credits}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Precision Usage</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">정밀 사용량</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.pro.used} <span className="text-gray-400 font-normal">/ {quota.pro.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Credits: {quota.pro.credits}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">크레딧: {quota.pro.credits}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Illustration</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">삽화</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.illustration.used} <span className="text-gray-400 font-normal">/ {quota.illustration.limit}</span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Credits: {quota.illustration.credits}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">크레딧: {quota.illustration.credits}</p>
         </div>
         <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Storage Slots</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">저장 슬롯</p>
           <p className="text-sm font-bold text-gray-700 mt-1">
             {quota.storage.used}{" "}
             <span className="text-gray-400 font-normal">
               / {quota.storage.limit === null ? "∞" : quota.storage.limit}
             </span>
           </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Plan: {quota.plan.toUpperCase()}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">요금제: {quota.plan.toUpperCase()}</p>
         </div>
       </div>
 
       {/* Limit Editors */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
         <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Speed Limit</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">속도 한도</label>
           <input
             type="number"
             min="0"
@@ -248,7 +248,7 @@ export default function QuotaPanel({ email }: { email: string }) {
           />
         </div>
         <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Precision Limit</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">정밀 한도</label>
           <input
             type="number"
             min="0"
@@ -258,7 +258,7 @@ export default function QuotaPanel({ email }: { email: string }) {
           />
         </div>
         <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Illustration Limit</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">삽화 한도</label>
           <input
             type="number"
             min="0"
@@ -268,7 +268,7 @@ export default function QuotaPanel({ email }: { email: string }) {
           />
         </div>
         <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Storage (empty=∞)</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">저장소 (빈칸=∞)</label>
           <input
             type="number"
             min="0"
@@ -283,14 +283,14 @@ export default function QuotaPanel({ email }: { email: string }) {
           disabled={saving}
           className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 shrink-0 h-[34px]"
         >
-          {saving ? "Saving..." : "Save"}
+          {saving ? "저장 중..." : "저장"}
         </button>
       </div>
 
       {/* Plan Editor */}
       <div className="flex items-end gap-3">
         <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subscription Plan</label>
+          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">구독 요금제</label>
           <select
             value={editPlan}
             onChange={(e) => setEditPlan(e.target.value as "free" | "basic" | "standard" | "pro")}
@@ -308,18 +308,18 @@ export default function QuotaPanel({ email }: { email: string }) {
           disabled={saving}
           className="px-4 py-2 bg-violet-500 text-white text-xs font-bold rounded-lg hover:bg-violet-600 transition-colors disabled:opacity-50 shrink-0"
         >
-          Save Plan
+          요금제 저장
         </button>
       </div>
 
       {subscription && (
         <p className="text-xs text-gray-500">
-          Current plan: <strong>{subscription.tier.toUpperCase()}</strong> ({subscription.status})
+          현재 요금제: <strong>{subscription.tier.toUpperCase()}</strong> ({subscription.status === "active" ? "활성" : "만료"})
         </p>
       )}
 
       {saveMsg && (
-        <p className={`text-xs font-medium ${saveMsg === "Saved" || saveMsg === "Plan saved" ? "text-green-600" : "text-red-500"}`}>
+        <p className={`text-xs font-medium ${saveMsg === "저장됨" || saveMsg === "요금제 저장됨" ? "text-green-600" : "text-red-500"}`}>
           {saveMsg}
         </p>
       )}
