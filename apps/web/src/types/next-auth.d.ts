@@ -8,7 +8,7 @@ declare module "@auth/core/types" {
       email?: string | null;
       image?: string | null;
       approved: boolean;
-      userStatus: "pending" | "approved" | "rejected";
+      userStatus: "pending" | "approved" | "rejected" | "deleted";
     };
   }
 }
@@ -16,6 +16,6 @@ declare module "@auth/core/types" {
 declare module "@auth/core/jwt" {
   interface JWT {
     approved?: boolean;
-    userStatus?: "pending" | "approved" | "rejected";
+    userStatus?: "pending" | "approved" | "rejected" | "deleted";
   }
 }

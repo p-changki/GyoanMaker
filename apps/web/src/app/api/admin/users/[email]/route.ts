@@ -27,6 +27,7 @@ export async function PATCH(
       { status: 400 }
     );
   }
+  // "deleted" is set only via self-deletion; admin cannot set it directly
 
   const targetEmail = decodeURIComponent(email);
   await updateUserStatus(targetEmail, status);

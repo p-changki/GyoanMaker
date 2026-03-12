@@ -50,9 +50,7 @@ export default function SampleCard({
 
       <div className="p-3">
         <p className="line-clamp-2 text-xs text-gray-600">{sample.prompt}</p>
-        <p className="mt-1 text-[10px] text-gray-400">
-          {sample.model} · {sample.quality}
-        </p>
+
 
         <div className="mt-2 flex gap-1.5">
           {sample.isActive ? (

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { deleteUser } from "@/lib/users";
+import { softDeleteUser } from "@/lib/users";
 import { deleteAllHandouts } from "@/lib/handouts";
 
 export async function DELETE() {
@@ -15,8 +15,8 @@ export async function DELETE() {
     // 1. Delete all handouts subcollection first
     const deletedCount = await deleteAllHandouts(email);
 
-    // 2. Delete the user document
-    await deleteUser(email);
+    // 2. Soft-delete the user document (keeps record visible to admin)
+    await softDeleteUser(email);
 
     return NextResponse.json({
       ok: true,
