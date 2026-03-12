@@ -131,22 +131,22 @@ export async function POST(req: NextRequest) {
   const eventType = payload.eventType ?? "unknown";
   const eventId = resolveEventId(rawBody || "{}", payload);
   const webhookRef = getDb().collection("billing_webhook_events").doc(eventId);
-  const webhookSnap = await webhookRef.get();
 
-  if (webhookSnap.exists) {
+  try {
+    await webhookRef.create({
+      eventId,
+      eventType,
+      receivedAt: new Date().toISOString(),
+      payload,
+    });
+  } catch {
+    // Document already exists — duplicate event
     return NextResponse.json({
       ok: true,
       duplicate: true,
       eventId,
     });
   }
-
-  await webhookRef.set({
-    eventId,
-    eventType,
-    receivedAt: new Date().toISOString(),
-    payload,
-  });
 
   if (eventType !== "PAYMENT_STATUS_CHANGED") {
     return NextResponse.json({
@@ -207,10 +207,11 @@ export async function POST(req: NextRequest) {
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown revert error";
+        console.error("[webhook] revertConfirmedOrder failed:", { orderId: order.orderId, message });
         await orderRef.set(
-          { revertError: message },
+          { revertError: message, revertFailedAt: now },
           { merge: true }
-        );
+        ).catch(() => undefined);
       }
     }
   } else {
