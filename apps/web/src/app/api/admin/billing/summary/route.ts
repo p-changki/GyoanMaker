@@ -35,14 +35,17 @@ export async function GET() {
         db
           .collection("pending_orders")
           .where("status", "==", "pending")
+          .where("createdAt", ">=", monthStart)
           .get(),
         db
           .collection("pending_orders")
           .where("status", "==", "paid_not_applied")
+          .where("createdAt", ">=", monthStart)
           .get(),
         db
           .collection("pending_orders")
           .where("status", "==", "failed")
+          .where("createdAt", ">=", monthStart)
           .get(),
       ]);
 

@@ -49,9 +49,9 @@ export default function BillingSummary() {
       alert: false,
     },
     {
-      label: "입금 대기",
+      label: "결제 대기",
       value: data.pendingCount,
-      sub: "결제 대기 중",
+      sub: "이번달 미완료",
       alert: false,
     },
     {
@@ -63,7 +63,7 @@ export default function BillingSummary() {
     {
       label: "실패 / 취소",
       value: data.failedCount,
-      sub: "조치 불필요",
+      sub: "이번달 기준",
       alert: false,
     },
   ];
