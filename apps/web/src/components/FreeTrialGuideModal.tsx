@@ -41,7 +41,7 @@ const STEPS = [
       "일러스트 테스트로 나만의 컨셉을 미리보기 해보세요 (하루 3회)",
       "마음에 드는 스타일을 샘플로 저장해서 재사용하세요",
     ],
-    tip: "일러스트 크레딧 5건으로 교안에 일러스트를 넣어보세요!",
+    tip: "일러스트 크레딧 3건으로 교안에 일러스트를 넣어보세요!",
   },
   {
     title: "편집 & PDF 내보내기",
@@ -82,9 +82,9 @@ const COLOR_MAP: Record<string, { text: string; iconBg: string; tipBg: string; t
 
 function QuotaOverview() {
   const quotaItems = [
-    { label: "속도 생성", value: "10회 / 월", icon: "⚡" },
+    { label: "속도 생성", value: "20회 / 월", icon: "⚡" },
     { label: "정밀 생성", value: "5회 / 월", icon: "🎯" },
-    { label: "일러스트 크레딧", value: "5건 / 월", icon: "🖼" },
+    { label: "일러스트 크레딧", value: "3건 / 월", icon: "🖼" },
     { label: "일러스트 테스트", value: "3회 / 일", icon: "🎨" },
     { label: "저장 공간", value: "3개", icon: "💾" },
     { label: "PDF 내보내기", value: "무제한", icon: "📄" },
