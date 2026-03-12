@@ -83,6 +83,16 @@ export default function TossPaymentButton({
   const isPaylinkEnabled = process.env.NEXT_PUBLIC_PAYLINK_ENABLED === "true";
   const isWidgetEnabled = process.env.NEXT_PUBLIC_TOSS_WIDGET_ENABLED === "true";
 
+  const isAdmin = (() => {
+    const email = session?.user?.email?.toLowerCase();
+    if (!email) return false;
+    return (process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+      .includes(email);
+  })();
+
   const handleClick = async () => {
     if (isLoading || disabled) {
       return;
@@ -164,7 +174,7 @@ export default function TossPaymentButton({
     setIsLoading(false);
   };
 
-  const isWidgetBlocked = checkoutFlow === "widget" && !isWidgetEnabled;
+  const isWidgetBlocked = checkoutFlow === "widget" && !isWidgetEnabled && !isAdmin;
 
   return (
     <div className="space-y-1">
