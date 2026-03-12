@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
-import { sendOrderReceivedEmail } from "@/lib/email";
+import { sendOrderReceivedEmail, sendAdminBankTransferNotificationEmail } from "@/lib/email";
 import {
   type PendingOrder,
   type PlanId,
@@ -212,6 +212,18 @@ export async function POST(req: NextRequest) {
 
   // Fire-and-forget: confirmation email to user
   sendOrderReceivedEmail({ orderId, orderName, amount, email }).catch(() => {});
+
+  // Fire-and-forget: admin notification
+  sendAdminBankTransferNotificationEmail({
+    buyerEmail: email,
+    orderId,
+    orderName,
+    amount,
+    depositorName,
+    receiptType,
+    ...(receiptPhone ? { receiptPhone } : {}),
+    ...(taxInvoiceInfo ? { taxInvoiceInfo } : {}),
+  }).catch(() => {});
 
   return NextResponse.json({
     ok: true,
