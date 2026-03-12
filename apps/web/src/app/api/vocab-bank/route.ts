@@ -286,7 +286,6 @@ export async function POST(req: NextRequest) {
 
   try {
     timeoutMs = getProxyTimeoutMs(baseUrl);
-    const startedAt = Date.now();
     const bodyRaw = await req.json();
     const parsed = parseVocabBankBody(bodyRaw);
 
@@ -361,11 +360,6 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify(upstreamBody),
             signal: AbortSignal.timeout(timeoutMs),
           });
-
-          const duration = Date.now() - startedAt;
-          console.log(
-            `[api/vocab-bank][${requestId}] upstream status=${response.status} duration=${duration}ms timeout=${timeoutMs}ms`
-          );
 
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));

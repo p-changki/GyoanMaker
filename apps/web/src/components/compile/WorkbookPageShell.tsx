@@ -25,6 +25,12 @@ interface WorkbookPageShellProps {
   pageKey?: string;
   /** Show step banner bar (default true) */
   showBanner?: boolean;
+  /** Badge config key — "workbook" for workbook, "vocabBank" for voca bank (default "workbook") */
+  badgeSectionKey?: "workbook" | "vocabBank";
+  /** Inline edit callbacks — provided → renders EditableText; omitted → plain text */
+  onEditSectionTitle?: (v: string) => void;
+  onEditStepBadge?: (v: string) => void;
+  onEditStepLabel?: (v: string) => void;
   children: ReactNode;
 }
 
@@ -36,6 +42,10 @@ export default function WorkbookPageShell({
   globalPageNumber,
   pageKey,
   showBanner = true,
+  badgeSectionKey = "workbook",
+  onEditSectionTitle,
+  onEditStepBadge,
+  onEditStepLabel,
   children,
 }: WorkbookPageShellProps) {
   useTemplateFontLoader();
@@ -104,7 +114,7 @@ export default function WorkbookPageShell({
               : undefined,
         }}
       >
-        <SectionNumberBadge sectionKey="workbook" defaultNumber={sectionNumber} color={hTitleColor} />
+        <SectionNumberBadge sectionKey={badgeSectionKey} defaultNumber={sectionNumber} color={hTitleColor} />
 
         <div
           className={`flex items-end pb-4 pt-6 gap-4 ${
@@ -122,14 +132,26 @@ export default function WorkbookPageShell({
               className="tracking-tighter leading-none"
               style={{ fontFamily: hFontCss, color: hTitleColor }}
             >
-              <span
-                style={{
-                  fontSize: `${fontSizes.headerLogo}px`,
-                  fontWeight: hWeight,
-                }}
-              >
-                {sectionTitle || "Workbook"}
-              </span>
+              {onEditSectionTitle ? (
+                <EditableText
+                  as="span"
+                  value={sectionTitle || "Workbook"}
+                  label="섹션 타이틀 수정"
+                  themeColor={hTitleColor}
+                  maxLength={40}
+                  onConfirm={onEditSectionTitle}
+                  style={{ fontSize: `${fontSizes.headerLogo}px`, fontWeight: hWeight }}
+                />
+              ) : (
+                <span
+                  style={{
+                    fontSize: `${fontSizes.headerLogo}px`,
+                    fontWeight: hWeight,
+                  }}
+                >
+                  {sectionTitle || "Workbook"}
+                </span>
+              )}
             </h1>
           </div>
 
@@ -191,7 +213,14 @@ export default function WorkbookPageShell({
       </header>
 
       {/* Step banner */}
-      {showBanner && <WorkbookStepBanner badge={stepBadge} label={stepLabel} />}
+      {showBanner && (
+        <WorkbookStepBanner
+          badge={stepBadge}
+          label={stepLabel}
+          onEditBadge={onEditStepBadge}
+          onEditLabel={onEditStepLabel}
+        />
+      )}
 
       {/* Content */}
       <section className="flex-1 w-full overflow-hidden flex flex-col">{children}</section>

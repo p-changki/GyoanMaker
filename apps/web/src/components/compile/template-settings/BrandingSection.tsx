@@ -221,9 +221,13 @@ export default function BrandingSection({ fileInputRef, avatarInputRef, onLogoUp
               )}
             </div>
           ) : (
-            <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center shrink-0 overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/avatar.png" alt="기본" width={48} height={48} className="w-full h-full object-contain opacity-50" />
+            <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center shrink-0 text-gray-300">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <title>이미지 없음</title>
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="M21 15l-5-5L5 21" />
+              </svg>
             </div>
           )}
           <div>
@@ -232,7 +236,7 @@ export default function BrandingSection({ fileInputRef, avatarInputRef, onLogoUp
               {avatarBase64 ? "변경" : "이미지 업로드"}
             </button>
             {avatarBase64 && <RemoveBgButton onClick={handleRemoveAvatarBg} loading={removingAvatarBg} />}
-            <p className="text-[9px] text-gray-400 mt-0.5">90x90px, 200KB 이하 (미설정 시 기본)</p>
+            <p className="text-[9px] text-gray-400 mt-0.5">90x90px, 200KB 이하 (미설정 시 미표시)</p>
           </div>
         </div>
         <ImageAdjustSliders

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 
 import { FONT_FAMILY_MAP, TITLE_WEIGHT_MAP } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import type { HandoutSection } from "@gyoanmaker/shared/types/handout";
-import { useIllustration } from "@/stores/useHandoutStore";
+import { useHandoutStore, useIllustration } from "@/stores/useHandoutStore";
 import { useSectionStyle } from "./useSectionStyle";
+import { EditableText } from "../EditableText";
 
 function statusLabel(status: string | undefined): string {
   if (status === "running") return "생성 중";
@@ -20,6 +21,17 @@ function statusLabel(status: string | undefined): string {
 
 export function VisualSummarySection({ section }: { section: HandoutSection }) {
   const illustration = useIllustration(section.passageId);
+  const updateSection = useHandoutStore((s) => s.updateSection);
+
+  const handleFlowEdit = useCallback(
+    (index: number, text: string) => {
+      const updatedFlow = section.flow.map((step, i) =>
+        i === index ? { ...step, text } : step
+      );
+      updateSection(section.passageId, { ...section, flow: updatedFlow });
+    },
+    [section, updateSection]
+  );
   const { titleColor, bgColor, textColor, fontSizes, fontFamily, fontFamilyKo, titleWeight, textAlign, theme } =
     useSectionStyle("visual_summary");
   const fontCss = FONT_FAMILY_MAP[fontFamily].css;
@@ -114,13 +126,20 @@ export function VisualSummarySection({ section }: { section: HandoutSection }) {
               className="flex-1 flex flex-col justify-evenly px-1 py-1 gap-2"
             >
               {section.flow.length > 0 ? (
-                section.flow.map((step) => (
+                section.flow.map((step, index) => (
                   <div
-                    key={step.text}
+                    key={index}
                     className="px-2 py-2.5 rounded-md font-semibold break-keep text-xs"
                     style={{ ...flowItemStyle, textAlign }}
                   >
-                    {step.text}
+                    <EditableText
+                      as="span"
+                      value={step.text}
+                      label={`내용 정리 ${index + 1} 수정`}
+                      themeColor={flowHeaderColor}
+                      maxLength={200}
+                      onConfirm={(text) => handleFlowEdit(index, text)}
+                    />
                   </div>
                 ))
               ) : (

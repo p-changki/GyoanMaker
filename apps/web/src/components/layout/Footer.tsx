@@ -8,13 +8,13 @@ export default function Footer() {
           {/* Business info */}
           <div className="text-xs text-gray-400 space-y-0.5">
             <p className="text-sm text-gray-500">
-              &copy; {new Date().getFullYear()} GyoanMaker. 모든 권리 보유.
+              &copy; {new Date().getFullYear()} GyoanMaker. All Rights Reserved.
             </p>
             <p>상호명: 창랩 | 대표: 박창기</p>
             <p>사업장소재지: 충청남도 천안시 서북구 불당31길 17, 401호</p>
             <p>
               사업자등록번호: 885-51-00965 | 통신판매업 신고번호:
-              xxxx-xxxx-xxxx
+              2026-충남천안-0664
             </p>
             <p>대표전화: 010-8345-5501 | 문의: dnsxj12345aa@gmail.com</p>
           </div>

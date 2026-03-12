@@ -260,12 +260,13 @@ export const DEFAULT_SECTION_STYLE: SectionStyleConfig = {
   textAlign: "",
 };
 
-export type BuiltInEditableKey = BuiltInSectionKey | "page1Body" | "page2Header" | "header" | "headerBadge";
-export type EditableSectionKey = Page2SectionKey | "page1Body" | "page2Header" | "header" | "headerBadge";
+export type BuiltInEditableKey = BuiltInSectionKey | "page1Title" | "page1Body" | "page2Header" | "header" | "headerBadge";
+export type EditableSectionKey = Page2SectionKey | "page1Title" | "page1Body" | "page2Header" | "header" | "headerBadge";
 
 export const SECTION_FONT_SIZE_KEYS: Record<BuiltInEditableKey, (keyof FontSizeConfig)[]> = {
   header:      ["headerLogo", "passageNumber"],
   headerBadge: ["headerBadge"],
+  page1Title:  [],
   page1Body:   ["analysisEn", "analysisKo", "sentenceNumber"],
   page2Header: ["summaryBarTitle"],
   visual_summary: ["visualEn", "visualKo", "flowText", "sectionTitle"],
@@ -285,6 +286,7 @@ export function getSectionFontSizeKeys(key: EditableSectionKey): (keyof FontSize
 export const EDITABLE_SECTION_LABELS: Record<BuiltInEditableKey, string> = {
   header: "헤더",
   headerBadge: "헤더 배지",
+  page1Title: "분석 타이틀 배지",
   page1Body: "문장 테이블",
   page2Header: "요약바",
   visual_summary: "삽화 요약",
@@ -351,6 +353,7 @@ export interface TemplateSettings {
   page1Layout?: Page1LayoutConfig;
   headerStyle?: SectionStyleConfig;
   headerBadgeStyle?: SectionStyleConfig;
+  page1TitleStyle?: SectionStyleConfig;
   page1BodyStyle?: SectionStyleConfig;
   page2HeaderStyle?: SectionStyleConfig;
   sectionStyles?: Partial<Record<Page2SectionKey, SectionStyleConfig>>;
@@ -375,6 +378,7 @@ export interface TemplateSettings {
   sectionBadgeConfig?: {
     handout?: SectionBadgeConfig;
     workbook?: SectionBadgeConfig;
+    vocabBank?: SectionBadgeConfig;
   };
 }
 

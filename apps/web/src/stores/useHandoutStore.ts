@@ -67,6 +67,8 @@ export const useHandoutStore = create<HandoutStore>((set) => ({
       activeId: "P01",
       progress: 0,
       isApplying: false,
+      analysisTitleTexts: {},
+      pageNumberOverrides: {},
     });
   },
 

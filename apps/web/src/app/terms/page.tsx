@@ -616,6 +616,7 @@ export default function TermsPage() {
         <p>사업장소재지: 충청남도 천안시 서북구 불당31길 17, 401호</p>
         <p>서비스명: GyoanMaker</p>
         <p>사업자등록번호: 885-51-00965</p>
+        <p>통신판매업 신고번호: 2026-충남천안-0664</p>
         <p>문의: dnsxj12345aa@gmail.com</p>
       </div>
     </div>
