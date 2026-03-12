@@ -2,11 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+interface CreditEntryInfo {
+  remaining: number;
+  total?: number;
+  purchasedAt: string;
+  expiresAt: string;
+  orderId?: string;
+}
+
 interface QuotaModelStatus {
   limit: number;
   used: number;
   remaining: number;
   credits: number;
+  creditEntries?: CreditEntryInfo[];
 }
 
 interface QuotaInfo {
@@ -35,6 +44,7 @@ export default function QuotaPanel({ email }: { email: string }) {
   const [editPlan, setEditPlan] = useState<"free" | "basic" | "standard" | "pro">("free");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [showCreditDetail, setShowCreditDetail] = useState(false);
 
   // Manual bank transfer grant state
   const [showManualGrant, setShowManualGrant] = useState(false);
@@ -234,6 +244,81 @@ export default function QuotaPanel({ email }: { email: string }) {
           <p className="text-[10px] text-gray-400 mt-0.5">요금제: {quota.plan.toUpperCase()}</p>
         </div>
       </div>
+
+      {/* Credit Detail */}
+      {(() => {
+        const allEntries = [
+          ...(quota.flash.creditEntries ?? []).map((e) => ({ ...e, model: "속도" as const })),
+          ...(quota.pro.creditEntries ?? []).map((e) => ({ ...e, model: "정밀" as const })),
+          ...(quota.illustration.creditEntries ?? []).map((e) => ({ ...e, model: "삽화" as const })),
+        ];
+        if (allEntries.length === 0) return null;
+        return (
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowCreditDetail((v) => !v)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <span className="text-[10px]">{showCreditDetail ? "▲" : "▼"}</span>
+              크레딧 구매 내역 ({allEntries.length}건)
+            </button>
+            {showCreditDetail && (
+              <div className="mt-2 overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500">
+                      <th className="px-2.5 py-1.5 text-left font-semibold">유형</th>
+                      <th className="px-2.5 py-1.5 text-left font-semibold">구매일</th>
+                      <th className="px-2.5 py-1.5 text-left font-semibold">주문ID</th>
+                      <th className="px-2.5 py-1.5 text-right font-semibold">구매</th>
+                      <th className="px-2.5 py-1.5 text-right font-semibold">사용</th>
+                      <th className="px-2.5 py-1.5 text-right font-semibold">잔여</th>
+                      <th className="px-2.5 py-1.5 text-left font-semibold">만료일</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allEntries.map((entry, idx) => {
+                      const purchased = entry.total ?? null;
+                      const used = purchased !== null ? purchased - entry.remaining : null;
+                      const dateStr = (iso: string) => {
+                        try { return new Date(iso).toLocaleDateString("ko-KR"); } catch { return iso; }
+                      };
+                      const isExpiringSoon = (() => {
+                        try {
+                          return new Date(entry.expiresAt).getTime() - Date.now() < 7 * 86400000;
+                        } catch { return false; }
+                      })();
+                      return (
+                        <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50/50">
+                          <td className="px-2.5 py-1.5 font-medium text-gray-700">{entry.model}</td>
+                          <td className="px-2.5 py-1.5 text-gray-600">{dateStr(entry.purchasedAt)}</td>
+                          <td className="px-2.5 py-1.5 text-gray-400 font-mono truncate max-w-30">
+                            {entry.orderId ? entry.orderId.slice(0, 16) + (entry.orderId.length > 16 ? "…" : "") : "-"}
+                          </td>
+                          <td className="px-2.5 py-1.5 text-right font-bold text-gray-700">
+                            {purchased !== null ? purchased : "-"}
+                          </td>
+                          <td className="px-2.5 py-1.5 text-right text-orange-600 font-medium">
+                            {used !== null ? used : "-"}
+                          </td>
+                          <td className="px-2.5 py-1.5 text-right font-bold text-green-600">
+                            {entry.remaining}
+                          </td>
+                          <td className={`px-2.5 py-1.5 ${isExpiringSoon ? "text-red-500 font-semibold" : "text-gray-600"}`}>
+                            {dateStr(entry.expiresAt)}
+                            {isExpiringSoon && " ⚠"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Limit Editors */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">

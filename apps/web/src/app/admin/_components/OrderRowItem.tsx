@@ -11,10 +11,12 @@ interface Props {
   bankActionId: string | null;
   retrying: string | null;
   taxUpdating: string | null;
+  cashReceiptUpdating: string | null;
   onBankApprove: (orderId: string) => void;
   onBankReject: (orderId: string) => void;
   onRetry: (orderId: string) => void;
   onTaxStatusUpdate: (orderId: string, taxStatus: "issued" | "none") => void;
+  onCashReceiptStatusUpdate: (orderId: string, status: "issued" | "none") => void;
 }
 
 export default function OrderRowItem({
@@ -24,10 +26,12 @@ export default function OrderRowItem({
   bankActionId,
   retrying,
   taxUpdating,
+  cashReceiptUpdating,
   onBankApprove,
   onBankReject,
   onRetry,
   onTaxStatusUpdate,
+  onCashReceiptStatusUpdate,
 }: Props) {
   return (
     <div className="bg-white border border-gray-200/60 rounded-xl shadow-sm overflow-hidden">
@@ -61,8 +65,14 @@ export default function OrderRowItem({
             </span>
           )}
           {order.receiptType === "cash_receipt" && (
-            <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full border bg-gray-50 text-gray-500 border-gray-200">
-              현금영수증
+            <span
+              className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full border ${
+                order.cashReceiptStatus === "issued"
+                  ? "bg-teal-50 text-teal-600 border-teal-200"
+                  : "bg-orange-50 text-orange-600 border-orange-200"
+              }`}
+            >
+              {order.cashReceiptStatus === "issued" ? "현금영수증 발행완료" : "현금영수증 미발행"}
             </span>
           )}
           <span
@@ -118,9 +128,11 @@ export default function OrderRowItem({
                 </span>
               </div>
               {order.receiptType === "cash_receipt" && (
-                <div className="text-xs text-gray-600">
-                  <span className="font-medium">현금영수증:</span> {order.receiptPhone ?? "-"}
-                </div>
+                <CashReceiptDetail
+                  order={order}
+                  cashReceiptUpdating={cashReceiptUpdating}
+                  onCashReceiptStatusUpdate={onCashReceiptStatusUpdate}
+                />
               )}
               {order.receiptType === "tax_invoice" && order.taxInvoiceInfo && (
                 <TaxInvoiceDetail
@@ -164,6 +176,59 @@ export default function OrderRowItem({
                 {retrying === order.orderId ? "Retrying..." : "Retry Apply"}
               </button>
             </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Sub-component: cash receipt detail ────────────────────────────────────
+
+function CashReceiptDetail({
+  order,
+  cashReceiptUpdating,
+  onCashReceiptStatusUpdate,
+}: {
+  order: OrderRow;
+  cashReceiptUpdating: string | null;
+  onCashReceiptStatusUpdate: (orderId: string, status: "issued" | "none") => void;
+}) {
+  return (
+    <div className="text-xs text-gray-600 space-y-0.5">
+      <div className="flex items-center gap-2">
+        <span className="font-medium">현금영수증:</span>
+        <span>{order.receiptPhone ?? "-"}</span>
+        <span
+          className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-full border ${
+            order.cashReceiptStatus === "issued"
+              ? "bg-teal-50 text-teal-600 border-teal-200"
+              : "bg-orange-50 text-orange-600 border-orange-200"
+          }`}
+        >
+          {order.cashReceiptStatus === "issued" ? "발행 완료" : "미발행"}
+        </span>
+      </div>
+      {order.status === "confirmed" && (
+        <div className="mt-2">
+          {order.cashReceiptStatus !== "issued" ? (
+            <button
+              type="button"
+              onClick={() => onCashReceiptStatusUpdate(order.orderId, "issued")}
+              disabled={cashReceiptUpdating === order.orderId}
+              className="px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors"
+            >
+              {cashReceiptUpdating === order.orderId ? "처리 중..." : "발행 완료 처리"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onCashReceiptStatusUpdate(order.orderId, "none")}
+              disabled={cashReceiptUpdating === order.orderId}
+              className="px-3 py-1.5 bg-white border border-gray-300 text-gray-600 text-xs font-semibold rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              {cashReceiptUpdating === order.orderId ? "처리 중..." : "발행 취소"}
+            </button>
           )}
         </div>
       )}

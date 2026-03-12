@@ -221,8 +221,10 @@ export async function addTopUpCredits(
   const docRef = getDb().collection(COLLECTION).doc(key);
   const now = new Date();
   const purchasedAt = now.toISOString();
+  const total = Math.max(0, Math.floor(amount));
   const entry: CreditEntry = {
-    remaining: Math.max(0, Math.floor(amount)),
+    remaining: total,
+    total,
     purchasedAt,
     expiresAt: getCreditExpiryIso(now),
     ...(orderId ? { orderId } : {}),

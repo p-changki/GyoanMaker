@@ -114,6 +114,7 @@ export interface ModelQuota {
 
 export interface CreditEntry {
   remaining: number;
+  total?: number;
   purchasedAt: string;
   expiresAt: string;
   orderId?: string;

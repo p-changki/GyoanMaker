@@ -325,12 +325,14 @@ export function buildQuotaStatus(state: NormalizedUserState): QuotaStatus {
       used: state.quota.flash.used,
       remaining: flashRemaining,
       credits: flashCredits,
+      creditEntries: state.credits.flash,
     },
     pro: {
       limit: state.quota.pro.monthlyLimit,
       used: state.quota.pro.used,
       remaining: proRemaining,
       credits: proCredits,
+      creditEntries: state.credits.pro,
     },
     storage: {
       limit: state.quota.storageLimit,
@@ -342,6 +344,7 @@ export function buildQuotaStatus(state: NormalizedUserState): QuotaStatus {
       used: state.quota.illustration.used,
       remaining: illustrationRemaining,
       credits: illustrationCredits,
+      creditEntries: state.credits.illustration,
     },
     canGenerate: flashRemaining > 0 || proRemaining > 0,
     canGenerateByModel: {

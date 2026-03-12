@@ -330,7 +330,7 @@ export default function DashboardPage() {
                       prefetch={false}
                       className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
                     >
-                      보카
+                      보카테스트
                     </Link>
                     <Link
                       href={`/pocket-voca?handoutId=${h.id}`}
@@ -338,6 +338,13 @@ export default function DashboardPage() {
                       className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
                     >
                       포켓보카
+                    </Link>
+                    <Link
+                      href={`/lecture-slide?handoutId=${h.id}`}
+                      prefetch={false}
+                      className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors"
+                    >
+                      슬라이드
                     </Link>
                     <button
                       type="button"

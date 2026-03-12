@@ -28,6 +28,8 @@ export interface OrderRow {
   taxInvoiceInfo: TaxInvoiceInfo | null;
   taxStatus: "none" | "pending" | "issued";
   taxStatusUpdatedAt: string | null;
+  cashReceiptStatus: "none" | "pending" | "issued";
+  cashReceiptStatusUpdatedAt: string | null;
 }
 
 export type StatusFilter =
@@ -40,6 +42,7 @@ export type StatusFilter =
 
 export type FlowFilter = "all" | "card" | "bank_transfer";
 export type TaxFilter = "all" | "tax_invoice_pending" | "tax_invoice_issued";
+export type ReceiptFilter = "all" | "cash_receipt_pending" | "cash_receipt_issued";
 
 export const STATUS_TABS: { key: StatusFilter; label: string; color: string }[] = [
   { key: "all", label: "전체", color: "bg-gray-100 text-gray-700" },
