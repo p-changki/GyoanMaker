@@ -194,16 +194,23 @@ export async function incrementStorageUsed(
   delta: number
 ): Promise<void> {
   const key = email.toLowerCase();
-  await getDb()
-    .collection(COLLECTION)
-    .doc(key)
-    .set(
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  await getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const state = normalizeUserState((snap.data() ?? {}) as UserDocLike, new Date());
+    const currentUsed = state.quota?.storageUsed ?? 0;
+    const next = Math.max(0, currentUsed + delta);
+
+    tx.set(
+      docRef,
       {
-        quota: { storageUsed: FieldValue.increment(delta) },
+        quota: { storageUsed: next },
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
+  });
 }
 
 export async function purgeExpiredCredits(email: string): Promise<number> {
