@@ -6,6 +6,7 @@ import type { TopUpCreditType } from "@gyoanmaker/shared/plans";
 import type {
   FlowFilter,
   OrderRow,
+  ReceiptFilter,
   StatusFilter,
   TaxFilter,
 } from "./ordersTable.types";
@@ -72,6 +73,7 @@ export function useOrdersTable() {
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
   const [taxFilter, setTaxFilter] = useState<TaxFilter>("all");
+  const [receiptFilter, setReceiptFilter] = useState<ReceiptFilter>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [amountMin, setAmountMin] = useState<string>("");
@@ -79,6 +81,7 @@ export function useOrdersTable() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [taxUpdating, setTaxUpdating] = useState<string | null>(null);
+  const [cashReceiptUpdating, setCashReceiptUpdating] = useState<string | null>(null);
   const [bankActionId, setBankActionId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -121,8 +124,20 @@ export function useOrdersTable() {
     );
   }, [flowFilteredOrders, taxFilter]);
 
+  const receiptFilteredOrders = useMemo(() => {
+    if (receiptFilter === "all") return taxFilteredOrders;
+    if (receiptFilter === "cash_receipt_pending") {
+      return taxFilteredOrders.filter(
+        (o) => o.receiptType === "cash_receipt" && o.status === "confirmed" && o.cashReceiptStatus !== "issued"
+      );
+    }
+    return taxFilteredOrders.filter(
+      (o) => o.receiptType === "cash_receipt" && o.cashReceiptStatus === "issued"
+    );
+  }, [taxFilteredOrders, receiptFilter]);
+
   const dateAmountFilteredOrders = useMemo(() => {
-    let result = taxFilteredOrders;
+    let result = receiptFilteredOrders;
     if (dateFrom) {
       const from = new Date(dateFrom);
       result = result.filter((o) => new Date(o.createdAt) >= from);
@@ -137,7 +152,7 @@ export function useOrdersTable() {
     if (min !== null) result = result.filter((o) => o.amount >= min);
     if (max !== null) result = result.filter((o) => o.amount <= max);
     return result;
-  }, [taxFilteredOrders, dateFrom, dateTo, amountMin, amountMax]);
+  }, [receiptFilteredOrders, dateFrom, dateTo, amountMin, amountMax]);
 
   const filteredOrders = useMemo(
     () => (activeFilter === "all" ? dateAmountFilteredOrders : dateAmountFilteredOrders.filter((o) => o.status === activeFilter)),
@@ -157,6 +172,10 @@ export function useOrdersTable() {
 
   const taxInvoicePendingCount = flowFilteredOrders.filter(
     (o) => o.receiptType === "tax_invoice" && o.status === "confirmed" && o.taxStatus !== "issued"
+  ).length;
+
+  const cashReceiptPendingCount = flowFilteredOrders.filter(
+    (o) => o.receiptType === "cash_receipt" && o.status === "confirmed" && o.cashReceiptStatus !== "issued"
   ).length;
 
   const flowCounts = {
@@ -295,8 +314,44 @@ export function useOrdersTable() {
     setCurrentPage(1);
   };
 
+  const handleCashReceiptStatusUpdate = async (orderId: string, cashReceiptStatus: "issued" | "none") => {
+    setCashReceiptUpdating(orderId);
+    try {
+      const res = await fetch(`/api/admin/billing/orders/${orderId}/cash-receipt-status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cashReceiptStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data?.error?.message ?? "현금영수증 상태 업데이트 실패");
+        return;
+      }
+      setAllOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId
+            ? { ...o, cashReceiptStatus, cashReceiptStatusUpdatedAt: new Date().toISOString() }
+            : o
+        )
+      );
+    } catch {
+      alert("현금영수증 상태 업데이트 요청 실패");
+    } finally {
+      setCashReceiptUpdating(null);
+    }
+  };
+
   const handleTaxFilterChange = (tax: TaxFilter) => {
     setTaxFilter(tax);
+    setReceiptFilter("all");
+    setActiveFilter("all");
+    setExpandedId(null);
+    setCurrentPage(1);
+  };
+
+  const handleReceiptFilterChange = (receipt: ReceiptFilter) => {
+    setReceiptFilter(receipt);
+    setTaxFilter("all");
     setActiveFilter("all");
     setExpandedId(null);
     setCurrentPage(1);
@@ -313,6 +368,7 @@ export function useOrdersTable() {
     activeFilter,
     flowFilter,
     taxFilter,
+    receiptFilter,
     dateFrom,
     dateTo,
     amountMin,
@@ -320,6 +376,7 @@ export function useOrdersTable() {
     expandedId,
     retrying,
     taxUpdating,
+    cashReceiptUpdating,
     bankActionId,
     currentPage,
     // derived
@@ -327,6 +384,7 @@ export function useOrdersTable() {
     filteredOrders,
     tabCounts,
     taxInvoicePendingCount,
+    cashReceiptPendingCount,
     flowCounts,
     totalPages,
     // handlers
@@ -335,11 +393,13 @@ export function useOrdersTable() {
     handleFilterChange,
     handleFlowFilterChange,
     handleTaxFilterChange,
+    handleReceiptFilterChange,
     handleDateRangeChange,
     handleAmountRangeChange,
     handleRetry,
     handleBankApprove,
     handleBankReject,
     handleTaxStatusUpdate,
+    handleCashReceiptStatusUpdate,
   };
 }
