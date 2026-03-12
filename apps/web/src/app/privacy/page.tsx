@@ -509,6 +509,7 @@ export default function PrivacyPage() {
             <p>상호명: 창랩</p>
             <p>사업장소재지: 충청남도 천안시 서북구 불당31길 17, 401호</p>
             <p>사업자등록번호: 885-51-00965</p>
+            <p>통신판매업 신고번호: 2026-충남천안-0664</p>
             <p>연락처: dnsxj12345aa@gmail.com</p>
           </div>
           <p className="mb-2">
@@ -537,7 +538,7 @@ export default function PrivacyPage() {
             본 방침의 변경 사항은 시행일 최소 7일 전에 서비스 내에서
             공지합니다.
           </p>
-          <p className="mt-4 text-sm text-gray-500">시행일: 2026년 3월 8일</p>
+          <p className="mt-4 text-sm text-gray-500">시행일: 2026년 3월 12일</p>
         </section>
       </div>
     </div>

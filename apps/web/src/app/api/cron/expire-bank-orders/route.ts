@@ -54,7 +54,6 @@ export async function GET(req: NextRequest) {
 
     await batch.commit();
 
-    console.log(`[cron/expire-bank-orders] Expired ${snap.size} orders`);
     return NextResponse.json({ ok: true, expired: snap.size });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

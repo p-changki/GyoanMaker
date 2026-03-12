@@ -160,6 +160,7 @@ const SectionCanvasItem = memo(function SectionCanvasItem({ id, globalPageStart 
 
   return (
     <div
+      id={`section-${id}`}
       className={`flex flex-col gap-12 transition-all duration-500 ${
         isActive ? "ring-4 ring-[#5E35B1]/20 scale-[1.01]" : "opacity-90"
       }`}

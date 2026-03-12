@@ -7,8 +7,9 @@ import {
   DEFAULT_SECTION_STYLE,
   THEME_PRESETS,
   DEFAULT_IMAGE_DISPLAY,
+  FONT_FAMILY_MAP,
 } from "@gyoanmaker/shared/types";
-import type { EditableSectionKey } from "@gyoanmaker/shared/types";
+import type { EditableSectionKey, FontFamily } from "@gyoanmaker/shared/types";
 import UnifiedSectionEditor from "../template-settings/UnifiedSectionEditor";
 import Page1LayoutSection from "../template-settings/Page1LayoutSection";
 import VocabLayoutSection from "../template-settings/VocabLayoutSection";
@@ -41,7 +42,7 @@ export function SectionStyleEditor({ sectionKey }: Props) {
       return (
         <div className="space-y-5 py-2">
           <Page1TitleStyleEditor />
-          <UnifiedSectionEditor sectionKey={"page1Body" as EditableSectionKey} />
+          <BadgeFontEditor />
         </div>
       );
     case "page1-body":
@@ -584,6 +585,40 @@ function ImageSliders({
         <span className="text-[9px] text-gray-400 w-6 shrink-0">상하</span>
         <input type="range" min={-50} max={50} step={1} value={offsetY} onChange={(e) => onChangeOffsetY(Number(e.target.value))} className="flex-1 h-1 accent-[#5E35B1]" />
         <span className="text-[9px] text-gray-500 w-8 text-right">{offsetY}px</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Badge Font Editor (for Page1 title badge, page1-title modal) ─── */
+
+function BadgeFontEditor() {
+  const page1TitleStyle = useTemplateSettingsStore((s) => s.page1TitleStyle);
+  const setPage1TitleStyle = useTemplateSettingsStore((s) => s.setPage1TitleStyle);
+  const globalFontFamily = useTemplateSettingsStore((s) => s.fontFamily);
+
+  const effectiveFont = (page1TitleStyle?.fontFamily || globalFontFamily) as FontFamily;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">폰트</p>
+      <div className="space-y-0.5">
+        <label className="text-[10px] text-gray-500">뱃지 폰트 (한/영 통합)</label>
+        <select
+          value={page1TitleStyle?.fontFamily ?? ""}
+          onChange={(e) => setPage1TitleStyle({ fontFamily: e.target.value as FontFamily | "" })}
+          className="w-full py-1.5 px-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 focus:border-[#5E35B1] focus:outline-none appearance-none cursor-pointer"
+          style={{ fontFamily: FONT_FAMILY_MAP[effectiveFont].css }}
+        >
+          <option value="">
+            전체 설정 사용 ({FONT_FAMILY_MAP[globalFontFamily].label})
+          </option>
+          {(Object.keys(FONT_FAMILY_MAP) as FontFamily[]).map((key) => (
+            <option key={key} value={key} style={{ fontFamily: FONT_FAMILY_MAP[key].css }}>
+              {FONT_FAMILY_MAP[key].label}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

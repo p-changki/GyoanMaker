@@ -178,7 +178,6 @@ export async function POST(req: NextRequest) {
 
   try {
     timeoutMs = getProxyTimeoutMs(baseUrl);
-    const startedAt = Date.now();
     const body = await req.json();
     const selectedModel: QuotaModel = body?.model === "flash" ? "flash" : "pro";
 
@@ -265,11 +264,6 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(timeoutMs),
     });
-
-    const duration = Date.now() - startedAt;
-    console.log(
-      `[api/generate][${requestId}] upstream status=${response.status} duration=${duration}ms timeout=${timeoutMs}ms`
-    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

@@ -7,15 +7,20 @@ import {
   DEFAULT_SECTION_STYLE,
 } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
+import { EditableText } from "./EditableText";
 
 interface WorkbookStepBannerProps {
   badge: string; // e.g. "Workbook" or "정답지"
   label: string; // e.g. "STEP 1 스스로 분석"
+  onEditBadge?: (v: string) => void;
+  onEditLabel?: (v: string) => void;
 }
 
 export default function WorkbookStepBanner({
   badge,
   label,
+  onEditBadge,
+  onEditLabel,
 }: WorkbookStepBannerProps) {
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
@@ -52,32 +57,69 @@ export default function WorkbookStepBanner({
       }}
     >
       {/* Left: badge text */}
-      <span
-        className="tracking-wide ml-6"
-        style={{
-          fontFamily: barFontCss,
-          fontWeight: titleFontWeight,
-          fontSize: `${fontSizes.summaryBarTitle}px`,
-          color: barTextColor,
-        }}
-      >
-        {badge}
-      </span>
-
-      {/* Right: step label */}
-      {label && (
-        <span
-          className="tracking-widest text-white/90"
+      {onEditBadge ? (
+        <EditableText
+          as="span"
+          value={badge}
+          label="배너 텍스트 수정"
+          themeColor={barBg}
+          maxLength={40}
+          onConfirm={onEditBadge}
+          className="tracking-wide ml-6"
           style={{
             fontFamily: barFontCss,
             fontWeight: titleFontWeight,
-            fontSize: `${Math.max(fontSizes.summaryBarTitle - 2, 10)}px`,
+            fontSize: `${fontSizes.summaryBarTitle}px`,
             color: barTextColor,
-            opacity: 0.85,
+          }}
+        />
+      ) : (
+        <span
+          className="tracking-wide ml-6"
+          style={{
+            fontFamily: barFontCss,
+            fontWeight: titleFontWeight,
+            fontSize: `${fontSizes.summaryBarTitle}px`,
+            color: barTextColor,
           }}
         >
-          {label}
+          {badge}
         </span>
+      )}
+
+      {/* Right: step label */}
+      {label && (
+        onEditLabel ? (
+          <EditableText
+            as="span"
+            value={label}
+            label="배너 라벨 수정"
+            themeColor={barBg}
+            maxLength={40}
+            onConfirm={onEditLabel}
+            className="tracking-widest"
+            style={{
+              fontFamily: barFontCss,
+              fontWeight: titleFontWeight,
+              fontSize: `${Math.max(fontSizes.summaryBarTitle - 2, 10)}px`,
+              color: barTextColor,
+              opacity: 0.85,
+            }}
+          />
+        ) : (
+          <span
+            className="tracking-widest text-white/90"
+            style={{
+              fontFamily: barFontCss,
+              fontWeight: titleFontWeight,
+              fontSize: `${Math.max(fontSizes.summaryBarTitle - 2, 10)}px`,
+              color: barTextColor,
+              opacity: 0.85,
+            }}
+          >
+            {label}
+          </span>
+        )
       )}
     </div>
   );

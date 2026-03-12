@@ -35,10 +35,12 @@ interface TemplateSettingsActions {
   setUseCustomTheme: (value: boolean) => void;
   setHeaderStyle: (partial: Partial<SectionStyleConfig>) => void;
   setHeaderBadgeStyle: (partial: Partial<SectionStyleConfig>) => void;
+  setPage1TitleStyle: (partial: Partial<SectionStyleConfig>) => void;
   setPage1BodyStyle: (partial: Partial<SectionStyleConfig>) => void;
   setPage2HeaderStyle: (partial: Partial<SectionStyleConfig>) => void;
   resetHeaderStyle: () => void;
   resetHeaderBadgeStyle: () => void;
+  resetPage1TitleStyle: () => void;
   resetPage1BodyStyle: () => void;
   resetPage2HeaderStyle: () => void;
   resetSectionStyleToGlobal: (key: Page2SectionKey) => void;
@@ -56,7 +58,7 @@ interface TemplateSettingsActions {
   setSectionTitle: (key: Page2SectionKey, title: string) => void;
   setSubSectionTitle: (key: string, title: string) => void;
   setSubSectionColor: (key: string, color: string) => void;
-  setSectionBadgeConfig: (key: "handout" | "workbook", partial: Partial<import("@gyoanmaker/shared/types").SectionBadgeConfig>) => void;
+  setSectionBadgeConfig: (key: "handout" | "workbook" | "vocabBank", partial: Partial<import("@gyoanmaker/shared/types").SectionBadgeConfig>) => void;
 }
 
 type TemplateSettingsStore = TemplateSettingsState & TemplateSettingsActions;
@@ -167,6 +169,7 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         // Explicitly clear optional style fields (set() merges, so undefined fields persist)
         headerStyle: undefined,
         headerBadgeStyle: undefined,
+        page1TitleStyle: undefined,
         page1BodyStyle: undefined,
         page2HeaderStyle: undefined,
         sectionStyles: undefined,
@@ -222,6 +225,11 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         headerBadgeStyle: { ...(state.headerBadgeStyle ?? DEFAULT_SECTION_STYLE), ...partial },
       })),
 
+    setPage1TitleStyle: (partial) =>
+      set((state) => ({
+        page1TitleStyle: { ...(state.page1TitleStyle ?? DEFAULT_SECTION_STYLE), ...partial },
+      })),
+
     setPage1BodyStyle: (partial) =>
       set((state) => ({
         page1BodyStyle: { ...(state.page1BodyStyle ?? DEFAULT_SECTION_STYLE), ...partial },
@@ -235,6 +243,8 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
     resetHeaderStyle: () => set({ headerStyle: undefined }),
 
     resetHeaderBadgeStyle: () => set({ headerBadgeStyle: undefined }),
+
+    resetPage1TitleStyle: () => set({ page1TitleStyle: undefined }),
 
     resetPage1BodyStyle: () => set({ page1BodyStyle: undefined }),
 
@@ -358,6 +368,7 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     page1Layout: state.page1Layout,
     headerStyle: state.headerStyle,
     headerBadgeStyle: state.headerBadgeStyle,
+    page1TitleStyle: state.page1TitleStyle,
     page1BodyStyle: state.page1BodyStyle,
     page2HeaderStyle: state.page2HeaderStyle,
     sectionStyles: state.sectionStyles,

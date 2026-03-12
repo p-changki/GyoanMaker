@@ -72,6 +72,9 @@ export function useCompileData() {
       if (existingId) {
         const workbookState = useWorkbookStore.getState();
         const vocabBankState = useVocabBankStore.getState();
+        const vocabBankWithConfig = vocabBankState.vocabBankData
+          ? { ...vocabBankState.vocabBankData, config: vocabBankState.config }
+          : undefined;
         const body = {
           title: saveTitle.trim() || undefined,
           sections,
@@ -83,7 +86,7 @@ export function useCompileData() {
             summaryTitleText: state.summaryTitleText,
           },
           workbook: workbookState.workbookData ?? undefined,
-          vocabBank: vocabBankState.vocabBankData ?? undefined,
+          vocabBank: vocabBankWithConfig,
         };
 
         const res = await fetch(`/api/handouts/${existingId}`, {
@@ -124,6 +127,9 @@ export function useCompileData() {
 
       const workbookStateNew = useWorkbookStore.getState();
       const vocabBankStateNew = useVocabBankStore.getState();
+      const vocabBankWithConfigNew = vocabBankStateNew.vocabBankData
+        ? { ...vocabBankStateNew.vocabBankData, config: vocabBankStateNew.config }
+        : undefined;
       const body = {
         title: saveTitle.trim() || `Handout ${new Date().toLocaleDateString("en-US")}`,
         sections,
@@ -134,10 +140,11 @@ export function useCompileData() {
         customTexts: {
           headerText: state.customHeaderText,
           analysisTitleText: state.analysisTitleText,
+          analysisTitleTexts: state.analysisTitleTexts,
           summaryTitleText: state.summaryTitleText,
         },
         workbook: workbookStateNew.workbookData ?? undefined,
-        vocabBank: vocabBankStateNew.vocabBankData ?? undefined,
+        vocabBank: vocabBankWithConfigNew,
       };
 
       const res = await fetch("/api/handouts", {

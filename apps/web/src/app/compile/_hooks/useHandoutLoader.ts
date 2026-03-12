@@ -159,6 +159,9 @@ export function useHandoutLoader() {
     const vocabBank = initData.handout.vocabBank ?? null;
     if (vocabBank) {
       setVocabBankData(vocabBank);
+      if (vocabBank.config) {
+        useVocabBankStore.setState({ config: vocabBank.config });
+      }
       return;
     }
     useVocabBankStore.setState({ vocabBankData: null });

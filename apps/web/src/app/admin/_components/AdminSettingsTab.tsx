@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 interface IllustrationPreset {
-  presetId: string;
+  sampleId: string;
   prompt: string;
   revisedPrompt: string;
   imageUrl: string;
@@ -139,7 +139,7 @@ export default function AdminSettingsTab() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {presets.map((preset) => (
               <div
-                key={preset.presetId}
+                key={preset.sampleId}
                 className="bg-white border border-gray-200/60 rounded-2xl overflow-hidden shadow-sm"
               >
                 {preset.imageUrl && (
@@ -169,11 +169,11 @@ export default function AdminSettingsTab() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleDelete(preset.presetId)}
-                      disabled={deleting === preset.presetId}
+                      onClick={() => handleDelete(preset.sampleId)}
+                      disabled={deleting === preset.sampleId}
                       className="px-2 py-1 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 disabled:opacity-50 transition-colors"
                     >
-                      {deleting === preset.presetId ? "..." : "삭제"}
+                      {deleting === preset.sampleId ? "..." : "삭제"}
                     </button>
                   </div>
                 </div>

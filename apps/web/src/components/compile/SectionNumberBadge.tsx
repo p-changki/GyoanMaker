@@ -11,7 +11,7 @@ import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { PencilHintIcon } from "./EditableHintBanner";
 
 interface SectionNumberBadgeProps {
-  sectionKey: "handout" | "workbook";
+  sectionKey: "handout" | "workbook" | "vocabBank";
   defaultNumber: string;
   /** Badge background color from theme (used as fallback) */
   color: string;
@@ -84,7 +84,7 @@ export default function SectionNumberBadge({
 
       {isOpen && (
         <BadgeEditModal
-          title={sectionKey === "handout" ? "교안 섹션 뱃지" : "워크북 섹션 뱃지"}
+          title={sectionKey === "handout" ? "교안 섹션 뱃지" : sectionKey === "workbook" ? "워크북 섹션 뱃지" : "보카 섹션 뱃지"}
           config={{ label, textColor, bgColor, fontFamily: config?.fontFamily || "", fontSize, width: badgeWidth, height: badgeHeight }}
           defaultNumber={defaultNumber}
           themeColor={color}

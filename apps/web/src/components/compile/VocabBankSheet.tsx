@@ -114,6 +114,7 @@ export default function VocabBankSheet({
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
 
   const updateItem = useVocabBankStore((state) => state.updateItem);
+  const updateConfig = useVocabBankStore((state) => state.updateConfig);
 
   const base = THEME_PRESETS[preset];
   const colors = useCustom && customColors ? { ...base, ...customColors } : base;
@@ -132,6 +133,9 @@ export default function VocabBankSheet({
       globalPageNumber={globalPageNumber}
       pageKey={pageKey}
       showBanner={pageIndex === 0}
+      badgeSectionKey="vocabBank"
+      onEditSectionTitle={(v) => updateConfig({ sheetTitle: v })}
+      onEditStepBadge={(v) => updateConfig({ rangeDescription: v })}
     >
       <div className="flex h-full flex-col" style={{ fontFamily: fontCss }}>
         <div className="grid grid-cols-2 gap-3">
@@ -157,10 +161,17 @@ export default function VocabBankSheet({
 
         {config.teacherName && (
           <p
-            className="mt-4 text-right text-xs font-semibold text-gray-500"
+            className="mt-4 text-right font-semibold text-gray-500"
             style={{ fontSize: `${fontSizes.pageFooter - 1}px` }}
           >
-            {config.teacherName}
+            <EditableText
+              as="span"
+              value={config.teacherName}
+              label="교사명 수정"
+              themeColor={colors.primary}
+              maxLength={40}
+              onConfirm={(v) => updateConfig({ teacherName: v })}
+            />
           </p>
         )}
       </div>

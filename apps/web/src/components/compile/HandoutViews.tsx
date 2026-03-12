@@ -198,6 +198,8 @@ export function ParsedHandoutViewPage1({
     useTemplateSettingsStore((s) => s.page1Layout) ?? DEFAULT_PAGE1_LAYOUT;
   const page1Style =
     useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
+  const page1TitleStyle =
+    useTemplateSettingsStore((s) => s.page1TitleStyle);
 
   const updateSection = useHandoutStore((s) => s.updateSection);
 
@@ -221,6 +223,10 @@ export function ParsedHandoutViewPage1({
   const p1FontFamilyKo = page1Style.fontFamilyKo
     ? FONT_FAMILY_MAP[page1Style.fontFamilyKo].css
     : theme.fontCssKo;
+  // Badge title font — independent from sentence text font
+  const p1BadgeFontFamily = page1TitleStyle?.fontFamily
+    ? FONT_FAMILY_MAP[page1TitleStyle.fontFamily].css
+    : p1FontFamily;
   const p1TextAlign = (page1Style.textAlign || "justify") as
     | "left"
     | "center"
@@ -310,6 +316,7 @@ export function ParsedHandoutViewPage1({
                 paddingLeft: pageNum === 1 ? `${badgePaddingX + 4}px` : `${badgePaddingX - 2}px`,
                 paddingRight: `${badgePaddingX}px`,
                 letterSpacing: "0.01em",
+                fontFamily: p1BadgeFontFamily,
               }}
             >
               <EditableAnalysisTitle passageId={section.passageId} />
@@ -480,23 +487,25 @@ export function ParsedHandoutViewPage2({
     >
       <DiscoveryBanner />
       <section className="mb-2 relative flex-1 w-full">
-        {/* Avatar - separate from bar for z-index layering */}
-        <div
-          className={`absolute ${avatarDisplay.layer === "back" ? "z-0" : "z-20"}`}
-          style={avatarStyle}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={avatarBase64 ?? "/images/avatar.png"}
-            loading="lazy"
-            alt="Teacher Avatar"
-            className="w-full h-full object-contain"
-            style={{
-              filter:
-                "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))",
-            }}
-          />
-        </div>
+        {/* Avatar - only rendered when custom image is set */}
+        {avatarBase64 && (
+          <div
+            className={`absolute ${avatarDisplay.layer === "back" ? "z-0" : "z-20"}`}
+            style={avatarStyle}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarBase64}
+              loading="lazy"
+              alt="Teacher Avatar"
+              className="w-full h-full object-contain"
+              style={{
+                filter:
+                  "drop-shadow(0 4px 3px rgba(0,0,0,0.07)) drop-shadow(0 2px 2px rgba(0,0,0,0.06))",
+              }}
+            />
+          </div>
+        )}
 
         <ClickZone focusKey="page2-header" label="요약바">
           <div
@@ -527,6 +536,7 @@ export function ParsedHandoutViewPage2({
                 fontSize: `${theme.fontSizes.summaryBarTitle}px`,
                 color: page2HeaderStyle?.titleColor || "#FFFFFF",
                 marginLeft: (() => {
+                  if (!avatarBase64) return "24px";
                   const avatarML = Math.round(24 + avatarDisplay.offsetX + 90 * avatarDisplay.scale + 8);
                   // Limit marginLeft to 40% of bar width so text always has space
                   const barPct = (page2HeaderStyle?.barWidth ?? 95) / 100;
