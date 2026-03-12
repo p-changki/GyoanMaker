@@ -26,14 +26,14 @@ export interface QuotaModelStatus {
 export interface QuotaStatus {
   plan: PlanId;
   monthKeyKst: string;
-  flash: QuotaModelStatus;
-  pro: QuotaModelStatus;
+  flash: QuotaModelStatus & { creditEntries: CreditEntry[] };
+  pro: QuotaModelStatus & { creditEntries: CreditEntry[] };
   storage: {
     limit: number | null;
     used: number;
     remaining: number | null;
   };
-  illustration: QuotaModelStatus;
+  illustration: QuotaModelStatus & { creditEntries: CreditEntry[] };
   canGenerate: boolean;
   canGenerateByModel: Record<QuotaModel, boolean>;
 }

@@ -115,6 +115,7 @@ export async function refundIllustrationCredits(
     const now = new Date();
     const entry: CreditEntry = {
       remaining,
+      total: remaining,
       purchasedAt: now.toISOString(),
       expiresAt: getCreditExpiryIso(now),
       orderId: reason,

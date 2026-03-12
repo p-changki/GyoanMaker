@@ -11,6 +11,7 @@ export default function OrdersTable() {
     activeFilter,
     flowFilter,
     taxFilter,
+    receiptFilter,
     dateFrom,
     dateTo,
     amountMin,
@@ -18,12 +19,14 @@ export default function OrdersTable() {
     expandedId,
     retrying,
     taxUpdating,
+    cashReceiptUpdating,
     bankActionId,
     currentPage,
     pagedOrders,
     filteredOrders,
     tabCounts,
     taxInvoicePendingCount,
+    cashReceiptPendingCount,
     flowCounts,
     totalPages,
     setCurrentPage,
@@ -31,12 +34,14 @@ export default function OrdersTable() {
     handleFilterChange,
     handleFlowFilterChange,
     handleTaxFilterChange,
+    handleReceiptFilterChange,
     handleDateRangeChange,
     handleAmountRangeChange,
     handleRetry,
     handleBankApprove,
     handleBankReject,
     handleTaxStatusUpdate,
+    handleCashReceiptStatusUpdate,
   } = useOrdersTable();
 
   return (
@@ -55,6 +60,11 @@ export default function OrdersTable() {
             {!loading && taxInvoicePendingCount > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
                 세금계산서 미발행 {taxInvoicePendingCount}건
+              </span>
+            )}
+            {!loading && cashReceiptPendingCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-semibold text-teal-700">
+                현금영수증 미발행 {cashReceiptPendingCount}건
               </span>
             )}
           </div>
@@ -112,6 +122,31 @@ export default function OrdersTable() {
               {label}
               {!loading && key === "tax_invoice_pending" && taxInvoicePendingCount > 0 && (
                 <span className="ml-1 text-[10px] opacity-70">{taxInvoicePendingCount}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Cash receipt filter */}
+      <div className="flex items-center gap-1 rounded-lg bg-teal-50 p-1 w-fit">
+        {(["all", "cash_receipt_pending", "cash_receipt_issued"] as const).map((key) => {
+          const label =
+            key === "all" ? "전체" : key === "cash_receipt_pending" ? "현금영수증 미발행" : "발행 완료";
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleReceiptFilterChange(key)}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+                receiptFilter === key
+                  ? "bg-white text-teal-700 shadow-sm"
+                  : "text-teal-400 hover:text-teal-600"
+              }`}
+            >
+              {label}
+              {!loading && key === "cash_receipt_pending" && cashReceiptPendingCount > 0 && (
+                <span className="ml-1 text-[10px] opacity-70">{cashReceiptPendingCount}</span>
               )}
             </button>
           );
@@ -218,6 +253,8 @@ export default function OrdersTable() {
                 onBankReject={handleBankReject}
                 onRetry={handleRetry}
                 onTaxStatusUpdate={handleTaxStatusUpdate}
+                cashReceiptUpdating={cashReceiptUpdating}
+                onCashReceiptStatusUpdate={handleCashReceiptStatusUpdate}
               />
             ))}
           </div>
