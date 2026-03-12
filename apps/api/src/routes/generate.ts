@@ -52,7 +52,7 @@ export function createGenerateRouter(options: GenerateRouterOptions): Router {
       return;
     }
 
-    const systemPrompt = getSystemPrompt(validated.level);
+    const systemPrompt = getSystemPrompt(validated.level, validated.vocabCount);
     if (!systemPrompt) {
       sendError(
         res,

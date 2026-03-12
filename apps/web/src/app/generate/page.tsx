@@ -53,6 +53,8 @@ export default function GeneratePage() {
         onTextBlockChange={form.setTextBlock}
         onContentLevelChange={form.setContentLevel}
         onModelTierChange={form.setModelTier}
+        vocabCount={form.vocabCount}
+        onVocabCountChange={form.setVocabCount}
         onOptionsChange={form.setOptions}
         onGuideOpenChange={form.setIsGuideOpen}
         onToggleMode={form.handleToggleMode}

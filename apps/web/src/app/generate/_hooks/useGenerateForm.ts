@@ -36,6 +36,7 @@ export function useGenerateForm() {
   const [cards, setCards] = useState<PassageInputType[]>([]);
   const [contentLevel, setContentLevel] = useState<ContentLevel>("advanced");
   const [modelTier, setModelTier] = useState<ModelTier>("pro");
+  const [vocabCount, setVocabCount] = useState<"standard" | "extended">("standard");
   const [options, setOptions] = useState<OutputOptionState>({
     copyBlock: true,
     pdf: false,
@@ -109,12 +110,13 @@ export function useGenerateForm() {
       options,
       level: contentLevel,
       model: modelTier,
+      vocabCount,
       timestamp: new Date().toISOString(),
     };
 
     sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
     router.push("/results");
-  }, [contentLevel, finalPassages, inputMode, modelTier, options, router]);
+  }, [contentLevel, finalPassages, inputMode, modelTier, options, router, vocabCount]);
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitDisabled || isSubmitting || pendingSubmitRef.current) return;
@@ -168,6 +170,7 @@ export function useGenerateForm() {
     cards,
     contentLevel,
     modelTier,
+    vocabCount,
     options,
     isSubmitting,
     isGuideOpen,
@@ -179,6 +182,7 @@ export function useGenerateForm() {
     setTextBlock,
     setContentLevel,
     setModelTier,
+    setVocabCount,
     setOptions,
     setIsGuideOpen,
     handleToggleMode,

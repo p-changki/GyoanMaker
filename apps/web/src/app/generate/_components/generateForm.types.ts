@@ -20,6 +20,7 @@ export interface GenerateFormProps {
   cards: PassageInputType[];
   contentLevel: ContentLevel;
   modelTier: ModelTier;
+  vocabCount: "standard" | "extended";
   options: OutputOptionState;
   isSubmitting: boolean;
   isGuideOpen: boolean;
@@ -31,6 +32,7 @@ export interface GenerateFormProps {
   onTextBlockChange: (value: string) => void;
   onContentLevelChange: (value: ContentLevel) => void;
   onModelTierChange: (value: ModelTier) => void;
+  onVocabCountChange: (value: "standard" | "extended") => void;
   onOptionsChange: (value: OutputOptionState) => void;
   onGuideOpenChange: (open: boolean) => void;
   onToggleMode: (mode: InputMode) => void;

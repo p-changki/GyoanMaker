@@ -45,6 +45,7 @@ export function parseSessionInput(stored: string | null): SessionInputData | nul
       },
       level: (rawObj.level as SessionInputData["level"]) ?? "advanced",
       model: (rawObj.model as SessionInputData["model"]) ?? "pro",
+      vocabCount: (rawObj.vocabCount as SessionInputData["vocabCount"]) ?? "standard",
       timestamp,
       textBlock: typeof rawObj.textBlock === "string" ? rawObj.textBlock : undefined,
       cards: Array.isArray(rawObj.cards)
