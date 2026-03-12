@@ -72,6 +72,10 @@ export function useOrdersTable() {
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
   const [taxFilter, setTaxFilter] = useState<TaxFilter>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [amountMin, setAmountMin] = useState<string>("");
+  const [amountMax, setAmountMax] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [taxUpdating, setTaxUpdating] = useState<string | null>(null);
@@ -117,20 +121,38 @@ export function useOrdersTable() {
     );
   }, [flowFilteredOrders, taxFilter]);
 
+  const dateAmountFilteredOrders = useMemo(() => {
+    let result = taxFilteredOrders;
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      result = result.filter((o) => new Date(o.createdAt) >= from);
+    }
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      result = result.filter((o) => new Date(o.createdAt) <= to);
+    }
+    const min = amountMin !== "" ? Number(amountMin) : null;
+    const max = amountMax !== "" ? Number(amountMax) : null;
+    if (min !== null) result = result.filter((o) => o.amount >= min);
+    if (max !== null) result = result.filter((o) => o.amount <= max);
+    return result;
+  }, [taxFilteredOrders, dateFrom, dateTo, amountMin, amountMax]);
+
   const filteredOrders = useMemo(
-    () => (activeFilter === "all" ? taxFilteredOrders : taxFilteredOrders.filter((o) => o.status === activeFilter)),
-    [taxFilteredOrders, activeFilter]
+    () => (activeFilter === "all" ? dateAmountFilteredOrders : dateAmountFilteredOrders.filter((o) => o.status === activeFilter)),
+    [dateAmountFilteredOrders, activeFilter]
   );
 
   // ── Counts ─────────────────────────────────────────────────────────────────
 
   const tabCounts: Record<StatusFilter, number> = {
-    all: taxFilteredOrders.length,
-    awaiting_deposit: taxFilteredOrders.filter((o) => o.status === "awaiting_deposit").length,
-    confirmed: taxFilteredOrders.filter((o) => o.status === "confirmed").length,
-    paid_not_applied: taxFilteredOrders.filter((o) => o.status === "paid_not_applied").length,
-    failed: taxFilteredOrders.filter((o) => o.status === "failed").length,
-    pending: taxFilteredOrders.filter((o) => o.status === "pending").length,
+    all: dateAmountFilteredOrders.length,
+    awaiting_deposit: dateAmountFilteredOrders.filter((o) => o.status === "awaiting_deposit").length,
+    confirmed: dateAmountFilteredOrders.filter((o) => o.status === "confirmed").length,
+    paid_not_applied: dateAmountFilteredOrders.filter((o) => o.status === "paid_not_applied").length,
+    failed: dateAmountFilteredOrders.filter((o) => o.status === "failed").length,
+    pending: dateAmountFilteredOrders.filter((o) => o.status === "pending").length,
   };
 
   const taxInvoicePendingCount = flowFilteredOrders.filter(
@@ -261,6 +283,18 @@ export function useOrdersTable() {
     setCurrentPage(1);
   };
 
+  const handleDateRangeChange = (from: string, to: string) => {
+    setDateFrom(from);
+    setDateTo(to);
+    setCurrentPage(1);
+  };
+
+  const handleAmountRangeChange = (min: string, max: string) => {
+    setAmountMin(min);
+    setAmountMax(max);
+    setCurrentPage(1);
+  };
+
   const handleTaxFilterChange = (tax: TaxFilter) => {
     setTaxFilter(tax);
     setActiveFilter("all");
@@ -279,6 +313,10 @@ export function useOrdersTable() {
     activeFilter,
     flowFilter,
     taxFilter,
+    dateFrom,
+    dateTo,
+    amountMin,
+    amountMax,
     expandedId,
     retrying,
     taxUpdating,
@@ -297,6 +335,8 @@ export function useOrdersTable() {
     handleFilterChange,
     handleFlowFilterChange,
     handleTaxFilterChange,
+    handleDateRangeChange,
+    handleAmountRangeChange,
     handleRetry,
     handleBankApprove,
     handleBankReject,

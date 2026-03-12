@@ -42,12 +42,12 @@ export type FlowFilter = "all" | "card" | "bank_transfer";
 export type TaxFilter = "all" | "tax_invoice_pending" | "tax_invoice_issued";
 
 export const STATUS_TABS: { key: StatusFilter; label: string; color: string }[] = [
-  { key: "all", label: "All", color: "bg-gray-100 text-gray-700" },
+  { key: "all", label: "전체", color: "bg-gray-100 text-gray-700" },
   { key: "awaiting_deposit", label: "입금 대기", color: "bg-purple-100 text-purple-700" },
-  { key: "confirmed", label: "Confirmed", color: "bg-green-100 text-green-700" },
-  { key: "paid_not_applied", label: "Paid Not Applied", color: "bg-red-100 text-red-700" },
-  { key: "failed", label: "Failed", color: "bg-orange-100 text-orange-700" },
-  { key: "pending", label: "Pending", color: "bg-amber-100 text-amber-700" },
+  { key: "confirmed", label: "확인됨", color: "bg-green-100 text-green-700" },
+  { key: "paid_not_applied", label: "결제 미적용", color: "bg-red-100 text-red-700" },
+  { key: "failed", label: "실패", color: "bg-orange-100 text-orange-700" },
+  { key: "pending", label: "대기", color: "bg-amber-100 text-amber-700" },
 ];
 
 export const STATUS_BADGE: Record<string, string> = {

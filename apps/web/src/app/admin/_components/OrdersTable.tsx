@@ -11,6 +11,10 @@ export default function OrdersTable() {
     activeFilter,
     flowFilter,
     taxFilter,
+    dateFrom,
+    dateTo,
+    amountMin,
+    amountMax,
     expandedId,
     retrying,
     taxUpdating,
@@ -27,6 +31,8 @@ export default function OrdersTable() {
     handleFilterChange,
     handleFlowFilterChange,
     handleTaxFilterChange,
+    handleDateRangeChange,
+    handleAmountRangeChange,
     handleRetry,
     handleBankApprove,
     handleBankReject,
@@ -110,6 +116,59 @@ export default function OrdersTable() {
             </button>
           );
         })}
+      </div>
+
+      {/* Date & Amount range filters */}
+      <div className="flex flex-wrap items-end gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-end gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">날짜 (생성일)</label>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => handleDateRangeChange(e.target.value, dateTo)}
+                className="px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+              />
+              <span className="text-xs text-gray-400">~</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => handleDateRangeChange(dateFrom, e.target.value)}
+                className="px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">금액 (원)</label>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              placeholder="최소"
+              value={amountMin}
+              onChange={(e) => handleAmountRangeChange(e.target.value, amountMax)}
+              className="w-24 px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+            />
+            <span className="text-xs text-gray-400">~</span>
+            <input
+              type="number"
+              placeholder="최대"
+              value={amountMax}
+              onChange={(e) => handleAmountRangeChange(amountMin, e.target.value)}
+              className="w-24 px-2 py-1.5 text-xs border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+            />
+          </div>
+        </div>
+        {(dateFrom || dateTo || amountMin || amountMax) && (
+          <button
+            type="button"
+            onClick={() => { handleDateRangeChange("", ""); handleAmountRangeChange("", ""); }}
+            className="px-2.5 py-1.5 text-xs font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+          >
+            초기화
+          </button>
+        )}
       </div>
 
       {/* Status tabs */}
