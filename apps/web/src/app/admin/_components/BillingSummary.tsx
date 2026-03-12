@@ -43,27 +43,27 @@ export default function BillingSummary() {
 
   const cards = [
     {
-      label: "Monthly Revenue",
+      label: "이번달 매출",
       value: `₩${data.monthlyRevenue.toLocaleString()}`,
-      sub: `${data.monthlyOrderCount} orders`,
+      sub: `${data.monthlyOrderCount}건`,
       alert: false,
     },
     {
-      label: "Pending",
+      label: "입금 대기",
       value: data.pendingCount,
-      sub: "awaiting payment",
+      sub: "결제 대기 중",
       alert: false,
     },
     {
-      label: "Paid Not Applied",
+      label: "결제 미적용",
       value: data.paidNotAppliedCount,
-      sub: "needs retry",
+      sub: "재처리 필요",
       alert: data.paidNotAppliedCount > 0,
     },
     {
-      label: "Failed / Canceled",
+      label: "실패 / 취소",
       value: data.failedCount,
-      sub: "no action needed",
+      sub: "조치 불필요",
       alert: false,
     },
   ];

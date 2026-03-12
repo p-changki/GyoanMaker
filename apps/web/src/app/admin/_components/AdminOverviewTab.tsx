@@ -139,7 +139,7 @@ export default function AdminOverviewTab({ onNavigate }: AdminOverviewTabProps) 
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`px-2 py-0.5 text-[10px] font-semibold border rounded-full ${STATUS_BADGE[user.status]}`}>
-                    {user.status}
+                    {user.status === "approved" ? "승인" : user.status === "pending" ? "대기" : "거부"}
                   </span>
                   <span className="text-[10px] text-gray-400">
                     {new Date(user.createdAt).toLocaleDateString("ko-KR")}

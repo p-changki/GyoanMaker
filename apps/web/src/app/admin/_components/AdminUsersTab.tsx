@@ -209,7 +209,7 @@ export default function AdminUsersTab() {
 
                 <div className="flex items-center gap-3 shrink-0">
                   <span className={`px-3 py-1 text-xs font-semibold border rounded-full ${STATUS_BADGE[user.status]}`}>
-                    {user.status}
+                    {user.status === "approved" ? "승인" : user.status === "pending" ? "대기" : "거부"}
                   </span>
 
                   {updating === user.email ? (
