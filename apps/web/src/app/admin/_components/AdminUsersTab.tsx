@@ -7,12 +7,13 @@ interface AppUser {
   email: string;
   name: string | null;
   image: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "deleted";
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
-type StatusFilter = "all" | "pending" | "approved" | "rejected";
+type StatusFilter = "all" | "pending" | "approved" | "rejected" | "deleted";
 type SortMode = "newest" | "name";
 
 const FILTER_TABS: { key: StatusFilter; label: string; color: string }[] = [
@@ -20,12 +21,14 @@ const FILTER_TABS: { key: StatusFilter; label: string; color: string }[] = [
   { key: "pending", label: "대기", color: "bg-amber-100 text-amber-700" },
   { key: "approved", label: "승인", color: "bg-green-100 text-green-700" },
   { key: "rejected", label: "거부", color: "bg-red-100 text-red-700" },
+  { key: "deleted", label: "탈퇴", color: "bg-gray-200 text-gray-600" },
 ];
 
 const STATUS_BADGE: Record<string, string> = {
   pending: "bg-amber-50 text-amber-600 border-amber-200",
   approved: "bg-green-50 text-green-600 border-green-200",
   rejected: "bg-red-50 text-red-600 border-red-200",
+  deleted: "bg-gray-100 text-gray-500 border-gray-300",
 };
 
 export default function AdminUsersTab() {
@@ -101,6 +104,7 @@ export default function AdminUsersTab() {
       pending: users.filter((u) => u.status === "pending").length,
       approved: users.filter((u) => u.status === "approved").length,
       rejected: users.filter((u) => u.status === "rejected").length,
+      deleted: users.filter((u) => u.status === "deleted").length,
     }),
     [users]
   );
@@ -227,42 +231,64 @@ export default function AdminUsersTab() {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`px-3 py-1 text-xs font-semibold border rounded-full ${STATUS_BADGE[user.status]}`}>
-                    {user.status === "approved" ? "승인" : user.status === "pending" ? "대기" : "거부"}
+                  <span className={`px-3 py-1 text-xs font-semibold border rounded-full ${STATUS_BADGE[user.status] ?? ""}`}>
+                    {user.status === "approved" ? "승인" : user.status === "pending" ? "대기" : user.status === "deleted" ? "탈퇴" : "거부"}
                   </span>
 
                   {updating === user.email ? (
                     <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
                   ) : (
                     <div className="flex gap-2">
-                      {user.status !== "rejected" && (
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(user.email, "rejected")}
-                          className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
-                        >
-                          거부
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setExpandedEmail((prev) => (prev === user.email ? null : user.email))}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-                          expandedEmail === user.email
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-50 text-gray-500 hover:bg-gray-100"
-                        }`}
-                      >
-                        할당량
-                      </button>
-                      {(user.status === "pending" || user.status === "rejected") && (
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(user.email)}
-                          className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-semibold rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
-                        >
-                          삭제
-                        </button>
+                      {user.status === "deleted" ? (
+                        // Deleted users: restore or hard-delete
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(user.email, "approved")}
+                            className="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors"
+                          >
+                            복구
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(user.email)}
+                            className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-semibold rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
+                          >
+                            영구삭제
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {user.status !== "rejected" && (
+                            <button
+                              type="button"
+                              onClick={() => handleStatusChange(user.email, "rejected")}
+                              className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
+                            >
+                              거부
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setExpandedEmail((prev) => (prev === user.email ? null : user.email))}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                              expandedEmail === user.email
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-50 text-gray-500 hover:bg-gray-100"
+                            }`}
+                          >
+                            할당량
+                          </button>
+                          {(user.status === "pending" || user.status === "rejected") && (
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget(user.email)}
+                              className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-semibold rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
+                            >
+                              삭제
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}

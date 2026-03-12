@@ -11,7 +11,7 @@ import type {
   UserQuota,
 } from "@gyoanmaker/shared/types";
 
-export type UserStatus = "pending" | "approved" | "rejected";
+export type UserStatus = "pending" | "approved" | "rejected" | "deleted";
 
 /**
  * Check if email is admin
@@ -36,6 +36,7 @@ export interface AppUser {
   status: UserStatus;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
   plan?: UserPlan;
   quota?:
     | (UserQuota & {
@@ -89,6 +90,7 @@ export async function findOrCreateUser(
 ): Promise<AppUser> {
   const key = email.toLowerCase();
   const existing = await getUser(key);
+  // Deleted accounts are kept as-is — admin can see and restore/ban them
   if (existing) return existing;
 
   const now = getNowIso();
@@ -181,10 +183,23 @@ export async function listUsers(filterStatus?: UserStatus): Promise<AppUser[]> {
 }
 
 /**
- * Delete user
+ * Soft-delete user (called on self-deletion — keeps doc for admin visibility)
+ */
+export async function softDeleteUser(email: string): Promise<void> {
+  const key = email.toLowerCase();
+  await getDb().collection(COLLECTION).doc(key).update({
+    status: "deleted",
+    deletedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  console.log(`[users] soft-deleted: ${maskEmail(key)}`);
+}
+
+/**
+ * Hard-delete user (called by admin — permanently removes document)
  */
 export async function deleteUser(email: string): Promise<void> {
   const key = email.toLowerCase();
   await getDb().collection(COLLECTION).doc(key).delete();
-  console.log(`[users] deleted: ${maskEmail(key)}`);
+  console.log(`[users] hard-deleted: ${maskEmail(key)}`);
 }
