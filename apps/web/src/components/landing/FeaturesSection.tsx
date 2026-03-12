@@ -81,6 +81,13 @@ const FEATURES = [
     color: { bg: "bg-purple-50", text: "text-purple-600" },
   },
   {
+    title: "강의 슬라이드",
+    description:
+      "교안 데이터로 강의용 PPT 슬라이드를 자동 생성합니다. 섹션별 폰트와 레이아웃을 커스터마이징할 수 있습니다.",
+    icon: "M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z",
+    color: { bg: "bg-sky-50", text: "text-sky-600" },
+  },
+  {
     title: "교안 저장소",
     description:
       "교안을 저장하고 언제든 다시 열 수 있습니다. 중복 감지로 불필요한 작업을 방지합니다.",

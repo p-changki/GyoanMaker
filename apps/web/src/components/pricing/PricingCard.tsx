@@ -65,6 +65,7 @@ const PLAN_META: Record<PlanId, PlanMeta> = {
           { label: "PDF 다운로드" },
           { label: "단어 테스트 생성", tooltip: "교안 어휘로 유의어 5지선다 시험지 자동 생성" },
           { label: "포켓보카 생성", tooltip: "핵심 어휘 유의어·반의어 암기 시트 자동 생성" },
+          { label: "강의 슬라이드(PPT)", tooltip: "교안 데이터로 강의용 PPT 슬라이드 자동 생성" },
         ],
       },
     ],
