@@ -168,6 +168,154 @@ export async function sendOrderRejectedEmail(
   }
 }
 
+// ── Admin purchase notification ──
+
+interface AdminPurchaseNotificationInfo {
+  buyerEmail: string;
+  orderId: string;
+  orderName: string;
+  amount: number;
+  orderType: "plan" | "topup";
+}
+
+export async function sendAdminPurchaseNotificationEmail(
+  info: AdminPurchaseNotificationInfo
+): Promise<void> {
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+
+  if (!isEmailConfigured() || adminEmails.length === 0) {
+    console.warn("[email] Admin emails not configured, skipping admin notification.");
+    return;
+  }
+
+  const typeLabel = info.orderType === "plan" ? "요금제" : "크레딧 팩";
+  const adminUrl = `${SERVICE_URL}/admin`;
+
+  const html = wrapHtml(`
+    <h2 style="margin:0 0 16px;font-size:16px;color:#111;">🎉 새 결제가 완료되었습니다</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;">
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;width:100px;">구매자</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${escapeHtml(info.buyerEmail)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">구분</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${typeLabel}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">상품</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${escapeHtml(info.orderName)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">결제 금액</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;font-weight:600;">₩${info.amount.toLocaleString()}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">주문번호</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;font-family:monospace;">${escapeHtml(info.orderId.slice(0, 16))}</td>
+      </tr>
+    </table>
+    <a href="${adminUrl}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">어드민 페이지 바로가기</a>
+  `);
+
+  try {
+    await getTransporter().sendMail({
+      from: `${SERVICE_NAME} <${GMAIL_USER}>`,
+      to: adminEmails.join(","),
+      subject: `[${SERVICE_NAME}] 새 결제 알림 — ${escapeHtml(info.orderName)} (₩${info.amount.toLocaleString()})`,
+      html,
+    });
+  } catch (error) {
+    console.error("[email] Failed to send admin purchase notification:", error);
+  }
+}
+
+// ── Admin bank transfer request notification ──
+
+interface AdminBankTransferNotificationInfo {
+  buyerEmail: string;
+  orderId: string;
+  orderName: string;
+  amount: number;
+  depositorName: string;
+  receiptType: "none" | "cash_receipt" | "tax_invoice";
+  receiptPhone?: string;
+  taxInvoiceInfo?: {
+    businessNumber?: string;
+    companyName?: string;
+    representative?: string;
+    email?: string;
+  };
+}
+
+export async function sendAdminBankTransferNotificationEmail(
+  info: AdminBankTransferNotificationInfo
+): Promise<void> {
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean);
+
+  if (!isEmailConfigured() || adminEmails.length === 0) {
+    console.warn("[email] Admin emails not configured, skipping bank transfer notification.");
+    return;
+  }
+
+  const receiptTypeLabel =
+    info.receiptType === "cash_receipt"
+      ? `현금영수증 (${escapeHtml(info.receiptPhone ?? "-")})`
+      : info.receiptType === "tax_invoice"
+        ? `세금계산서 (${escapeHtml(info.taxInvoiceInfo?.companyName ?? "-")} / ${escapeHtml(info.taxInvoiceInfo?.businessNumber ?? "-")})`
+        : "미신청";
+
+  const adminUrl = `${SERVICE_URL}/admin`;
+
+  const html = wrapHtml(`
+    <h2 style="margin:0 0 16px;font-size:16px;color:#111;">📥 무통장입금 신청이 접수되었습니다</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;">
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;width:120px;">신청자</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${escapeHtml(info.buyerEmail)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">입금자명</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${escapeHtml(info.depositorName)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">상품</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${escapeHtml(info.orderName)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">입금 금액</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;font-weight:600;">₩${info.amount.toLocaleString()}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">증빙 신청</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;">${receiptTypeLabel}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 12px;background:#f9f9f9;color:#666;border:1px solid #eee;">주문번호</td>
+        <td style="padding:10px 12px;border:1px solid #eee;color:#111;font-family:monospace;">${escapeHtml(info.orderId.slice(0, 16))}</td>
+      </tr>
+    </table>
+    <a href="${adminUrl}" style="display:inline-block;padding:10px 20px;background:#111;color:#fff;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">어드민 페이지 바로가기</a>
+  `);
+
+  try {
+    await getTransporter().sendMail({
+      from: `${SERVICE_NAME} <${GMAIL_USER}>`,
+      to: adminEmails.join(","),
+      subject: `[${SERVICE_NAME}] 무통장입금 신청 — ${escapeHtml(info.orderName)} (₩${info.amount.toLocaleString()})`,
+      html,
+    });
+  } catch (error) {
+    console.error("[email] Failed to send admin bank transfer notification:", error);
+  }
+}
+
 // ── Order received (deposit request submitted) ──
 
 export async function sendOrderReceivedEmail(info: OrderEmailInfo): Promise<void> {
