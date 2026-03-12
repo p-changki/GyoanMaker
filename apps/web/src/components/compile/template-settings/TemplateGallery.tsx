@@ -40,6 +40,7 @@ export default function TemplateGallery() {
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates"],
     queryFn: fetchTemplates,
+    staleTime: 5 * 60_000,
   });
 
   const saveMutation = useMutation({

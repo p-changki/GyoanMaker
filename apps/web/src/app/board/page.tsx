@@ -31,6 +31,7 @@ export default function BoardPage() {
   const { data: posts, isLoading, isError } = useQuery({
     queryKey: ["board-posts"],
     queryFn: fetchPosts,
+    staleTime: 10 * 60_000,
   });
 
   const keyword = search.trim().toLowerCase();

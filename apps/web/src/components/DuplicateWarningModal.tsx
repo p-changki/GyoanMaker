@@ -65,6 +65,7 @@ export default function DuplicateWarningModal({
             <Link
               key={d.id}
               href={`/compile?handoutId=${d.id}`}
+              prefetch={false}
               className="flex items-center justify-between rounded-xl border border-gray-200 p-3 text-sm hover:bg-gray-50 transition-colors"
             >
               <div className="min-w-0 flex-1">

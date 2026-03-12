@@ -372,21 +372,21 @@ export async function POST(req: NextRequest) {
           const totalUsage = data?.totalUsage;
 
           try {
-            await Promise.all([
-              incrementUsage(userEmail, parsed.model, passageCount),
-              totalUsage
-                ? logUsage({
-                    email: userEmail,
-                    requestId,
-                    passageCount,
-                    model: parsed.model,
-                    level: "vocab-bank",
-                    inputTokens: totalUsage.inputTokens ?? 0,
-                    outputTokens: totalUsage.outputTokens ?? 0,
-                    totalTokens: totalUsage.totalTokens ?? 0,
-                  })
-                : Promise.resolve(),
-            ]);
+            await incrementUsage(userEmail, parsed.model, passageCount);
+            if (totalUsage) {
+              logUsage({
+                email: userEmail,
+                requestId,
+                passageCount,
+                model: parsed.model,
+                level: "vocab-bank",
+                inputTokens: totalUsage.inputTokens ?? 0,
+                outputTokens: totalUsage.outputTokens ?? 0,
+                totalTokens: totalUsage.totalTokens ?? 0,
+              }).catch((err) =>
+                console.error(`[api/vocab-bank][${requestId}] logUsage failed:`, err)
+              );
+            }
           } catch (quotaErr) {
             if (quotaErr instanceof QuotaExceededError) {
               console.warn(

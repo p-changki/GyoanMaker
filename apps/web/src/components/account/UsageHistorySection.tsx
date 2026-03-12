@@ -52,6 +52,7 @@ export default function UsageHistorySection({ embedded }: { embedded?: boolean }
   const { data, isLoading } = useQuery({
     queryKey: ["billing-usage"],
     queryFn: fetchUsage,
+    staleTime: 5 * 60_000,
   });
 
   const [page, setPage] = useState(1);

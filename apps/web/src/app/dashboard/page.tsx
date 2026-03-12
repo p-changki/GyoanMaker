@@ -138,6 +138,7 @@ export default function DashboardPage() {
   } = useQuery({
     queryKey: ["handouts"],
     queryFn: fetchHandouts,
+    staleTime: 5 * 60_000,
   });
 
   const { data: storageQuota } = useQuery({
@@ -318,6 +319,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Link
                       href={`/compile?handoutId=${h.id}`}
+                      prefetch={false}
                       onMouseEnter={() => handlePrefetch(h.id)}
                       className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
                     >
@@ -325,12 +327,14 @@ export default function DashboardPage() {
                     </Link>
                     <Link
                       href={`/voca-test?handoutId=${h.id}`}
+                      prefetch={false}
                       className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
                     >
                       보카
                     </Link>
                     <Link
                       href={`/pocket-voca?handoutId=${h.id}`}
+                      prefetch={false}
                       className="px-3 py-1.5 bg-[#F3E8FF] text-[#5E35B1] rounded-lg text-xs font-bold hover:bg-[#EDE7F6] transition-colors"
                     >
                       포켓보카

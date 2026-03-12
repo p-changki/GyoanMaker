@@ -100,6 +100,7 @@ export default function HeaderClient({ isAuth, user }: HeaderClientProps) {
           <Link
             key={item.label}
             href={item.href}
+            prefetch={false}
             className={cn(
               "relative cursor-pointer whitespace-nowrap rounded-full px-3 py-2 text-[13px] font-semibold transition-colors lg:px-5 lg:text-sm",
               "text-gray-500 hover:text-gray-900",
