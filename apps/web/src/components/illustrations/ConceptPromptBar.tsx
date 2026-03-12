@@ -136,7 +136,7 @@ export default function ConceptPromptBar({
           Enter로 생성 · Shift+Enter로 줄바꿈 · 이 프롬프트는 테스트용이며 실제 지문 일러스트에는 사용되지 않습니다
         </p>
         <p className="text-xs font-semibold text-[#5E35B1]">
-          테스트 생성 무료{dailyUsage ? ` (${dailyUsage.used}/${dailyUsage.limit}회)` : ""} · 잔여 크레딧 {credits.toLocaleString()}
+          테스트 생성 무료{dailyUsage ? ` (${dailyUsage.used}/${dailyUsage.limit}회)` : ""} · 교안 삽화 크레딧 {credits.toLocaleString()}
         </p>
       </div>
     </div>

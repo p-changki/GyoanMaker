@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
 import { confirmTossPayment, TossPaymentError } from "@/lib/payment";
 import { addTopUpCredits, changePlan } from "@/lib/subscription";
+import { sendAdminPurchaseNotificationEmail } from "@/lib/email";
 import {
   type PendingOrder,
   TOP_UP_PACKAGES,
@@ -417,6 +418,15 @@ export async function POST(req: NextRequest) {
       ),
       getDb().collection("billing_orders").doc(orderId).set(billingOrderPayload),
     ]);
+
+    // Fire-and-forget: admin purchase notification
+    sendAdminPurchaseNotificationEmail({
+      buyerEmail: email,
+      orderId,
+      orderName: order.orderName,
+      amount: confirmed.totalAmount,
+      orderType,
+    }).catch((err) => console.error("[billing/confirm] admin notification failed:", err));
 
     return NextResponse.json({
       ok: true,
