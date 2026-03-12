@@ -37,6 +37,8 @@ export default function AdminUsersTab() {
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -73,6 +75,23 @@ export default function AdminUsersTab() {
       setError(err instanceof Error ? err.message : "상태 변경 실패");
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(deleteTarget)}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("삭제 실패");
+      setDeleteTarget(null);
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "삭제 실패");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -245,6 +264,15 @@ export default function AdminUsersTab() {
                       >
                         할당량
                       </button>
+                      {user.status === "pending" && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(user.email)}
+                          className="px-3 py-1.5 bg-gray-100 text-gray-500 text-xs font-semibold rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
+                        >
+                          삭제
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -253,6 +281,36 @@ export default function AdminUsersTab() {
               {expandedEmail === user.email && <QuotaPanel email={user.email} />}
             </div>
           ))}
+        </div>
+      )}
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h3 className="text-base font-bold text-gray-900 mb-2">사용자 삭제</h3>
+            <p className="text-sm text-gray-600 mb-1">
+              아래 계정과 모든 데이터(교안 등)가 <span className="font-semibold text-red-600">영구 삭제</span>됩니다.
+            </p>
+            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 mb-5 break-all">{deleteTarget}</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {deleting ? "삭제 중..." : "삭제 확인"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
