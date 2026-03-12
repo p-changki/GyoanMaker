@@ -23,6 +23,7 @@ export interface SessionInputData {
   options: OutputOptionState;
   level: ContentLevel;
   model: ModelTier;
+  vocabCount?: "standard" | "extended";
   timestamp: string;
 }
 

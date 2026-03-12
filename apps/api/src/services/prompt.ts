@@ -86,9 +86,23 @@ function getPromptInfo(level: PromptLevel = "advanced"): PromptInfo | null {
   return loadPromptFile("advanced");
 }
 
-export function getSystemPrompt(level: PromptLevel = "advanced"): string | null {
+export function getSystemPrompt(
+  level: PromptLevel = "advanced",
+  vocabCount: "standard" | "extended" = "standard"
+): string | null {
   const info = getPromptInfo(level);
-  return info ? info.text : null;
+  if (!info) return null;
+
+  if (vocabCount === "extended") {
+    return info.text
+      .replace(/반드시 4개 선정할 것/g, "반드시 7~10개 선정할 것")
+      .replace(/핵심 어휘는 반드시 4개\./g, "핵심 어휘는 반드시 7~10개.")
+      .replace(/4개 미만 출력 금지\. 후보가 부족하면 지문에서 추가 후보를 찾아 정확히 4개를 채울 것/g, "7~10개 미만 출력 금지. 후보가 부족하면 지문에서 추가 후보를 찾아 최소 7개를 채울 것")
+      .replace(/총 4개는 반드시 유지/g, "총 7~10개는 반드시 유지")
+      .replace(/4개 미만 출력 금지\. 부족하면 지문에서 후보를 추가로 찾아 4개를 채운 뒤 출력/g, "7개 미만 출력 금지. 부족하면 지문에서 후보를 추가로 찾아 최소 7개를 채운 뒤 출력");
+  }
+
+  return info.text;
 }
 
 export function getPromptMetadata() {

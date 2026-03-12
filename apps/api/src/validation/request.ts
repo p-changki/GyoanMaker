@@ -7,12 +7,14 @@ const MAX_TOTAL_WORDS = 5000;
 
 type ContentLevel = "advanced" | "basic";
 type ModelTier = "pro" | "flash";
+export type VocabCountMode = "standard" | "extended";
 
 const generateBodySchema = z.object({
   passages: z.array(z.string()).min(1).max(MAX_PASSAGES),
   level: z.enum(["advanced", "basic"]).optional(),
   model: z.enum(["pro", "flash"]).optional(),
   mode: z.enum(["basic", "flash"]).optional(),
+  vocabCount: z.enum(["standard", "extended"]).optional(),
 });
 
 export interface ValidGenerateRequest {
@@ -20,6 +22,7 @@ export interface ValidGenerateRequest {
   passages: string[];
   level: ContentLevel;
   model: ModelTier;
+  vocabCount: VocabCountMode;
 }
 
 export interface InvalidGenerateRequest {
@@ -110,10 +113,13 @@ export function validateGenerateRequest(body: unknown): ValidateGenerateRequestR
     }
   }
 
+  const vocabCount: VocabCountMode = parsed.data.vocabCount ?? "standard";
+
   return {
     ok: true,
     passages: normalizedPassages,
     level,
     model,
+    vocabCount,
   };
 }

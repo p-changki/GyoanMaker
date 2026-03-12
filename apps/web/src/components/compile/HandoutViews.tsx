@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState } from "react";
+import { createContext, memo, useCallback, useMemo, useState } from "react";
 import { HandoutSection } from "@gyoanmaker/shared/types/handout";
 import {
   THEME_PRESETS,
@@ -19,10 +19,12 @@ import { HandoutFooter, HandoutHeader } from "./HandoutHeader";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
 import { useHandoutStore } from "@/stores/useHandoutStore";
-import { BUILTIN_SECTION_COMPONENTS, CustomSection } from "./page2-sections";
+import { BUILTIN_SECTION_COMPONENTS, CustomSection, VocabularySection } from "./page2-sections";
 import { isCustomSectionKey } from "@gyoanmaker/shared/types";
 import { useTemplateFontLoader } from "./useTemplateFontLoader";
 import { updateSentenceText } from "@/lib/sectionUpdaters";
+
+export const ExtendedVocabLayoutContext = createContext(false);
 
 function useTheme() {
   useTemplateFontLoader();
@@ -455,11 +457,13 @@ export function ParsedHandoutViewPage2({
   pageNum,
   globalPageNumber,
   pageKey,
+  hideVocab,
 }: {
   section: HandoutSection;
   pageNum: number;
   globalPageNumber?: number;
   pageKey?: string;
+  hideVocab?: boolean;
 }) {
   const theme = useTheme();
   const page2Sections = useTemplateSettingsStore((s) => s.page2Sections);
@@ -481,12 +485,13 @@ export function ParsedHandoutViewPage2({
   );
 
   return (
+    <ExtendedVocabLayoutContext.Provider value={!!hideVocab}>
     <div
       className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
       onClick={() => { /* no-op: modal closes via backdrop/Escape */ }}
     >
       <DiscoveryBanner />
-      <section className="mb-2 relative flex-1 w-full">
+      <section className={`mb-2 relative w-full ${hideVocab ? "flex flex-col flex-1" : "flex-1"}`}>
         {/* Avatar - only rendered when custom image is set */}
         {avatarBase64 && (
           <div
@@ -554,11 +559,13 @@ export function ParsedHandoutViewPage2({
           </div>
         </ClickZone>
 
-        <div className="space-y-2 pl-2">
+        <div className={hideVocab ? "flex flex-col justify-between gap-4 pl-2 flex-1" : "space-y-2 pl-2"}>
           {page2Sections.map((key) => {
             // Skip standalone flow when visual_summary is present (flow is embedded inside it)
             if (key === "flow" && page2Sections.includes("visual_summary"))
               return null;
+            // Skip vocabulary on page2 when vocab count > 4 (rendered on separate page3)
+            if (key === "vocabulary" && hideVocab) return null;
             const style = sectionStyles?.[key];
             const wrapStyle = {
               paddingTop: style?.paddingTop ?? 0,
@@ -586,6 +593,51 @@ export function ParsedHandoutViewPage2({
               </ClickZone>
             );
           })}
+        </div>
+      </section>
+
+      <HandoutFooter section={section} pageNum={pageNum} globalPageNumber={globalPageNumber} pageKey={pageKey} />
+    </div>
+    </ExtendedVocabLayoutContext.Provider>
+  );
+}
+
+export function ParsedHandoutViewPage3({
+  section,
+  pageNum,
+  globalPageNumber,
+  pageKey,
+}: {
+  section: HandoutSection;
+  pageNum: number;
+  globalPageNumber?: number;
+  pageKey?: string;
+}) {
+  const theme = useTheme();
+  const sectionStyles = useTemplateSettingsStore((s) => s.sectionStyles);
+
+  const vocabStyle = sectionStyles?.["vocabulary"];
+  const wrapStyle = {
+    paddingTop: vocabStyle?.paddingTop ?? 0,
+    paddingBottom: vocabStyle?.paddingBottom ?? 0,
+    borderTop:
+      vocabStyle?.borderStyle && vocabStyle.borderStyle !== "none"
+        ? `1px ${vocabStyle.borderStyle} ${vocabStyle.borderColor || theme.primaryDark || theme.primary}`
+        : undefined,
+  };
+
+  return (
+    <div
+      className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
+      onClick={() => { /* no-op */ }}
+    >
+      <section className="mb-2 relative flex-1 w-full">
+        <div className="space-y-2 pl-2">
+          <ClickZone focusKey="vocabulary" label="섹션 편집">
+            <div style={wrapStyle}>
+              <VocabularySection section={section} />
+            </div>
+          </ClickZone>
         </div>
       </section>
 

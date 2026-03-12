@@ -190,14 +190,16 @@ function validateEntryMeaning(args: {
 
 const VOCAB_THRESHOLDS = {
   advanced: {
-    vocabCount: 4,
+    vocabCountMin: 4,
+    vocabCountMax: 10,
     synonymsMin: 3,
     synonymsMax: 3,
     antonymsMin: 2,
     antonymsMax: 2,
   },
   basic: {
-    vocabCount: 4,
+    vocabCountMin: 4,
+    vocabCountMax: 10,
     synonymsMin: 3,
     synonymsMax: 3,
     antonymsMin: 2,
@@ -243,9 +245,9 @@ export function validateVocabText(
   const items = splitItems(section);
   info.push(`핵심 어휘 항목 수: ${items.length}`);
 
-  if (items.length !== threshold.vocabCount) {
+  if (items.length < threshold.vocabCountMin || items.length > threshold.vocabCountMax) {
     errors.push(
-      `Core Vocabulary 항목 수 위반: ${items.length}개 (필수 ${threshold.vocabCount}개)`
+      `Core Vocabulary 항목 수 위반: ${items.length}개 (허용 ${threshold.vocabCountMin}~${threshold.vocabCountMax}개)`
     );
   }
 
