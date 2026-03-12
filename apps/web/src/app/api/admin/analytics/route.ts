@@ -9,6 +9,19 @@ import { getMonthKeyKst, PLANS } from "@gyoanmaker/shared/plans";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/** Returns the start of KST today as a UTC ISO string */
+function getTodayKstIso(): string {
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + KST_OFFSET_MS);
+  // Midnight KST = UTC midnight minus 9h
+  const kstMidnight = new Date(
+    Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate())
+  );
+  return new Date(kstMidnight.getTime() - KST_OFFSET_MS).toISOString();
+}
+
 function getMonthsAgoIso(n: number): string {
   const d = new Date();
   d.setMonth(d.getMonth() - n);
@@ -18,10 +31,13 @@ function getMonthsAgoIso(n: number): string {
 }
 
 function getDaysAgoIso(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + KST_OFFSET_MS);
+  kstNow.setUTCDate(kstNow.getUTCDate() - n);
+  const kstMidnight = new Date(
+    Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), kstNow.getUTCDate())
+  );
+  return new Date(kstMidnight.getTime() - KST_OFFSET_MS).toISOString();
 }
 
 function toMonthLabel(iso: string): string {
@@ -30,7 +46,9 @@ function toMonthLabel(iso: string): string {
 }
 
 function toDayLabel(iso: string): string {
-  return iso.slice(5, 10); // "MM-DD"
+  // Use KST date to be consistent with KPI calculations
+  const kstIso = new Date(new Date(iso).getTime() + KST_OFFSET_MS).toISOString();
+  return kstIso.slice(5, 10); // "MM-DD" in KST
 }
 
 function extractDomain(email: string): string {
@@ -80,9 +98,7 @@ export async function GET() {
 
   const sixMonthsAgo = getMonthsAgoIso(6);
   const thirtyDaysAgo = getDaysAgoIso(30);
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayIso = todayStart.toISOString();
+  const todayIso = getTodayKstIso();
   const thisMonthKey = getMonthKeyKst();
   const thisMonthStart = `${thisMonthKey}-01T00:00:00.000Z`;
 

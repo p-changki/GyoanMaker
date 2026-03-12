@@ -25,33 +25,24 @@ export async function GET() {
     const db = getDb();
     const monthStart = getMonthStartIso();
 
-    const [confirmedSnap, pendingSnap, paidNotAppliedSnap, failedSnap] =
-      await Promise.all([
-        db
-          .collection("billing_orders")
-          .where("status", "==", "confirmed")
-          .where("confirmedAt", ">=", monthStart)
-          .get(),
-        db
-          .collection("pending_orders")
-          .where("status", "==", "pending")
-          .where("createdAt", ">=", monthStart)
-          .get(),
-        db
-          .collection("pending_orders")
-          .where("status", "==", "paid_not_applied")
-          .where("createdAt", ">=", monthStart)
-          .get(),
-        db
-          .collection("pending_orders")
-          .where("status", "==", "failed")
-          .where("createdAt", ">=", monthStart)
-          .get(),
-      ]);
+    // Single-field range queries (no composite index needed), filter status in memory
+    const [billingSnap, pendingSnap] = await Promise.all([
+      db
+        .collection("billing_orders")
+        .where("confirmedAt", ">=", monthStart)
+        .get(),
+      db
+        .collection("pending_orders")
+        .where("createdAt", ">=", monthStart)
+        .get(),
+    ]);
 
     let monthlyRevenue = 0;
-    confirmedSnap.forEach((doc) => {
+    let monthlyOrderCount = 0;
+    billingSnap.forEach((doc) => {
       const data = doc.data();
+      if (data.status !== "confirmed") return;
+      monthlyOrderCount++;
       monthlyRevenue += typeof data.confirmedAmount === "number"
         ? data.confirmedAmount
         : typeof data.amount === "number"
@@ -59,12 +50,22 @@ export async function GET() {
           : 0;
     });
 
+    let pendingCount = 0;
+    let paidNotAppliedCount = 0;
+    let failedCount = 0;
+    pendingSnap.forEach((doc) => {
+      const status = doc.data().status;
+      if (status === "pending") pendingCount++;
+      else if (status === "paid_not_applied") paidNotAppliedCount++;
+      else if (status === "failed") failedCount++;
+    });
+
     return NextResponse.json({
       monthlyRevenue,
-      monthlyOrderCount: confirmedSnap.size,
-      pendingCount: pendingSnap.size,
-      paidNotAppliedCount: paidNotAppliedSnap.size,
-      failedCount: failedSnap.size,
+      monthlyOrderCount,
+      pendingCount,
+      paidNotAppliedCount,
+      failedCount,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
