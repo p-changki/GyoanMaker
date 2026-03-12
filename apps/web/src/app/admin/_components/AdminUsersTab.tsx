@@ -32,7 +32,7 @@ export default function AdminUsersTab() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<StatusFilter>("pending");
+  const [filter, setFilter] = useState<StatusFilter>("all");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
@@ -235,15 +235,6 @@ export default function AdminUsersTab() {
                     <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin" />
                   ) : (
                     <div className="flex gap-2">
-                      {user.status !== "approved" && (
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(user.email, "approved")}
-                          className="px-3 py-1.5 bg-green-50 text-green-600 text-xs font-semibold rounded-lg hover:bg-green-100 transition-colors"
-                        >
-                          승인
-                        </button>
-                      )}
                       {user.status !== "rejected" && (
                         <button
                           type="button"
@@ -264,7 +255,7 @@ export default function AdminUsersTab() {
                       >
                         할당량
                       </button>
-                      {user.status === "pending" && (
+                      {(user.status === "pending" || user.status === "rejected") && (
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(user.email)}

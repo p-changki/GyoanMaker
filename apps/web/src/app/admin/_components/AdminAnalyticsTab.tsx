@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import type { TodayOrder } from "@/app/api/admin/analytics/today-orders/route";
 import {
   ResponsiveContainer,
   BarChart,
@@ -44,19 +45,22 @@ function StatCard({
   value,
   sub,
   accent,
+  onClick,
 }: {
   label: string;
   value: React.ReactNode;
   sub?: string;
   accent?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <div
+      onClick={onClick}
       className={`rounded-xl p-4 shadow-sm border ${
         accent
           ? "bg-violet-50 border-violet-200"
           : "bg-white border-gray-200/60"
-      }`}
+      } ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
     >
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
         {label}
@@ -69,6 +73,103 @@ function StatCard({
         {value}
       </p>
       {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+      {onClick && (
+        <p className="text-[10px] text-gray-400 mt-1">클릭하여 상세 보기 →</p>
+      )}
+    </div>
+  );
+}
+
+function TodayOrdersModal({
+  onClose,
+}: {
+  onClose: () => void;
+}) {
+  const [orders, setOrders] = useState<TodayOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/analytics/today-orders")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load");
+        return r.json() as Promise<{ orders: TodayOrder[] }>;
+      })
+      .then((d) => setOrders(d.orders))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : "오류 발생"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const total = orders.reduce((sum, o) => sum + o.amount, 0);
+
+  const orderTypeLabel = (type: string) => {
+    if (type === "plan") return "플랜";
+    if (type === "topup") return "충전";
+    return type;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h3 className="text-base font-bold text-gray-900">오늘 결제 내역</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {new Date().toLocaleDateString("ko-KR")} 기준 확정된 결제
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-lg font-bold"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-5">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-6 h-6 border-2 border-gray-200 border-t-violet-500 rounded-full animate-spin" />
+            </div>
+          ) : error ? (
+            <p className="text-sm text-red-500 text-center py-8">{error}</p>
+          ) : orders.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">오늘 결제 내역이 없습니다.</p>
+          ) : (
+            <div className="space-y-2">
+              {orders.map((order) => (
+                <div
+                  key={order.orderId}
+                  className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{order.email}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {orderTypeLabel(order.orderType)}
+                      {order.planTier ? ` · ${order.planTier}` : ""}
+                      {" · "}
+                      {new Date(order.confirmedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900 shrink-0 ml-4">
+                    ₩{order.amount.toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {!loading && orders.length > 0 && (
+          <div className="p-5 border-t border-gray-100 flex items-center justify-between">
+            <span className="text-xs text-gray-500">{orders.length}건</span>
+            <span className="text-sm font-bold text-gray-900">
+              합계 ₩{total.toLocaleString()}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -124,6 +225,8 @@ export default function AdminAnalyticsTab() {
   const [error, setError] = useState<string | null>(null);
   const [revenueView, setRevenueView] = useState<"monthly" | "daily">("monthly");
   const [usageView, setUsageView] = useState<"monthly" | "daily">("monthly");
+  const [showTodayModal, setShowTodayModal] = useState(false);
+  const openTodayModal = useCallback(() => setShowTodayModal(true), []);
 
   useEffect(() => {
     fetch("/api/admin/analytics")
@@ -183,6 +286,7 @@ export default function AdminAnalyticsTab() {
           <StatCard
             label="오늘 매출"
             value={`₩${summary.totalRevenueToday.toLocaleString()}`}
+            onClick={openTodayModal}
           />
           <StatCard
             label="이번 달 매출"
@@ -678,6 +782,10 @@ export default function AdminAnalyticsTab() {
           </table>
         </div>
       </section>
+
+      {showTodayModal && (
+        <TodayOrdersModal onClose={() => setShowTodayModal(false)} />
+      )}
     </div>
   );
 }
