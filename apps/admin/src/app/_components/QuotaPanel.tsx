@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import UserQuotaCards from "./management/user-detail/UserQuotaCards";
+import UserCreditHistory from "./management/user-detail/UserCreditHistory";
+import UserLimitEditor from "./management/user-detail/UserLimitEditor";
+import UserPlanEditor from "./management/user-detail/UserPlanEditor";
+import UserManualGrant from "./management/user-detail/UserManualGrant";
 
 interface CreditEntryInfo {
   remaining: number;
@@ -37,6 +42,8 @@ export default function QuotaPanel({ email }: { email: string }) {
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Limit editor state
   const [editFlash, setEditFlash] = useState("");
   const [editPro, setEditPro] = useState("");
   const [editStorage, setEditStorage] = useState("");
@@ -44,22 +51,7 @@ export default function QuotaPanel({ email }: { email: string }) {
   const [editPlan, setEditPlan] = useState<"free" | "basic" | "standard" | "pro">("free");
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
-  const [showCreditDetail, setShowCreditDetail] = useState(false);
 
-  // Manual bank transfer grant state
-  const [showManualGrant, setShowManualGrant] = useState(false);
-  const [manualPlan, setManualPlan] = useState<"free" | "basic" | "standard" | "pro">("basic");
-  const [manualEndDate, setManualEndDate] = useState("");
-  const [manualAmount, setManualAmount] = useState("");
-  const [manualMemo, setManualMemo] = useState("");
-  const [granting, setGranting] = useState(false);
-  const [grantMsg, setGrantMsg] = useState<{ text: string; ok: boolean } | null>(null);
-
-  const defaultEndDate = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d.toISOString().slice(0, 10);
-  }, []);
 
   const fetchQuota = useCallback(async () => {
     setLoading(true);
@@ -92,7 +84,7 @@ export default function QuotaPanel({ email }: { email: string }) {
     fetchQuota();
   }, [fetchQuota]);
 
-  const handleSave = async () => {
+  const handleSaveLimits = async () => {
     const flashMonthlyLimit = parseInt(editFlash, 10);
     const proMonthlyLimit = parseInt(editPro, 10);
     const storageLimit = editStorage.trim().length === 0 ? null : parseInt(editStorage, 10);
@@ -166,38 +158,6 @@ export default function QuotaPanel({ email }: { email: string }) {
     }
   };
 
-  const handleManualGrant = async () => {
-    const endDate = manualEndDate || defaultEndDate;
-    setGranting(true);
-    setGrantMsg(null);
-    try {
-      const res = await fetch("/api/billing/manual-grant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          planId: manualPlan,
-          periodEndAt: endDate,
-          amount: manualAmount.trim() ? parseInt(manualAmount, 10) : 0,
-          memo: manualMemo.trim() || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error?.message ?? "플랜 부여 실패");
-      }
-      setGrantMsg({ text: `${manualPlan.toUpperCase()} 플랜 부여 완료 (만료: ${endDate})`, ok: true });
-      setManualMemo("");
-      setManualAmount("");
-      await fetchQuota();
-      setTimeout(() => setGrantMsg(null), 4000);
-    } catch (err) {
-      setGrantMsg({ text: err instanceof Error ? err.message : "오류 발생", ok: false });
-    } finally {
-      setGranting(false);
-    }
-  };
-
   if (loading) {
     return <div className="text-xs text-gray-400 py-2">할당량 로딩 중...</div>;
   }
@@ -210,296 +170,37 @@ export default function QuotaPanel({ email }: { email: string }) {
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-      {/* Usage Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">속도 사용량</p>
-          <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.flash.used} <span className="text-gray-400 font-normal">/ {quota.flash.limit}</span>
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">크레딧: {quota.flash.credits}</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">정밀 사용량</p>
-          <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.pro.used} <span className="text-gray-400 font-normal">/ {quota.pro.limit}</span>
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">크레딧: {quota.pro.credits}</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">삽화</p>
-          <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.illustration.used} <span className="text-gray-400 font-normal">/ {quota.illustration.limit}</span>
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">크레딧: {quota.illustration.credits}</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">저장 슬롯</p>
-          <p className="text-sm font-bold text-gray-700 mt-1">
-            {quota.storage.used}{" "}
-            <span className="text-gray-400 font-normal">
-              / {quota.storage.limit === null ? "∞" : quota.storage.limit}
-            </span>
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">요금제: {quota.plan.toUpperCase()}</p>
-        </div>
-      </div>
+      <UserQuotaCards quota={quota} />
 
-      {/* Credit Detail */}
-      {(() => {
-        const allEntries = [
-          ...(quota.flash.creditEntries ?? []).map((e) => ({ ...e, model: "속도" as const })),
-          ...(quota.pro.creditEntries ?? []).map((e) => ({ ...e, model: "정밀" as const })),
-          ...(quota.illustration.creditEntries ?? []).map((e) => ({ ...e, model: "삽화" as const })),
-        ];
-        if (allEntries.length === 0) return null;
-        return (
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={() => setShowCreditDetail((v) => !v)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              <span className="text-[10px]">{showCreditDetail ? "▲" : "▼"}</span>
-              크레딧 구매 내역 ({allEntries.length}건)
-            </button>
-            {showCreditDetail && (
-              <div className="mt-2 overflow-x-auto rounded-lg border border-gray-200">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500">
-                      <th className="px-2.5 py-1.5 text-left font-semibold">유형</th>
-                      <th className="px-2.5 py-1.5 text-left font-semibold">구매일</th>
-                      <th className="px-2.5 py-1.5 text-left font-semibold">주문ID</th>
-                      <th className="px-2.5 py-1.5 text-right font-semibold">구매</th>
-                      <th className="px-2.5 py-1.5 text-right font-semibold">사용</th>
-                      <th className="px-2.5 py-1.5 text-right font-semibold">잔여</th>
-                      <th className="px-2.5 py-1.5 text-left font-semibold">만료일</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allEntries.map((entry, idx) => {
-                      const purchased = entry.total ?? null;
-                      const used = purchased !== null ? purchased - entry.remaining : null;
-                      const dateStr = (iso: string) => {
-                        try { return new Date(iso).toLocaleDateString("ko-KR"); } catch { return iso; }
-                      };
-                      const isExpiringSoon = (() => {
-                        try {
-                          return new Date(entry.expiresAt).getTime() - Date.now() < 7 * 86400000;
-                        } catch { return false; }
-                      })();
-                      return (
-                        <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50/50">
-                          <td className="px-2.5 py-1.5 font-medium text-gray-700">{entry.model}</td>
-                          <td className="px-2.5 py-1.5 text-gray-600">{dateStr(entry.purchasedAt)}</td>
-                          <td className="px-2.5 py-1.5 text-gray-400 font-mono truncate max-w-30">
-                            {entry.orderId ? entry.orderId.slice(0, 16) + (entry.orderId.length > 16 ? "…" : "") : "-"}
-                          </td>
-                          <td className="px-2.5 py-1.5 text-right font-bold text-gray-700">
-                            {purchased !== null ? purchased : "-"}
-                          </td>
-                          <td className="px-2.5 py-1.5 text-right text-orange-600 font-medium">
-                            {used !== null ? used : "-"}
-                          </td>
-                          <td className="px-2.5 py-1.5 text-right font-bold text-green-600">
-                            {entry.remaining}
-                          </td>
-                          <td className={`px-2.5 py-1.5 ${isExpiringSoon ? "text-red-500 font-semibold" : "text-gray-600"}`}>
-                            {dateStr(entry.expiresAt)}
-                            {isExpiringSoon && " ⚠"}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        );
-      })()}
+      <UserCreditHistory
+        flashEntries={quota.flash.creditEntries ?? []}
+        proEntries={quota.pro.creditEntries ?? []}
+        illustrationEntries={quota.illustration.creditEntries ?? []}
+      />
 
-      {/* Limit Editors */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 items-end">
-        <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">속도 한도</label>
-          <input
-            type="number"
-            min="0"
-            value={editFlash}
-            onChange={(e) => setEditFlash(e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">정밀 한도</label>
-          <input
-            type="number"
-            min="0"
-            value={editPro}
-            onChange={(e) => setEditPro(e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">삽화 한도</label>
-          <input
-            type="number"
-            min="0"
-            value={editIllustration}
-            onChange={(e) => setEditIllustration(e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">저장소 (빈칸=∞)</label>
-          <input
-            type="number"
-            min="0"
-            value={editStorage}
-            onChange={(e) => setEditStorage(e.target.value)}
-            className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 shrink-0 h-[34px]"
-        >
-          {saving ? "저장 중..." : "저장"}
-        </button>
-      </div>
+      <UserLimitEditor
+        editFlash={editFlash}
+        editPro={editPro}
+        editIllustration={editIllustration}
+        editStorage={editStorage}
+        saving={saving}
+        saveMsg={saveMsg}
+        onChangeFlash={setEditFlash}
+        onChangePro={setEditPro}
+        onChangeIllustration={setEditIllustration}
+        onChangeStorage={setEditStorage}
+        onSave={handleSaveLimits}
+      />
 
-      {/* Plan Editor */}
-      <div className="flex items-end gap-3">
-        <div className="flex-1">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">구독 요금제</label>
-          <select
-            value={editPlan}
-            onChange={(e) => setEditPlan(e.target.value as "free" | "basic" | "standard" | "pro")}
-            className="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
-          >
-            <option value="free">FREE</option>
-            <option value="basic">BASIC</option>
-            <option value="standard">STANDARD</option>
-            <option value="pro">PRO</option>
-          </select>
-        </div>
-        <button
-          type="button"
-          onClick={handleSavePlan}
-          disabled={saving}
-          className="px-4 py-2 bg-violet-500 text-white text-xs font-bold rounded-lg hover:bg-violet-600 transition-colors disabled:opacity-50 shrink-0"
-        >
-          요금제 저장
-        </button>
-      </div>
+      <UserPlanEditor
+        editPlan={editPlan}
+        subscription={subscription}
+        saving={saving}
+        onChangePlan={setEditPlan}
+        onSave={handleSavePlan}
+      />
 
-      {subscription && (
-        <p className="text-xs text-gray-500">
-          현재 요금제: <strong>{subscription.tier.toUpperCase()}</strong> ({subscription.status === "active" ? "활성" : "만료"})
-        </p>
-      )}
-
-      {saveMsg && (
-        <p className={`text-xs font-medium ${saveMsg === "저장됨" || saveMsg === "요금제 저장됨" ? "text-green-600" : "text-red-500"}`}>
-          {saveMsg}
-        </p>
-      )}
-
-      {/* Manual Bank Transfer Grant */}
-      <div className="pt-3 border-t border-gray-100">
-        <button
-          type="button"
-          onClick={() => setShowManualGrant((v) => !v)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors"
-        >
-          <span className="text-[10px]">{showManualGrant ? "▲" : "▼"}</span>
-          무통장 수동 부여
-        </button>
-
-        {showManualGrant && (
-          <div className="mt-3 space-y-3 p-3 bg-purple-50/50 rounded-xl border border-purple-100">
-            <p className="text-[10px] text-purple-600 font-medium">
-              플랜 부여 후 billing_orders에 수동 기록이 생성됩니다.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  플랜
-                </label>
-                <select
-                  value={manualPlan}
-                  onChange={(e) => setManualPlan(e.target.value as typeof manualPlan)}
-                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
-                >
-                  <option value="basic">BASIC</option>
-                  <option value="standard">STANDARD</option>
-                  <option value="pro">PRO</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  만료일
-                </label>
-                <input
-                  type="date"
-                  value={manualEndDate || defaultEndDate}
-                  onChange={(e) => setManualEndDate(e.target.value)}
-                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  입금액 (원, 선택)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={manualAmount}
-                  onChange={(e) => setManualAmount(e.target.value)}
-                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  메모 (선택)
-                </label>
-                <input
-                  type="text"
-                  placeholder="입금자명, 특이사항 등"
-                  value={manualMemo}
-                  onChange={(e) => setManualMemo(e.target.value)}
-                  maxLength={200}
-                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleManualGrant}
-              disabled={granting}
-              className="w-full px-4 py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-            >
-              {granting ? "처리 중..." : "플랜 부여 + 기록 저장"}
-            </button>
-
-            {grantMsg && (
-              <p className={`text-xs font-medium ${grantMsg.ok ? "text-green-600" : "text-red-500"}`}>
-                {grantMsg.text}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+      <UserManualGrant email={email} onGranted={fetchQuota} />
     </div>
   );
 }
