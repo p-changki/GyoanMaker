@@ -3,6 +3,8 @@ import HeroSection from "@/components/landing/HeroSection";
 import LazySampleCarousel from "@/components/landing/LazySampleCarousel";
 import EarlyOpenModal from "@/components/landing/EarlyOpenModal";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "교안메이커 | AI 영어 교안 자동 생성기",
   description:

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "기능 소개 | 교안메이커 - AI 영어 교안 자동 생성",
   description:
