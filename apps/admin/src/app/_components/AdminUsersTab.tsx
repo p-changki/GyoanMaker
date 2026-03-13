@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QuotaPanel from "./QuotaPanel";
+import ConfirmModal from "./shared/ConfirmModal";
 
 interface AppUser {
   email: string;
@@ -42,6 +43,7 @@ export default function AdminUsersTab() {
   const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -262,7 +264,7 @@ export default function AdminUsersTab() {
                           {user.status !== "rejected" && (
                             <button
                               type="button"
-                              onClick={() => handleStatusChange(user.email, "rejected")}
+                              onClick={() => setRejectTarget(user.email)}
                               className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors"
                             >
                               거부
@@ -300,6 +302,22 @@ export default function AdminUsersTab() {
           ))}
         </div>
       )}
+      {/* Reject confirmation modal */}
+      <ConfirmModal
+        open={rejectTarget !== null}
+        title="사용자 거부"
+        description={`${rejectTarget ?? ""} 사용자를 거부하시겠습니까? 거부된 사용자는 서비스를 이용할 수 없습니다.`}
+        confirmLabel="거부"
+        variant="danger"
+        loading={updating === rejectTarget}
+        onConfirm={async () => {
+          if (!rejectTarget) return;
+          await handleStatusChange(rejectTarget, "rejected");
+          setRejectTarget(null);
+        }}
+        onCancel={() => setRejectTarget(null)}
+      />
+
       {/* Delete confirmation modal */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

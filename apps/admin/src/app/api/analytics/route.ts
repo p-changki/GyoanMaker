@@ -103,11 +103,12 @@ export async function GET() {
   const thisMonthStart = `${thisMonthKey}-01T00:00:00.000Z`;
 
   try {
-    const [usersSnap, usageSnap, revenueSnap, topUsersSnap] = await Promise.all([
+    const [usersSnap, usageSnap, revenueSnap, topUsersSnap, allRevenueSnap] = await Promise.all([
       db.collection("users").get(),
       db.collection("usage_logs").where("createdAt", ">=", new Date(sixMonthsAgo)).get(),
       db.collection("billing_orders").where("status", "==", "confirmed").where("confirmedAt", ">=", sixMonthsAgo).get(),
       db.collection("usage_logs").where("createdAt", ">=", new Date(thirtyDaysAgo)).get(),
+      db.collection("billing_orders").where("status", "==", "confirmed").get(),
     ]);
 
     // ── 1. Plan distribution + MRR ────────────────────
@@ -295,10 +296,16 @@ export async function GET() {
     let totalRevenueThisMonth = 0;
     let totalRevenueToday = 0;
 
+    // All-time revenue from unfiltered query
+    allRevenueSnap.forEach((doc) => {
+      const d = doc.data();
+      totalRevenueAllTime += typeof d.amount === "number" ? d.amount : 0;
+    });
+
+    // This month & today from 6-month filtered snap
     revenueSnap.forEach((doc) => {
       const d = doc.data();
       const amt = typeof d.amount === "number" ? d.amount : 0;
-      totalRevenueAllTime += amt;
       const confirmedAt = typeof d.confirmedAt === "string" ? d.confirmedAt : "";
       if (confirmedAt >= thisMonthStart) totalRevenueThisMonth += amt;
       if (confirmedAt >= todayIso) totalRevenueToday += amt;
