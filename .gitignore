@@ -18,11 +18,14 @@ node_modules/
 /.next/
 /out/
 /apps/web/.next/
+/apps/admin/.next/
 
 # production
 /build
 /apps/api/dist/
 /packages/shared/dist/
+/packages/auth/dist/
+/packages/server-lib/dist/
 
 # misc
 .DS_Store

@@ -49,18 +49,6 @@ function validateOrigin(req: NextRequest): boolean {
 
 
 /**
- * 관리자 이메일 목록
- */
-function getAdminEmails(): Set<string> {
-  return new Set(
-    (process.env.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean)
-  );
-}
-
-/**
  * 라우트 보호 Proxy
  * Next.js Proxy 런타임에서 실행되므로 Node 전용 모듈을 직접 사용하지 않습니다.
  */
@@ -111,18 +99,6 @@ export const middleware = auth((req) => {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // /admin 경로: 관리자만 접근 허용
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    const adminEmails = getAdminEmails();
-    if (
-      !session.user.email ||
-      !adminEmails.has(session.user.email.toLowerCase())
-    ) {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-    return NextResponse.next();
   }
 
   // 인증됐지만 미승인 → 승인 대기 페이지

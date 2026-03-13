@@ -181,7 +181,9 @@ export default function UserMenu({ user }: UserMenuProps) {
             {isAdmin && (
               <>
                 <a
-                  href="/admin"
+                  href="https://admin.gyoan-maker.store"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                 >
                   <svg
