@@ -19,8 +19,8 @@ export default middleware(async (req: NextRequest) => {
   const session = (req as unknown as { auth?: { user?: { email?: string } } }).auth;
   const pathname = req.nextUrl.pathname;
 
-  // Allow auth API routes
-  if (pathname.startsWith("/api/auth")) {
+  // Allow auth API routes and login page
+  if (pathname.startsWith("/api/auth") || pathname === "/login") {
     return NextResponse.next();
   }
 
