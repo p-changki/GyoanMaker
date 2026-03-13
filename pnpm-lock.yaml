@@ -29,12 +29,6 @@ importers:
       '@gyoanmaker/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@tanstack/react-query':
-        specifier: ^5.90.21
-        version: 5.90.21(react@19.2.3)
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
       firebase-admin:
         specifier: ^13.7.0
         version: 13.7.0
@@ -56,12 +50,6 @@ importers:
       recharts:
         specifier: ^3.8.0
         version: 3.8.0(@types/react@19.2.14)(react-dom@19.2.3(react@19.2.3))(react-is@16.13.1)(react@19.2.3)(redux@5.0.1)
-      tailwind-merge:
-        specifier: ^3.5.0
-        version: 3.5.0
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
