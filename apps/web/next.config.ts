@@ -85,6 +85,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/admin",
+        destination: "https://admin.gyoan-maker.store",
+        permanent: false,
+      },
+      {
+        source: "/admin/:path*",
+        destination: "https://admin.gyoan-maker.store/:path*",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

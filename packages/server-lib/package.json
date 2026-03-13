@@ -1,0 +1,33 @@
+{
+  "name": "@gyoanmaker/server-lib",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./firebase-admin": "./src/firebase-admin.ts",
+    "./users": "./src/users.ts",
+    "./quota": "./src/quota/index.ts",
+    "./quota/types": "./src/quota/types.ts",
+    "./quota/resolvers": "./src/quota/resolvers.ts",
+    "./subscription": "./src/subscription.ts",
+    "./orders": "./src/orders.ts",
+    "./usageLog": "./src/usageLog.ts",
+    "./email": "./src/email.ts",
+    "./firebase-storage": "./src/firebase-storage.ts",
+    "./illustration-presets": "./src/illustration-presets.ts",
+    "./illustration-samples": "./src/illustration-samples.ts"
+  },
+  "peerDependencies": {
+    "firebase-admin": ">=13",
+    "nodemailer": ">=8"
+  },
+  "dependencies": {
+    "@gyoanmaker/shared": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo 'No lint configured for @gyoanmaker/server-lib'"
+  }
+}
