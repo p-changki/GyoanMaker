@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "dompurify";
 import PasswordModal from "./PasswordModal";
 import DeletePostModal from "./DeletePostModal";
 import type { PostDetail as PostDetailType } from "@/lib/board/types";
