@@ -20,8 +20,9 @@ export async function GET() {
     return NextResponse.json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/billing/usage] Failed to fetch usage logs: ${message}`);
     return NextResponse.json(
-      { error: { code: "USAGE_FETCH_ERROR", message } },
+      { error: { code: "USAGE_FETCH_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

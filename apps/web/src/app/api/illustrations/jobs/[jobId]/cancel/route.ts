@@ -34,11 +34,12 @@ export async function POST(
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/jobs/${jobId}/cancel] Failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_JOB_CANCEL_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }

@@ -1,6 +1,8 @@
 export {
   getQuotaStatus,
   incrementUsage,
+  reserveQuota,
+  rollbackQuota,
   setQuotaLimits,
   setStorageUsed,
   reserveStorageSlot,
@@ -14,4 +16,5 @@ export {
   type QuotaLimitsUpdate,
   type QuotaModelStatus,
   type QuotaStatus,
+  type ReservationReceipt,
 } from "@gyoanmaker/server-lib/quota";

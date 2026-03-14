@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import DOMPurify from "isomorphic-dompurify";
 import PasswordModal from "./PasswordModal";
 import DeletePostModal from "./DeletePostModal";
 import type { PostDetail as PostDetailType } from "@/lib/board/types";
@@ -79,7 +81,22 @@ export default function PostDetailView({
   const locked = isLocked(post);
   const isAuthor = post.authorEmail === currentUserEmail.toLowerCase();
   const canDelete = locked ? post.canDelete === true : isAuthor || isAdmin;
-  const content = locked ? unlockedContent : post.content;
+  const rawContent = locked ? unlockedContent : post.content;
+  const content = useMemo(
+    () =>
+      rawContent !== null && rawContent !== undefined
+        ? DOMPurify.sanitize(rawContent, {
+            ALLOWED_TAGS: [
+              "p", "br", "strong", "em", "u", "s", "ul", "ol", "li",
+              "blockquote", "h1", "h2", "h3", "h4", "h5", "h6",
+              "a", "code", "pre",
+            ],
+            ALLOWED_ATTR: ["href", "target", "rel"],
+            FORCE_BODY: true,
+          })
+        : rawContent,
+    [rawContent]
+  );
   const needsPassword = locked && unlockedContent === null;
 
   return (

@@ -114,11 +114,12 @@ export async function GET() {
     return NextResponse.json({ profile, credits });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/profile] GET failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_PROFILE_GET_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }
@@ -309,11 +310,12 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ profile });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/profile] PATCH failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_PROFILE_PATCH_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }

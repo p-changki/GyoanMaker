@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
-  getQuotaStatus,
-  incrementUsage,
+  reserveQuota,
+  rollbackQuota,
   QuotaExceededError,
+  type ReservationReceipt,
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
 import { expirePlanIfNeeded } from "@/lib/subscription";
@@ -255,22 +256,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Pre-reserve quota atomically BEFORE calling the AI API.
     const passageCount = parsed.passages.length;
     await expirePlanIfNeeded(userEmail);
-    const quota = await getQuotaStatus(userEmail);
-    const modelQuota = parsed.model === "flash" ? quota.flash : quota.pro;
 
-    if (modelQuota.remaining < passageCount) {
-      return jsonWithRequestId(
-        requestId,
-        {
-          error: {
-            code: "QUOTA_EXCEEDED",
-            message: parsed.model === "flash" ? "Flash usage limit exceeded." : "Pro usage limit exceeded.",
+    let receipt: ReservationReceipt;
+    try {
+      receipt = await reserveQuota(userEmail, parsed.model, passageCount);
+    } catch (reserveErr) {
+      if (reserveErr instanceof QuotaExceededError) {
+        return jsonWithRequestId(
+          requestId,
+          {
+            error: {
+              code: "QUOTA_EXCEEDED",
+              message: parsed.model === "flash" ? "Flash usage limit exceeded." : "Pro usage limit exceeded.",
+            },
           },
-        },
-        { status: 429 }
-      );
+          { status: 429 }
+        );
+      }
+      throw reserveErr;
     }
 
     const upstreamBody = { passages: parsed.passages, model: parsed.model };
@@ -307,6 +313,9 @@ export async function POST(req: NextRequest) {
           });
 
           if (!response.ok) {
+            await rollbackQuota(receipt).catch((rbErr) =>
+              console.error(`[api/pocket-voca][${requestId}] Rollback failed:`, rbErr)
+            );
             const errorData = await response.json().catch(() => ({}));
             cleanup();
             sendData({ __status: response.status, ...errorData });
@@ -316,36 +325,28 @@ export async function POST(req: NextRequest) {
           const data = await response.json();
           const totalUsage = data?.totalUsage;
 
-          try {
-            await incrementUsage(userEmail, parsed.model, passageCount);
-            if (totalUsage) {
-              logUsage({
-                email: userEmail,
-                requestId,
-                passageCount,
-                model: parsed.model,
-                level: "pocket-voca",
-                inputTokens: totalUsage.inputTokens ?? 0,
-                outputTokens: totalUsage.outputTokens ?? 0,
-                totalTokens: totalUsage.totalTokens ?? 0,
-              }).catch((err) =>
-                console.error(`[api/pocket-voca][${requestId}] logUsage failed:`, err)
-              );
-            }
-          } catch (quotaErr) {
-            if (quotaErr instanceof QuotaExceededError) {
-              console.warn(
-                `[api/pocket-voca][${requestId}] Post-success quota apply failed model=${quotaErr.model} needed=${quotaErr.needed} available=${quotaErr.available}`
-              );
-            }
-            console.error(
-              `[api/pocket-voca][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
+          // Quota already reserved — just log token usage
+          if (totalUsage) {
+            logUsage({
+              email: userEmail,
+              requestId,
+              passageCount,
+              model: parsed.model,
+              level: "pocket-voca",
+              inputTokens: totalUsage.inputTokens ?? 0,
+              outputTokens: totalUsage.outputTokens ?? 0,
+              totalTokens: totalUsage.totalTokens ?? 0,
+            }).catch((err) =>
+              console.error(`[api/pocket-voca][${requestId}] logUsage failed:`, err)
             );
           }
 
           sendData(data);
           cleanup();
         } catch (error) {
+          await rollbackQuota(receipt).catch((rbErr) =>
+            console.error(`[api/pocket-voca][${requestId}] Rollback failed:`, rbErr)
+          );
           cleanup();
           const isTimeout = error instanceof Error && error.name === "TimeoutError";
           const errName = error instanceof Error ? error.name : "UnknownError";

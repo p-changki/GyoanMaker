@@ -49,8 +49,9 @@ export async function GET() {
     return NextResponse.json({ samples });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/samples] GET failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "SAMPLES_LIST_ERROR", message } },
+      { error: { code: "SAMPLES_LIST_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }
@@ -99,8 +100,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sample }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/samples] POST failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "SAMPLES_SAVE_ERROR", message } },
+      { error: { code: "SAMPLES_SAVE_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

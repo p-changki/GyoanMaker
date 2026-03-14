@@ -28,8 +28,9 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/style-presets/[id]] DELETE failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "STYLE_PRESET_DELETE_ERROR", message } },
+      { error: { code: "STYLE_PRESET_DELETE_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

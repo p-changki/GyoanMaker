@@ -18,6 +18,7 @@ import {
   QuotaExceededError,
   type QuotaLimitsUpdate,
   type QuotaStatus,
+  type ReservationReceipt,
   type UserDocLike,
 } from "./types";
 
@@ -79,6 +80,113 @@ export async function incrementUsage(
   });
 
   return result;
+}
+
+/**
+ * Atomically reserve quota BEFORE calling the AI API.
+ * Returns a receipt that rollbackQuota can use for precise reversal.
+ * Throws QuotaExceededError if insufficient quota/credits.
+ */
+export async function reserveQuota(
+  email: string,
+  model: QuotaModel,
+  amount = 1
+): Promise<ReservationReceipt> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  const receipt = await getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const state = normalizeUserState((snap.data() ?? {}) as UserDocLike, new Date());
+
+    assertCanConsume(state, model, amount);
+
+    let fromSub = 0;
+    let fromCredits = 0;
+    let creditSnapshotBeforeConsume: import("@gyoanmaker/shared/types").CreditEntry[] = [];
+
+    if (amount > 0) {
+      const targetQuota = state.quota[model];
+      const subRemaining = Math.max(0, targetQuota.monthlyLimit - targetQuota.used);
+      fromSub = Math.min(subRemaining, amount);
+      targetQuota.used += fromSub;
+
+      const needCredits = amount - fromSub;
+      if (needCredits > 0) {
+        creditSnapshotBeforeConsume = state.credits[model].map((e) => ({ ...e }));
+        const consumed = consumeCredits(state.credits[model], needCredits);
+        state.credits[model] = consumed.updated;
+        fromCredits = consumed.consumed;
+        if (consumed.consumed < needCredits) {
+          throw new QuotaExceededError(model, amount, fromSub + consumed.consumed);
+        }
+      }
+
+      const totalUsed = state.quota.flash.used + state.quota.pro.used;
+      state.legacyUsageMonthly = {
+        key: state.quota.flash.monthKeyKst,
+        count: totalUsed,
+      };
+      state.legacyUsageDaily = {
+        ...state.legacyUsageDaily,
+        count: Math.max(state.legacyUsageDaily.count, totalUsed),
+      };
+    }
+
+    tx.set(docRef, buildPersistPayload(state), { merge: true });
+
+    return {
+      email: key,
+      model,
+      fromSubscription: fromSub,
+      fromCredits,
+      creditSnapshotBeforeConsume,
+    } satisfies ReservationReceipt;
+  });
+
+  return receipt;
+}
+
+/**
+ * Roll back a previously reserved quota when the AI API call fails.
+ * Restores subscription used count and credit entries to their pre-reserve state.
+ */
+export async function rollbackQuota(receipt: ReservationReceipt): Promise<void> {
+  const totalReserved = receipt.fromSubscription + receipt.fromCredits;
+  if (totalReserved <= 0) return;
+
+  const docRef = getDb().collection(COLLECTION).doc(receipt.email);
+
+  await getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const state = normalizeUserState((snap.data() ?? {}) as UserDocLike, new Date());
+
+    // Restore subscription used count
+    if (receipt.fromSubscription > 0) {
+      const targetQuota = state.quota[receipt.model];
+      targetQuota.used = Math.max(0, targetQuota.used - receipt.fromSubscription);
+    }
+
+    // Restore credit entries to their pre-consumption snapshot
+    if (receipt.fromCredits > 0 && receipt.creditSnapshotBeforeConsume.length > 0) {
+      state.credits[receipt.model] = receipt.creditSnapshotBeforeConsume.map(
+        (e) => ({ ...e })
+      );
+    }
+
+    // Update legacy counters
+    const totalUsed = state.quota.flash.used + state.quota.pro.used;
+    state.legacyUsageMonthly = {
+      key: state.quota.flash.monthKeyKst,
+      count: totalUsed,
+    };
+    state.legacyUsageDaily = {
+      ...state.legacyUsageDaily,
+      count: Math.max(state.legacyUsageDaily.count, totalUsed),
+    };
+
+    tx.set(docRef, buildPersistPayload(state), { merge: true });
+  });
 }
 
 export async function setQuotaLimits(
@@ -333,4 +441,5 @@ export type {
   QuotaLimitsUpdate,
   QuotaModelStatus,
   QuotaStatus,
+  ReservationReceipt,
 } from "./types";

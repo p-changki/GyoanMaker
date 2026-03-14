@@ -57,8 +57,9 @@ export async function GET() {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/billing/status] Failed to fetch billing status: ${message}`);
     return NextResponse.json(
-      { error: { code: "BILLING_STATUS_ERROR", message } },
+      { error: { code: "BILLING_STATUS_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

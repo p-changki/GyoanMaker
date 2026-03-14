@@ -93,6 +93,19 @@ export interface NormalizedUserState {
   needsPersist: boolean;
 }
 
+/**
+ * Receipt returned by reserveQuota — captures exactly what was consumed
+ * so rollbackQuota can reverse the operation precisely.
+ */
+export interface ReservationReceipt {
+  readonly email: string;
+  readonly model: QuotaModel;
+  readonly fromSubscription: number;
+  readonly fromCredits: number;
+  /** Snapshot of credit entries before consumption (for precise rollback). */
+  readonly creditSnapshotBeforeConsume: CreditEntry[];
+}
+
 export class QuotaExceededError extends Error {
   readonly code = "QUOTA_EXCEEDED";
   readonly model: QuotaModel;

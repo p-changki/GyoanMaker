@@ -39,8 +39,9 @@ export async function POST(
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/samples/[sampleId]/activate] POST failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "SAMPLES_ACTIVATE_ERROR", message } },
+      { error: { code: "SAMPLES_ACTIVATE_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }
@@ -65,8 +66,9 @@ export async function DELETE(
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/samples/[sampleId]/activate] DELETE failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "SAMPLES_DEACTIVATE_ERROR", message } },
+      { error: { code: "SAMPLES_DEACTIVATE_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

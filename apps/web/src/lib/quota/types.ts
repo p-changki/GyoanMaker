@@ -9,4 +9,5 @@ export {
   type QuotaLimitsUpdate,
   type UserDocLike,
   type NormalizedUserState,
+  type ReservationReceipt,
 } from "@gyoanmaker/server-lib/quota/types";

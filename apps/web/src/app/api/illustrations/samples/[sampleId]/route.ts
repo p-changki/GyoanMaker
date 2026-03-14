@@ -28,8 +28,9 @@ export async function DELETE(
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/samples/[sampleId]] DELETE failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "SAMPLES_DELETE_ERROR", message } },
+      { error: { code: "SAMPLES_DELETE_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
-  getQuotaStatus,
-  incrementUsage,
+  reserveQuota,
+  rollbackQuota,
   QuotaExceededError,
+  type ReservationReceipt,
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
 import { expirePlanIfNeeded } from "@/lib/subscription";
@@ -316,25 +317,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Pre-reserve quota atomically BEFORE calling the AI API.
     const passageCount = parsed.passages.length;
     await expirePlanIfNeeded(userEmail);
-    const quota = await getQuotaStatus(userEmail);
-    const modelQuota = parsed.model === "flash" ? quota.flash : quota.pro;
 
-    if (modelQuota.remaining < passageCount) {
-      return jsonWithRequestId(
-        requestId,
-        {
-          error: {
-            code: "QUOTA_EXCEEDED",
-            message:
-              parsed.model === "flash"
-                ? "Flash usage limit exceeded."
-                : "Pro usage limit exceeded.",
+    let receipt: ReservationReceipt;
+    try {
+      receipt = await reserveQuota(userEmail, parsed.model, passageCount);
+    } catch (reserveErr) {
+      if (reserveErr instanceof QuotaExceededError) {
+        return jsonWithRequestId(
+          requestId,
+          {
+            error: {
+              code: "QUOTA_EXCEEDED",
+              message:
+                parsed.model === "flash"
+                  ? "Flash usage limit exceeded."
+                  : "Pro usage limit exceeded.",
+            },
           },
-        },
-        { status: 429 }
-      );
+          { status: 429 }
+        );
+      }
+      throw reserveErr;
     }
 
     const upstreamBody = {
@@ -376,6 +382,9 @@ export async function POST(req: NextRequest) {
           });
 
           if (!response.ok) {
+            await rollbackQuota(receipt).catch((rbErr) =>
+              console.error(`[api/workbook][${requestId}] Rollback failed:`, rbErr)
+            );
             const errorData = await response.json().catch(() => ({}));
             cleanup();
             sendData({ __status: response.status, ...errorData });
@@ -388,36 +397,28 @@ export async function POST(req: NextRequest) {
             ? data.passages.length
             : passageCount;
 
-          try {
-            await incrementUsage(userEmail, parsed.model, successCount);
-            if (totalUsage) {
-              logUsage({
-                email: userEmail,
-                requestId,
-                passageCount: successCount,
-                model: parsed.model,
-                level: "workbook",
-                inputTokens: totalUsage.inputTokens ?? 0,
-                outputTokens: totalUsage.outputTokens ?? 0,
-                totalTokens: totalUsage.totalTokens ?? 0,
-              }).catch((err) =>
-                console.error(`[api/workbook][${requestId}] logUsage failed:`, err)
-              );
-            }
-          } catch (quotaErr) {
-            if (quotaErr instanceof QuotaExceededError) {
-              console.warn(
-                `[api/workbook][${requestId}] Post-success quota apply failed model=${quotaErr.model} needed=${quotaErr.needed} available=${quotaErr.available}`
-              );
-            }
-            console.error(
-              `[api/workbook][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
+          // Quota already reserved — just log token usage
+          if (totalUsage) {
+            logUsage({
+              email: userEmail,
+              requestId,
+              passageCount: successCount,
+              model: parsed.model,
+              level: "workbook",
+              inputTokens: totalUsage.inputTokens ?? 0,
+              outputTokens: totalUsage.outputTokens ?? 0,
+              totalTokens: totalUsage.totalTokens ?? 0,
+            }).catch((err) =>
+              console.error(`[api/workbook][${requestId}] logUsage failed:`, err)
             );
           }
 
           cleanup();
           sendData(data);
         } catch (error) {
+          await rollbackQuota(receipt).catch((rbErr) =>
+            console.error(`[api/workbook][${requestId}] Rollback failed:`, rbErr)
+          );
           cleanup();
           const isTimeout =
             error instanceof Error && error.name === "TimeoutError";

@@ -340,17 +340,19 @@ export async function POST(req: NextRequest) {
       );
 
       if (error instanceof TossPaymentError) {
+        console.error(`[api/billing/checkout/init] Toss paylink create failed: [${error.code}] ${error.message}`);
         return NextResponse.json(
           {
             error: {
               code: error.code ?? "PAYLINK_CREATE_FAILED",
-              message: error.message || "Failed to create Toss paylink checkout.",
+              message: "Failed to create Toss paylink checkout.",
             },
           },
           { status: error.statusCode ?? 502 }
         );
       }
 
+      console.error(`[api/billing/checkout/init] Paylink create failed: ${message}`);
       return NextResponse.json(
         {
           error: {
