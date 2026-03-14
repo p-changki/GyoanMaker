@@ -13,6 +13,14 @@ import { EditableHeaderText } from "./EditableFields";
 import WorkbookStepBanner from "./WorkbookStepBanner";
 import { useTemplateFontLoader } from "./useTemplateFontLoader";
 import SectionNumberBadge from "./SectionNumberBadge";
+
+/** Map Tailwind-style badgeShape values to CSS borderRadius (purge-safe) */
+const BADGE_SHAPE_RADIUS: Record<string, string> = {
+  "rounded-full": "9999px",
+  "rounded-lg": "8px",
+  "rounded-none": "0",
+};
+
 import { EditableText } from "./EditableText";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 
@@ -87,6 +95,10 @@ export default function WorkbookPageShell({
     ? FONT_FAMILY_MAP[headerBadgeStyle.fontFamily].css
     : undefined;
   const badgeAlign = headerBadgeStyle.textAlign || "right";
+  const hBadgeShape = headerBadgeStyle.badgeShape || "rounded-none";
+  const hBadgeHeight = headerBadgeStyle.badgeHeight || 28;
+  const hBadgePaddingX = headerBadgeStyle.badgePaddingX || 16;
+  const hBadgeBorderRadius = BADGE_SHAPE_RADIUS[hBadgeShape] ?? "0";
 
   return (
     <div
@@ -157,13 +169,20 @@ export default function WorkbookPageShell({
 
           {/* Right: editable badge */}
           <div
-            className="px-4 py-1.5 whitespace-nowrap translate-y-4 relative z-20 shrink-0"
+            className="whitespace-nowrap translate-y-4 relative z-20 shrink-0"
             style={{
               backgroundColor: badgeBg,
               color: badgeTextColor,
               fontSize: `${fontSizes.headerBadge}px`,
               fontFamily: badgeFontCss,
               fontWeight: badgeWeight,
+              height: `${hBadgeHeight}px`,
+              paddingLeft: `${hBadgePaddingX}px`,
+              paddingRight: `${hBadgePaddingX}px`,
+              display: "flex",
+              width: "fit-content",
+              alignItems: "center",
+              borderRadius: hBadgeBorderRadius,
               paddingTop: headerBadgeStyle.paddingTop
                 ? `${headerBadgeStyle.paddingTop}px`
                 : undefined,
