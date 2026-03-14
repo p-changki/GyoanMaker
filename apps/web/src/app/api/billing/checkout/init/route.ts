@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
 import { createTossPayment, TossPaymentError } from "@/lib/payment";
+import { billingCheckoutInitLimiter } from "@/lib/rate-limit";
 import {
   type CheckoutFlow,
   type PendingOrder,
@@ -98,6 +99,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
+    );
+  }
+
+  if (!billingCheckoutInitLimiter.check(email)) {
+    return NextResponse.json(
+      { error: { code: "RATE_LIMITED", message: "Too many requests. Please try again later." } },
+      { status: 429 }
     );
   }
 

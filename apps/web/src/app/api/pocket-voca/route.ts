@@ -49,6 +49,12 @@ function getProxyRateLimitMax(): number {
 }
 
 function getClientAddress(req: NextRequest): string {
+  // Prefer Cloudflare's immutable client IP header (cannot be spoofed)
+  const cfIp = req.headers.get("cf-connecting-ip");
+  if (cfIp && cfIp.trim().length > 0) {
+    return cfIp.trim();
+  }
+
   const forwardedFor = req.headers.get("x-forwarded-for");
   if (forwardedFor && forwardedFor.trim().length > 0) {
     const ips = forwardedFor
