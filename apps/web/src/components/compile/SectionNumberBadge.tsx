@@ -6,6 +6,8 @@ import {
   FONT_FAMILY_MAP,
   type FontFamily,
   type SectionBadgeConfig,
+  type BadgeShape,
+  type BadgePosition,
 } from "@gyoanmaker/shared/types";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { PencilHintIcon } from "./EditableHintBanner";
@@ -18,6 +20,34 @@ interface SectionNumberBadgeProps {
 }
 
 const DEFAULT_BADGE_FONT = '"Arial Black", "Impact", sans-serif';
+
+function getShapeBorderRadius(shape: BadgeShape, width: number, height: number): string {
+  switch (shape) {
+    case "rounded-b":
+      return "0 0 18px 18px";
+    case "rounded":
+      return "18px";
+    case "square":
+      return "0";
+    case "circle":
+      return `${Math.max(width, height)}px`;
+    default:
+      return "0 0 18px 18px";
+  }
+}
+
+function getPositionClass(position: BadgePosition): string {
+  switch (position) {
+    case "left":
+      return "left-8 md:left-12 xl:left-16";
+    case "center":
+      return "left-1/2 -translate-x-1/2";
+    case "right":
+      return "right-8 md:right-12 xl:right-16";
+    default:
+      return "left-8 md:left-12 xl:left-16";
+  }
+}
 
 export default function SectionNumberBadge({
   sectionKey,
@@ -39,6 +69,11 @@ export default function SectionNumberBadge({
     : DEFAULT_BADGE_FONT;
   const badgeWidth = config?.width || 168;
   const badgeHeight = config?.height || 86;
+  const shape: BadgeShape = config?.shape || "rounded-b";
+  const position: BadgePosition = config?.position || "left";
+
+  const borderRadius = getShapeBorderRadius(shape, badgeWidth, badgeHeight);
+  const positionClass = getPositionClass(position);
 
   const handleSave = useCallback(
     (partial: Partial<SectionBadgeConfig>) => {
@@ -51,20 +86,30 @@ export default function SectionNumberBadge({
   return (
     <>
       <div
-        className="absolute top-0 left-8 md:left-12 xl:left-16 z-20"
+        className={`absolute top-0 ${positionClass} z-20`}
         style={{ width: `${badgeWidth}px`, height: `${badgeHeight}px` }}
       >
         {/* Solid Drop Shadow */}
         <div
-          className="absolute top-[6px] left-[6px] bg-[#D1D5DB] rounded-b-[18px] z-0"
-          style={{ width: `${badgeWidth}px`, height: `${badgeHeight}px` }}
+          className="absolute top-[6px] left-[6px] bg-[#D1D5DB] z-0"
+          style={{
+            width: `${badgeWidth}px`,
+            height: `${badgeHeight}px`,
+            borderRadius,
+          }}
         />
         {/* Main Background Block */}
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="absolute top-0 left-0 rounded-b-[18px] flex items-start justify-start pl-4 pt-3 z-10 border-0 cursor-pointer group/badge"
-          style={{ backgroundColor: bgColor, width: `${badgeWidth}px`, height: `${badgeHeight}px` }}
+          className="absolute top-0 left-0 flex items-center justify-center z-10 border-0 cursor-pointer group/badge"
+          style={{
+            backgroundColor: bgColor,
+            width: `${badgeWidth}px`,
+            height: `${badgeHeight}px`,
+            borderRadius,
+            paddingTop: "4px",
+          }}
           aria-label="섹션 번호 편집"
         >
           <span
@@ -85,7 +130,12 @@ export default function SectionNumberBadge({
       {isOpen && (
         <BadgeEditModal
           title={sectionKey === "handout" ? "교안 섹션 뱃지" : sectionKey === "workbook" ? "워크북 섹션 뱃지" : "보카 섹션 뱃지"}
-          config={{ label, textColor, bgColor, fontFamily: config?.fontFamily || "", fontSize, width: badgeWidth, height: badgeHeight }}
+          config={{
+            label, textColor, bgColor,
+            fontFamily: config?.fontFamily || "",
+            fontSize, width: badgeWidth, height: badgeHeight,
+            shape, position,
+          }}
           defaultNumber={defaultNumber}
           themeColor={color}
           onSave={handleSave}
@@ -106,6 +156,35 @@ const FONT_OPTIONS: { value: FontFamily | ""; label: string }[] = [
   })),
 ];
 
+const SHAPE_OPTIONS: { value: BadgeShape; label: string; icon: React.ReactNode }[] = [
+  {
+    value: "rounded-b",
+    label: "하단 라운드",
+    icon: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="2" width="16" height="20" rx="0" ry="0" style={{ borderRadius: "0 0 8px 8px" }} /><path d="M4 2h16v14c0 4.418-3.582 8-8 8s-8-3.582-8-8V2z" /></svg>,
+  },
+  {
+    value: "rounded",
+    label: "라운드",
+    icon: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="6" /></svg>,
+  },
+  {
+    value: "square",
+    label: "사각형",
+    icon: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="0" /></svg>,
+  },
+  {
+    value: "circle",
+    label: "원형",
+    icon: <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" /></svg>,
+  },
+];
+
+const POSITION_OPTIONS: { value: BadgePosition; label: string }[] = [
+  { value: "left", label: "좌측" },
+  { value: "center", label: "중앙" },
+  { value: "right", label: "우측" },
+];
+
 function BadgeEditModal({
   title,
   config,
@@ -115,7 +194,12 @@ function BadgeEditModal({
   onClose,
 }: {
   title: string;
-  config: { label: string; textColor: string; bgColor: string; fontFamily: FontFamily | ""; fontSize: number; width: number; height: number };
+  config: {
+    label: string; textColor: string; bgColor: string;
+    fontFamily: FontFamily | ""; fontSize: number;
+    width: number; height: number;
+    shape: BadgeShape; position: BadgePosition;
+  };
   defaultNumber: string;
   themeColor: string;
   onSave: (partial: Partial<SectionBadgeConfig>) => void;
@@ -128,6 +212,8 @@ function BadgeEditModal({
   const [fontSize, setFontSize] = useState(config.fontSize);
   const [badgeWidth, setBadgeWidth] = useState(config.width);
   const [badgeHeight, setBadgeHeight] = useState(config.height);
+  const [shape, setShape] = useState<BadgeShape>(config.shape);
+  const [position, setPosition] = useState<BadgePosition>(config.position);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -145,13 +231,16 @@ function BadgeEditModal({
       fontSize,
       width: badgeWidth,
       height: badgeHeight,
+      shape,
+      position,
     });
-  }, [label, textColor, bgColor, fontFamily, fontSize, badgeWidth, badgeHeight, defaultNumber, themeColor, onSave]);
+  }, [label, textColor, bgColor, fontFamily, fontSize, badgeWidth, badgeHeight, shape, position, defaultNumber, themeColor, onSave]);
 
-  // Preview font for the label
   const previewFont = fontFamily
     ? FONT_FAMILY_MAP[fontFamily].css
     : DEFAULT_BADGE_FONT;
+
+  const previewBorderRadius = getShapeBorderRadius(shape, badgeWidth, badgeHeight);
 
   return createPortal(
     <div
@@ -159,7 +248,7 @@ function BadgeEditModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl p-8 w-[380px] max-w-[90vw] space-y-5"
+        className="bg-white rounded-2xl shadow-2xl p-8 w-[400px] max-w-[90vw] space-y-5 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
@@ -169,11 +258,12 @@ function BadgeEditModal({
         {/* Preview */}
         <div className="flex justify-center py-3">
           <div
-            className="rounded-b-[18px] flex items-center justify-center"
+            className="flex items-center justify-center"
             style={{
               backgroundColor: bgColor,
               width: `${Math.round(badgeWidth * 0.7)}px`,
               height: `${Math.round(badgeHeight * 0.7)}px`,
+              borderRadius: previewBorderRadius,
             }}
           >
             <span
@@ -206,6 +296,57 @@ function BadgeEditModal({
             className="w-full px-3 py-2 text-sm font-bold text-gray-900 border border-gray-200 rounded-lg focus:outline-none text-center"
             style={{ borderColor: themeColor }}
           />
+        </div>
+
+        {/* Shape */}
+        <div>
+          <label className="text-[11px] font-semibold text-gray-400 mb-2 block">모양</label>
+          <div className="flex gap-2">
+            {SHAPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setShape(opt.value)}
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 transition-colors flex-1 ${
+                  shape === opt.value
+                    ? "border-current bg-purple-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                style={shape === opt.value ? { borderColor: themeColor, color: themeColor } : undefined}
+              >
+                <span className={shape === opt.value ? "" : "text-gray-400"}>{opt.icon}</span>
+                <span className={`text-[10px] font-medium ${shape === opt.value ? "text-gray-700" : "text-gray-400"}`}>
+                  {opt.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Position */}
+        <div>
+          <label className="text-[11px] font-semibold text-gray-400 mb-2 block">위치</label>
+          <div className="flex gap-2">
+            {POSITION_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPosition(opt.value)}
+                className={`flex-1 py-2 rounded-lg border-2 text-xs font-bold transition-colors ${
+                  position === opt.value
+                    ? "text-white"
+                    : "border-gray-200 text-gray-400 hover:border-gray-300"
+                }`}
+                style={
+                  position === opt.value
+                    ? { backgroundColor: themeColor, borderColor: themeColor }
+                    : undefined
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Colors row */}

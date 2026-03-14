@@ -326,31 +326,54 @@ export function HandoutFooter({
   pageKey?: string;
 }) {
   const fontSizes = useTemplateSettingsStore((s) => s.fontSizes);
-  const override = useHandoutStore((s) =>
+  const leftKey = pageKey ? `${pageKey}-left` : undefined;
+  const leftOverride = useHandoutStore((s) =>
+    leftKey ? s.pageNumberOverrides[leftKey] : undefined
+  );
+  const rightOverride = useHandoutStore((s) =>
     pageKey ? s.pageNumberOverrides[pageKey] : undefined
   );
   const setOverride = useHandoutStore((s) => s.setPageNumberOverride);
   const theme = useTheme();
 
-  const displayValue =
-    override !== undefined && override !== ""
-      ? override
+  const defaultLeftValue = `PAGE ${section.passageId.slice(1)}-${pageNum}`;
+  const leftDisplayValue =
+    leftOverride !== undefined && leftOverride !== ""
+      ? leftOverride
+      : defaultLeftValue;
+
+  const rightDisplayValue =
+    rightOverride !== undefined && rightOverride !== ""
+      ? rightOverride
       : globalPageNumber !== undefined
         ? String(globalPageNumber)
         : "";
 
   return (
     <footer className="mt-auto pt-10 flex items-center justify-between shrink-0">
-      <span
-        className="font-black text-[#E5E7EB]"
-        style={{ fontSize: `${fontSizes.pageFooter}px` }}
-      >
-        PAGE {section.passageId.slice(1)}-{pageNum}
-      </span>
+      {leftKey ? (
+        <EditableText
+          as="span"
+          value={leftDisplayValue}
+          label="좌측 페이지 라벨 수정"
+          themeColor={theme.primary}
+          maxLength={20}
+          onConfirm={(next) => setOverride(leftKey, next)}
+          className="font-black text-[#E5E7EB]"
+          style={{ fontSize: `${fontSizes.pageFooter}px` }}
+        />
+      ) : (
+        <span
+          className="font-black text-[#E5E7EB]"
+          style={{ fontSize: `${fontSizes.pageFooter}px` }}
+        >
+          {defaultLeftValue}
+        </span>
+      )}
       {globalPageNumber !== undefined && pageKey && (
         <EditableText
           as="span"
-          value={displayValue}
+          value={rightDisplayValue}
           label="페이지 번호 수정"
           themeColor={theme.primary}
           maxLength={10}
