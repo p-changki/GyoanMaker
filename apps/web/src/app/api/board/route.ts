@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { createPost, listPosts } from "@/lib/board/posts";
 import { isAdmin } from "@/lib/users";
 import type { PostType } from "@/lib/board/types";
+import sanitizeHtml from "sanitize-html";
 
 /**
  * GET /api/board — List posts (content excluded)
@@ -94,10 +95,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const sanitizedContent = sanitizeHtml(content.trim(), {
+      allowedTags: [
+        "p", "br", "strong", "em", "u", "s", "ul", "ol", "li",
+        "blockquote", "h1", "h2", "h3", "h4", "h5", "h6",
+        "a", "code", "pre",
+      ],
+      allowedAttributes: { a: ["href", "target", "rel"] },
+    });
+
     const post = await createPost({
       type,
       title: title.trim(),
-      content: content.trim(),
+      content: sanitizedContent,
       authorEmail: session.user.email,
       authorName: session.user.name ?? null,
       replyEmail: type === "secret" && replyEmail ? replyEmail.trim() : undefined,

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import {
-  getQuotaStatus,
-  incrementUsage,
+  reserveQuota,
+  rollbackQuota,
   QuotaExceededError,
+  type ReservationReceipt,
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
 import { expirePlanIfNeeded } from "@/lib/subscription";
@@ -236,27 +237,36 @@ export async function POST(req: NextRequest) {
     // Auth + approved check
     const session = await auth();
     const userEmail = session?.user?.email;
+
+    if (!userEmail) {
+      return jsonWithRequestId(
+        requestId,
+        { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
+        { status: 401 }
+      );
+    }
+
     const passageCount = Array.isArray(passages) ? passages.length : 1;
 
-    if (userEmail) {
-      const status = await getUserStatus(userEmail);
-      if (status !== "approved") {
-        return jsonWithRequestId(
-          requestId,
-          { error: { code: "FORBIDDEN", message: "Account not approved." } },
-          { status: 403 }
-        );
-      }
+    const status = await getUserStatus(userEmail);
+    if (status !== "approved") {
+      return jsonWithRequestId(
+        requestId,
+        { error: { code: "FORBIDDEN", message: "Account not approved." } },
+        { status: 403 }
+      );
+    }
 
-      // TODO(billing): TOCTOU race — quota checked here but Cloud Run call
-      // takes 30+ seconds before incrementUsage. Concurrent requests can both
-      // pass. assertCanConsume in transaction prevents credit over-spend, but
-      // AI API cost is already incurred. Consider pre-reserving quota.
-      await expirePlanIfNeeded(userEmail);
-      const quota = await getQuotaStatus(userEmail);
-      const modelQuota = selectedModel === "flash" ? quota.flash : quota.pro;
+    // Pre-reserve quota atomically BEFORE calling the AI API.
+    // This prevents TOCTOU race where concurrent requests both pass the
+    // quota check during the 30s+ AI call window.
+    await expirePlanIfNeeded(userEmail);
 
-      if (modelQuota.remaining < passageCount) {
+    let receipt: ReservationReceipt;
+    try {
+      receipt = await reserveQuota(userEmail, selectedModel, passageCount);
+    } catch (reserveErr) {
+      if (reserveErr instanceof QuotaExceededError) {
         return jsonWithRequestId(
           requestId,
           {
@@ -271,20 +281,33 @@ export async function POST(req: NextRequest) {
           { status: 429 }
         );
       }
+      throw reserveErr;
     }
 
-    const response = await fetch(`${baseUrl}/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-KEY": apiKey,
-        "X-Request-ID": requestId,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(timeoutMs),
-    });
+    // AI API call — rollback quota on any failure
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": apiKey,
+          "X-Request-ID": requestId,
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (fetchErr) {
+      await rollbackQuota(receipt).catch((rbErr) =>
+        console.error(`[api/generate][${requestId}] Rollback failed:`, rbErr)
+      );
+      throw fetchErr;
+    }
 
     if (!response.ok) {
+      await rollbackQuota(receipt).catch((rbErr) =>
+        console.error(`[api/generate][${requestId}] Rollback failed:`, rbErr)
+      );
       const errorData = await response.json().catch(() => ({}));
       return jsonWithRequestId(requestId, errorData, {
         status: response.status,
@@ -293,39 +316,25 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
 
-    // Increment quota + log token usage on success
-    if (userEmail) {
-      const totalUsage = data?.totalUsage;
-      const successCount = Array.isArray(data?.results)
-        ? data.results.length
-        : passageCount;
+    // Log token usage on success (quota already reserved)
+    const totalUsage = data?.totalUsage;
+    const successCount = Array.isArray(data?.results)
+      ? data.results.length
+      : passageCount;
 
-      try {
-        await incrementUsage(userEmail, selectedModel, successCount);
-        if (totalUsage) {
-          logUsage({
-            email: userEmail,
-            requestId,
-            passageCount: successCount,
-            model: selectedModel,
-            level: body?.level ?? "advanced",
-            inputTokens: totalUsage.inputTokens ?? 0,
-            outputTokens: totalUsage.outputTokens ?? 0,
-            totalTokens: totalUsage.totalTokens ?? 0,
-          }).catch((err) =>
-            console.error(`[api/generate][${requestId}] logUsage failed:`, err)
-          );
-        }
-      } catch (quotaErr) {
-        if (quotaErr instanceof QuotaExceededError) {
-          console.warn(
-            `[api/generate][${requestId}] Post-success quota apply failed model=${quotaErr.model} needed=${quotaErr.needed} available=${quotaErr.available}`
-          );
-        }
-        console.error(
-          `[api/generate][${requestId}] Failed to increment quota/log usage: ${quotaErr instanceof Error ? quotaErr.message : quotaErr}`
-        );
-      }
+    if (totalUsage) {
+      logUsage({
+        email: userEmail,
+        requestId,
+        passageCount: successCount,
+        model: selectedModel,
+        level: body?.level ?? "advanced",
+        inputTokens: totalUsage.inputTokens ?? 0,
+        outputTokens: totalUsage.outputTokens ?? 0,
+        totalTokens: totalUsage.totalTokens ?? 0,
+      }).catch((err) =>
+        console.error(`[api/generate][${requestId}] logUsage failed:`, err)
+      );
     }
 
     return jsonWithRequestId(requestId, data);

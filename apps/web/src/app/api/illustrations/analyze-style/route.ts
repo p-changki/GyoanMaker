@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error("[analyze-style] Error:", message);
     return NextResponse.json(
-      { error: { code: "ANALYSIS_ERROR", message } },
+      { error: { code: "ANALYSIS_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

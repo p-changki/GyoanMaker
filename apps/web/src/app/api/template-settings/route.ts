@@ -25,8 +25,9 @@ export async function GET() {
     return NextResponse.json(settings);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/template-settings] GET failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "TEMPLATE_SETTINGS_ERROR", message } },
+      { error: { code: "TEMPLATE_SETTINGS_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }
@@ -184,8 +185,9 @@ export async function PATCH(req: Request) {
     return NextResponse.json(updated);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/template-settings] PATCH failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "TEMPLATE_SETTINGS_ERROR", message } },
+      { error: { code: "TEMPLATE_SETTINGS_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

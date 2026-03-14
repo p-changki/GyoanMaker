@@ -126,11 +126,12 @@ export async function GET(req: NextRequest) {
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/jobs] List failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_JOB_LIST_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }
@@ -322,11 +323,12 @@ export async function POST(req: NextRequest) {
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/jobs] Create failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_JOB_CREATE_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }
