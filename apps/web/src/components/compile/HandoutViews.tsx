@@ -16,13 +16,30 @@ import {
 } from "./EditableFields";
 import { EditableText } from "./EditableText";
 import { HandoutFooter, HandoutHeader } from "./HandoutHeader";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { useTemplateSettingsStore } from "@/stores/useTemplateSettingsStore";
 import { useEditorFocusStore } from "@/stores/useEditorFocusStore";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 import { BUILTIN_SECTION_COMPONENTS, CustomSection, VocabularySection } from "./page2-sections";
 import { isCustomSectionKey } from "@gyoanmaker/shared/types";
+import type { Page2SectionKey } from "@gyoanmaker/shared/types";
 import { useTemplateFontLoader } from "./useTemplateFontLoader";
 import { updateSentenceText } from "@/lib/sectionUpdaters";
+import SortableSection from "./SortableSection";
 
 export const ExtendedVocabLayoutContext = createContext(false);
 
@@ -202,6 +219,8 @@ export function ParsedHandoutViewPage1({
     useTemplateSettingsStore((s) => s.page1BodyStyle) ?? DEFAULT_SECTION_STYLE;
   const page1TitleStyle =
     useTemplateSettingsStore((s) => s.page1TitleStyle);
+  const page1TitleVisible = useTemplateSettingsStore((s) => s.page1TitleVisible) ?? true;
+  const setPage1TitleVisible = useTemplateSettingsStore((s) => s.setPage1TitleVisible);
 
   const updateSection = useHandoutStore((s) => s.updateSection);
 
@@ -285,7 +304,7 @@ export function ParsedHandoutViewPage1({
 
   return (
     <div
-      className="p-8 md:p-12 xl:p-16 flex flex-col h-full bg-white relative"
+      className="p-8 md:p-12 xl:p-16 flex flex-col flex-1 bg-white relative"
       onClick={() => { /* no-op: modal closes via backdrop/Escape */ }}
     >
       {page1Layout.headerVisible && (
@@ -293,38 +312,68 @@ export function ParsedHandoutViewPage1({
       )}
 
       <section className="mb-8 relative flex-1 w-full">
-        <ClickZone focusKey="page1-title" label="타이틀 편집">
-          <div
-            className={`mt-4 mb-4 z-10 relative flex items-center ${badgeAlign === "center" ? "justify-center" : badgeAlign === "right" ? "justify-end" : "justify-start"}`}
-          >
-            {/* Passage number chip — only on first page of each passage */}
-            {pageNum === 1 && (
-              <div className="relative z-20">
-                <PassageNumberChip
-                  passageId={section.passageId}
-                  themeColor={p1TitleColor}
-                />
+        {page1TitleVisible ? (
+          <div className="relative group/p1-title">
+            <ClickZone focusKey="page1-title" label="타이틀 편집">
+              <div
+                className={`mt-4 mb-4 z-10 relative flex items-center ${badgeAlign === "center" ? "justify-center" : badgeAlign === "right" ? "justify-end" : "justify-start"}`}
+              >
+                {/* Passage number chip — only on first page of each passage */}
+                {pageNum === 1 && (
+                  <div className="relative z-20">
+                    <PassageNumberChip
+                      passageId={section.passageId}
+                      themeColor={p1TitleColor}
+                    />
+                  </div>
+                )}
+                <div
+                  className={`flex w-fit items-center justify-center font-bold border ${badgeShape} relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
+                  style={{
+                    color: p1TitleColor,
+                    borderColor: p1TitleColor,
+                    backgroundColor:
+                      badgeBgColor === "transparent" ? "white" : badgeBgColor,
+                    fontSize: `${badgeFontSize + 1}px`,
+                    height: `${badgeHeight}px`,
+                    paddingLeft: pageNum === 1 ? `${badgePaddingX + 4}px` : `${badgePaddingX - 2}px`,
+                    paddingRight: `${badgePaddingX}px`,
+                    letterSpacing: "0.01em",
+                    fontFamily: p1BadgeFontFamily,
+                  }}
+                >
+                  <EditableAnalysisTitle passageId={section.passageId} />
+                </div>
               </div>
-            )}
-            <div
-              className={`flex w-fit items-center justify-center font-bold border ${badgeShape} relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
-              style={{
-                color: p1TitleColor,
-                borderColor: p1TitleColor,
-                backgroundColor:
-                  badgeBgColor === "transparent" ? "white" : badgeBgColor,
-                fontSize: `${badgeFontSize + 1}px`,
-                height: `${badgeHeight}px`,
-                paddingLeft: pageNum === 1 ? `${badgePaddingX + 4}px` : `${badgePaddingX - 2}px`,
-                paddingRight: `${badgePaddingX}px`,
-                letterSpacing: "0.01em",
-                fontFamily: p1BadgeFontFamily,
-              }}
+            </ClickZone>
+            {/* Hide button — hidden from PDF */}
+            <button
+              type="button"
+              data-html2canvas-ignore="true"
+              onClick={(e) => { e.stopPropagation(); setPage1TitleVisible(false); }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover/p1-title:opacity-100 transition-opacity z-50 p-1.5 bg-white border border-gray-200 rounded-full shadow-md hover:bg-red-50 hover:border-red-300"
+              aria-label="타이틀 숨기기"
             >
-              <EditableAnalysisTitle passageId={section.passageId} />
-            </div>
+              <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7.5a11.72 11.72 0 013.168-4.477M6.343 6.343A9.97 9.97 0 0112 5c5 0 9.27 3.11 11 7.5a11.7 11.7 0 01-4.168 4.477M6.343 6.343L3 3m3.343 3.343l2.829 2.829m7.656 7.656l2.829 2.829M6.343 6.343l11.314 11.314M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
-        </ClickZone>
+        ) : (
+          /* Show button when hidden — hidden from PDF */
+          <button
+            type="button"
+            data-html2canvas-ignore="true"
+            onClick={() => setPage1TitleVisible(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 mt-4 mb-4 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-500 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-.274.857-.646 1.67-1.108 2.418M2.458 12a11.95 11.95 0 001.108 2.418" />
+            </svg>
+            <span className="text-[11px] font-medium">타이틀 표시</span>
+          </button>
+        )}
 
         <ClickZone focusKey="page1-body" label="문장 테이블">
           <div className="w-full" style={tableBorderStyle}>
@@ -472,6 +521,27 @@ export function ParsedHandoutViewPage2({
     useTemplateSettingsStore((s) => s.avatarDisplay) ?? DEFAULT_IMAGE_DISPLAY;
   const sectionStyles = useTemplateSettingsStore((s) => s.sectionStyles);
   const page2HeaderStyle = useTemplateSettingsStore((s) => s.page2HeaderStyle);
+  const page2HeaderVisible = useTemplateSettingsStore((s) => s.page2HeaderVisible) ?? true;
+  const setPage2HeaderVisible = useTemplateSettingsStore((s) => s.setPage2HeaderVisible);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const current = useTemplateSettingsStore.getState().page2Sections;
+    const oldIndex = current.indexOf(active.id as Page2SectionKey);
+    const newIndex = current.indexOf(over.id as Page2SectionKey);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    useTemplateSettingsStore.setState({
+      page2Sections: arrayMove([...current], oldIndex, newIndex),
+    });
+  }, []);
 
 
   const avatarStyle = useMemo(
@@ -487,7 +557,7 @@ export function ParsedHandoutViewPage2({
   return (
     <ExtendedVocabLayoutContext.Provider value={!!hideVocab}>
     <div
-      className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
+      className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col flex-1 bg-white relative"
       onClick={() => { /* no-op: modal closes via backdrop/Escape */ }}
     >
       <DiscoveryBanner />
@@ -512,88 +582,130 @@ export function ParsedHandoutViewPage2({
           </div>
         )}
 
-        <ClickZone focusKey="page2-header" label="요약바">
-          <div
-            data-summary-bar
-            className="relative z-10 mb-3 rounded-xl flex items-center mt-1"
-            style={{
-              width: `${page2HeaderStyle?.barWidth ?? 95}%`,
-              minHeight: "40px",
-              backgroundColor: page2HeaderStyle?.bgColor || theme.primary,
-              paddingTop: page2HeaderStyle?.paddingTop ?? 0,
-              paddingBottom: page2HeaderStyle?.paddingBottom ?? 0,
-              paddingRight: "16px",
-              overflow: "visible",
-              borderTop:
-                page2HeaderStyle?.borderStyle &&
-                page2HeaderStyle.borderStyle !== "none"
-                  ? `1px ${page2HeaderStyle.borderStyle} ${page2HeaderStyle.borderColor || theme.primaryDark || theme.primary}`
-                  : undefined,
-            }}
-          >
-            <span
-              className="tracking-wide z-30 flex-1"
-              style={{
-                fontFamily: page2HeaderStyle?.fontFamily
-                  ? FONT_FAMILY_MAP[page2HeaderStyle.fontFamily].css
-                  : "GmarketSans, sans-serif",
-                fontWeight: theme.titleFontWeight,
-                fontSize: `${theme.fontSizes.summaryBarTitle}px`,
-                color: page2HeaderStyle?.titleColor || "#FFFFFF",
-                marginLeft: (() => {
-                  if (!avatarBase64) return "24px";
-                  const avatarML = Math.round(24 + avatarDisplay.offsetX + 90 * avatarDisplay.scale + 8);
-                  // Limit marginLeft to 40% of bar width so text always has space
-                  const barPct = (page2HeaderStyle?.barWidth ?? 95) / 100;
-                  const barPx = 794 * barPct; // PDF base width
-                  const maxML = Math.round(barPx * 0.4);
-                  return `${Math.min(avatarML, maxML)}px`;
-                })(),
-                wordBreak: "break-word",
-                overflowWrap: "break-word",
-                textAlign: (page2HeaderStyle?.textAlign || "left") as "left" | "center" | "right" | "justify",
-              }}
+        {page2HeaderVisible ? (
+          <div className="relative group/summary-bar">
+            <ClickZone focusKey="page2-header" label="요약바">
+              <div
+                data-summary-bar
+                className="relative z-10 mb-3 rounded-xl flex items-center mt-1"
+                style={{
+                  width: `${page2HeaderStyle?.barWidth ?? 95}%`,
+                  minHeight: "40px",
+                  backgroundColor: page2HeaderStyle?.bgColor || theme.primary,
+                  paddingTop: `${(page2HeaderStyle?.paddingTop ?? 0) + 10}px`,
+                  paddingBottom: `${(page2HeaderStyle?.paddingBottom ?? 0) + 10}px`,
+                  paddingRight: "16px",
+                  overflow: "visible",
+                  borderTop:
+                    page2HeaderStyle?.borderStyle &&
+                    page2HeaderStyle.borderStyle !== "none"
+                      ? `1px ${page2HeaderStyle.borderStyle} ${page2HeaderStyle.borderColor || theme.primaryDark || theme.primary}`
+                      : undefined,
+                }}
+              >
+                <span
+                  className="tracking-wide z-30 flex-1"
+                  style={{
+                    fontFamily: page2HeaderStyle?.fontFamily
+                      ? FONT_FAMILY_MAP[page2HeaderStyle.fontFamily].css
+                      : "GmarketSans, sans-serif",
+                    fontWeight: theme.titleFontWeight,
+                    fontSize: `${theme.fontSizes.summaryBarTitle}px`,
+                    lineHeight: 1.2,
+                    color: page2HeaderStyle?.titleColor || "#FFFFFF",
+                    marginLeft: (() => {
+                      if (!avatarBase64) return "24px";
+                      const avatarML = Math.round(24 + avatarDisplay.offsetX + 90 * avatarDisplay.scale + 8);
+                      const barPct = (page2HeaderStyle?.barWidth ?? 95) / 100;
+                      const barPx = 794 * barPct;
+                      const maxML = Math.round(barPx * 0.4);
+                      return `${Math.min(avatarML, maxML)}px`;
+                    })(),
+                    wordBreak: "break-word",
+                    overflowWrap: "break-word",
+                    textAlign: (page2HeaderStyle?.textAlign || "left") as "left" | "center" | "right" | "justify",
+                  }}
+                >
+                  <EditableSummaryTitleText />
+                </span>
+              </div>
+            </ClickZone>
+            {/* Hide button — hidden from PDF */}
+            <button
+              type="button"
+              data-html2canvas-ignore="true"
+              onClick={(e) => { e.stopPropagation(); setPage2HeaderVisible(false); }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover/summary-bar:opacity-100 transition-opacity z-50 p-1.5 bg-white border border-gray-200 rounded-full shadow-md hover:bg-red-50 hover:border-red-300"
+              aria-label="요약바 숨기기"
             >
-              <EditableSummaryTitleText />
-            </span>
+              <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7.5a11.72 11.72 0 013.168-4.477M6.343 6.343A9.97 9.97 0 0112 5c5 0 9.27 3.11 11 7.5a11.7 11.7 0 01-4.168 4.477M6.343 6.343L3 3m3.343 3.343l2.829 2.829m7.656 7.656l2.829 2.829M6.343 6.343l11.314 11.314M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
-        </ClickZone>
+        ) : (
+          /* Show button when hidden — hidden from PDF */
+          <button
+            type="button"
+            data-html2canvas-ignore="true"
+            onClick={() => setPage2HeaderVisible(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 mb-3 mt-1 bg-gray-50 border border-dashed border-gray-300 rounded-lg text-gray-400 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-500 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-.274.857-.646 1.67-1.108 2.418M2.458 12a11.95 11.95 0 001.108 2.418" />
+            </svg>
+            <span className="text-[11px] font-medium">요약바 표시</span>
+          </button>
+        )}
 
-        <div className={hideVocab ? "flex flex-col justify-between gap-4 pl-2 flex-1" : "space-y-2 pl-2"}>
-          {page2Sections.map((key) => {
-            // Skip standalone flow when visual_summary is present (flow is embedded inside it)
-            if (key === "flow" && page2Sections.includes("visual_summary"))
-              return null;
-            // Skip vocabulary on page2 when vocab count > 4 (rendered on separate page3)
-            if (key === "vocabulary" && hideVocab) return null;
-            const style = sectionStyles?.[key];
-            const wrapStyle = {
-              paddingTop: style?.paddingTop ?? 0,
-              paddingBottom: style?.paddingBottom ?? 0,
-              borderTop:
-                style?.borderStyle && style.borderStyle !== "none"
-                  ? `1px ${style.borderStyle} ${style.borderColor || theme.primaryDark || theme.primary}`
-                  : undefined,
-            };
-            if (isCustomSectionKey(key)) {
-              return (
-                <ClickZone key={key} focusKey={key} label="커스텀 섹션">
-                  <div style={wrapStyle}>
-                    <CustomSection sectionKey={key} />
-                  </div>
-                </ClickZone>
-              );
-            }
-            const Component = BUILTIN_SECTION_COMPONENTS[key];
-            return (
-              <ClickZone key={key} focusKey={key} label="섹션 편집">
-                <div style={wrapStyle}>
-                  <Component section={section} />
-                </div>
-              </ClickZone>
-            );
-          })}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={page2Sections} strategy={verticalListSortingStrategy}>
+            <div className={hideVocab ? "flex flex-col gap-4 pl-2" : "space-y-2 pl-2"}>
+              {page2Sections.map((key) => {
+                // Skip standalone flow when visual_summary is present (flow is embedded inside it)
+                if (key === "flow" && page2Sections.includes("visual_summary"))
+                  return null;
+                // Skip vocabulary on page2 when vocab count > 4 (rendered on separate page3)
+                if (key === "vocabulary" && hideVocab) return null;
+                const style = sectionStyles?.[key];
+                const wrapStyle = {
+                  paddingTop: style?.paddingTop ?? 0,
+                  paddingBottom: style?.paddingBottom ?? 0,
+                  borderTop:
+                    style?.borderStyle && style.borderStyle !== "none"
+                      ? `1px ${style.borderStyle} ${style.borderColor || theme.primaryDark || theme.primary}`
+                      : undefined,
+                };
+                if (isCustomSectionKey(key)) {
+                  return (
+                    <SortableSection key={key} id={key}>
+                      <ClickZone focusKey={key} label="커스텀 섹션">
+                        <div style={wrapStyle}>
+                          <CustomSection sectionKey={key} />
+                        </div>
+                      </ClickZone>
+                    </SortableSection>
+                  );
+                }
+                const Component = BUILTIN_SECTION_COMPONENTS[key];
+                return (
+                  <SortableSection key={key} id={key}>
+                    <ClickZone focusKey={key} label="섹션 편집">
+                      <div style={wrapStyle}>
+                        <Component section={section} />
+                      </div>
+                    </ClickZone>
+                  </SortableSection>
+                );
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </section>
 
       <HandoutFooter section={section} pageNum={pageNum} globalPageNumber={globalPageNumber} pageKey={pageKey} />
@@ -628,7 +740,7 @@ export function ParsedHandoutViewPage3({
 
   return (
     <div
-      className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col h-full bg-white relative"
+      className="px-6 pb-6 pt-20 md:px-8 md:pb-8 md:pt-20 xl:px-10 xl:pb-10 xl:pt-24 flex flex-col flex-1 bg-white relative"
       onClick={() => { /* no-op */ }}
     >
       <section className="mb-2 relative flex-1 w-full">

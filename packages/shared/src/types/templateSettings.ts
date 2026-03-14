@@ -356,6 +356,8 @@ export interface TemplateSettings {
   page1TitleStyle?: SectionStyleConfig;
   page1BodyStyle?: SectionStyleConfig;
   page2HeaderStyle?: SectionStyleConfig;
+  page2HeaderVisible?: boolean;  // default true — 요약바 표시 여부
+  page1TitleVisible?: boolean;   // default true — Page1 분석 타이틀 뱃지 표시 여부
   sectionStyles?: Partial<Record<Page2SectionKey, SectionStyleConfig>>;
   vocabColumnLayout?: VocabColumnLayout;
   customThemeColors?: CustomThemeColors | null;
@@ -382,6 +384,9 @@ export interface TemplateSettings {
   };
 }
 
+export type BadgeShape = "rounded-b" | "rounded" | "square" | "circle";
+export type BadgePosition = "left" | "center" | "right";
+
 export interface SectionBadgeConfig {
   label?: string;         // default "01" / "02"
   textColor?: string;     // default "#FFFFFF"
@@ -390,6 +395,8 @@ export interface SectionBadgeConfig {
   fontSize?: number;      // px, default = fontSizes.passageNumber + 18
   width?: number;         // px, default 168 (md) / 125 (sm)
   height?: number;        // px, default 86 (md) / 68 (sm)
+  shape?: BadgeShape;     // default "rounded-b" (하단 라운드)
+  position?: BadgePosition; // default "left"
 }
 
 export const DEFAULT_TEMPLATE_SETTINGS: TemplateSettings = {

@@ -59,6 +59,8 @@ interface TemplateSettingsActions {
   setSubSectionTitle: (key: string, title: string) => void;
   setSubSectionColor: (key: string, color: string) => void;
   setSectionBadgeConfig: (key: "handout" | "workbook" | "vocabBank", partial: Partial<import("@gyoanmaker/shared/types").SectionBadgeConfig>) => void;
+  setPage2HeaderVisible: (visible: boolean) => void;
+  setPage1TitleVisible: (visible: boolean) => void;
 }
 
 type TemplateSettingsStore = TemplateSettingsState & TemplateSettingsActions;
@@ -186,6 +188,8 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
         sectionTitles: undefined,
         subSectionTitles: undefined,
         subSectionColors: undefined,
+        page2HeaderVisible: undefined,
+        page1TitleVisible: undefined,
       }),
 
     // Phase 1 actions
@@ -347,6 +351,10 @@ export const useTemplateSettingsStore = create<TemplateSettingsStore>(
           [key]: { ...state.sectionBadgeConfig?.[key], ...partial },
         },
       })),
+
+    setPage2HeaderVisible: (page2HeaderVisible) => set({ page2HeaderVisible }),
+
+    setPage1TitleVisible: (page1TitleVisible) => set({ page1TitleVisible }),
   })
 );
 
@@ -384,6 +392,8 @@ export function extractSettings(state: TemplateSettingsStore): TemplateSettings 
     subSectionTitles: state.subSectionTitles,
     subSectionColors: state.subSectionColors,
     sectionBadgeConfig: state.sectionBadgeConfig,
+    page2HeaderVisible: state.page2HeaderVisible,
+    page1TitleVisible: state.page1TitleVisible,
   };
 }
 
