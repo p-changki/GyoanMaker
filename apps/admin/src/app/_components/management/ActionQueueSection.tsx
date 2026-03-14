@@ -9,22 +9,28 @@ interface PendingUser {
   createdAt: string;
 }
 
-interface PaidNotAppliedOrder {
+interface OrderItem {
   orderId: string;
   email: string;
   orderName: string;
   amount: number;
   createdAt: string;
+  checkoutFlow?: string;
+  depositorName?: string;
 }
 
 export default function ActionQueueSection() {
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
-  const [paidNotAppliedOrders, setPaidNotAppliedOrders] = useState<PaidNotAppliedOrder[]>([]);
+  const [paidNotAppliedOrders, setPaidNotAppliedOrders] = useState<OrderItem[]>([]);
+  const [awaitingDepositOrders, setAwaitingDepositOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [updating, setUpdating] = useState<string | null>(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [approving, setApproving] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [rejectOrderTarget, setRejectOrderTarget] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [bulkRejectConfirm, setBulkRejectConfirm] = useState(false);
@@ -43,8 +49,9 @@ export default function ActionQueueSection() {
         setPendingUsers(allUsers.filter((u) => u.status === "pending"));
       }
       if (ordersRes.status === "fulfilled") {
-        const allOrders = (ordersRes.value as { orders: (PaidNotAppliedOrder & { status: string })[] }).orders ?? [];
+        const allOrders = (ordersRes.value as { orders: (OrderItem & { status: string })[] }).orders ?? [];
         setPaidNotAppliedOrders(allOrders.filter((o) => o.status === "paid_not_applied").slice(0, 20));
+        setAwaitingDepositOrders(allOrders.filter((o) => o.status === "awaiting_deposit").slice(0, 20));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "데이터 로딩 실패");
@@ -147,6 +154,47 @@ export default function ActionQueueSection() {
     }
   };
 
+  const handleApproveOrder = async (orderId: string) => {
+    setApproving(orderId);
+    try {
+      const res = await fetch("/api/billing/bank-transfer/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: { message?: string } })?.error?.message ?? "승인 실패");
+      }
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "승인 실패");
+    } finally {
+      setApproving(null);
+    }
+  };
+
+  const handleRejectOrder = async (orderId: string) => {
+    setRejecting(orderId);
+    try {
+      const res = await fetch("/api/billing/bank-transfer/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: { message?: string } })?.error?.message ?? "거절 실패");
+      }
+      setRejectOrderTarget(null);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "거절 실패");
+    } finally {
+      setRejecting(null);
+    }
+  };
+
   const toggleSelect = (email: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -167,7 +215,7 @@ export default function ActionQueueSection() {
     }
   };
 
-  const hasActions = pendingUsers.length > 0 || paidNotAppliedOrders.length > 0;
+  const hasActions = pendingUsers.length > 0 || paidNotAppliedOrders.length > 0 || awaitingDepositOrders.length > 0;
 
   if (loading) {
     return (
@@ -285,6 +333,58 @@ export default function ActionQueueSection() {
         </div>
       )}
 
+      {/* Awaiting Deposit Orders (Bank Transfer) */}
+      {awaitingDepositOrders.length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded-2xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-purple-200">
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center">
+                <span className="w-2 h-2 rounded-full bg-purple-500" />
+              </span>
+              <p className="text-sm font-bold text-purple-800">
+                입금 대기 ({awaitingDepositOrders.length}건)
+              </p>
+            </div>
+          </div>
+          <div className="divide-y divide-purple-100">
+            {awaitingDepositOrders.map((order) => (
+              <div key={order.orderId} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{order.email}</p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {order.orderName} · ₩{order.amount.toLocaleString()}
+                    {order.depositorName && ` · 입금자: ${order.depositorName}`}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {new Date(order.createdAt).toLocaleDateString("ko-KR")}
+                  </p>
+                </div>
+                {approving === order.orderId ? (
+                  <div className="w-5 h-5 border-2 border-gray-200 border-t-green-500 rounded-full animate-spin shrink-0" />
+                ) : (
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleApproveOrder(order.orderId)}
+                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      승인
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRejectOrderTarget(order.orderId)}
+                      className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors"
+                    >
+                      거절
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Paid Not Applied Orders */}
       {paidNotAppliedOrders.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-2xl overflow-hidden">
@@ -350,6 +450,21 @@ export default function ActionQueueSection() {
           setBulkRejectConfirm(false);
         }}
         onCancel={() => setBulkRejectConfirm(false)}
+      />
+
+      {/* Order reject confirmation */}
+      <ConfirmModal
+        open={rejectOrderTarget !== null}
+        title="주문 거절"
+        description={`주문 ${rejectOrderTarget?.slice(0, 12) ?? ""}… 을 거절하시겠습니까? 거절 시 사용자에게 알림이 전송됩니다.`}
+        confirmLabel="거절"
+        variant="danger"
+        loading={rejecting === rejectOrderTarget}
+        onConfirm={async () => {
+          if (!rejectOrderTarget) return;
+          await handleRejectOrder(rejectOrderTarget);
+        }}
+        onCancel={() => setRejectOrderTarget(null)}
       />
     </div>
   );

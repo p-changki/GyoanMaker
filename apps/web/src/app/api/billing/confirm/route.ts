@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
 import { confirmTossPayment, TossPaymentError } from "@/lib/payment";
-import { addTopUpCredits, changePlan } from "@/lib/subscription";
+import { addTopUpCredits, changePlan, schedulePlanChange } from "@/lib/subscription";
 import { sendAdminPurchaseNotificationEmail } from "@/lib/email";
 import { billingConfirmLimiter } from "@/lib/rate-limit";
 import {
@@ -367,7 +367,12 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      subscriptionResult = await changePlan(email, order.planId);
+      if ((order as { scheduled?: boolean }).scheduled) {
+        // Scheduled downgrade: defer plan application to current period end
+        subscriptionResult = await schedulePlanChange(email, order.planId);
+      } else {
+        subscriptionResult = await changePlan(email, order.planId);
+      }
     }
 
     if (orderType === "topup") {
@@ -407,6 +412,7 @@ export async function POST(req: NextRequest) {
     }
 
     const confirmedAt = new Date().toISOString();
+    const isScheduled = !!(order as { scheduled?: boolean }).scheduled;
     const billingOrderPayload = {
       ...order,
       type: orderType,
@@ -419,6 +425,7 @@ export async function POST(req: NextRequest) {
       approvedAt: confirmed.approvedAt,
       refundStatus: order.refundStatus ?? "none",
       refundAmount: order.refundAmount ?? 0,
+      ...(isScheduled ? { scheduled: true, scheduledApplyAt: (subscriptionResult as { planPendingApplyAt?: string | null })?.planPendingApplyAt ?? null } : {}),
       updatedAt: confirmedAt,
     };
 

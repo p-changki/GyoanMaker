@@ -115,10 +115,10 @@ function BillingPageContent() {
 
       {/* Tab content */}
       {activeTab === "plan" && (
-        <PlanSection currentPlan={currentPlan} targetPlan={targetPlan} />
+        <PlanSection currentPlan={currentPlan} currentPeriodEndAt={periodEndAt} targetPlan={targetPlan} />
       )}
       {activeTab === "topup" && <TopUpSection />}
-      {activeTab === "bank" && <BankTransferSection />}
+      {activeTab === "bank" && <BankTransferSection currentPlan={currentPlan} currentPeriodEndAt={periodEndAt} />}
     </div>
   );
 }

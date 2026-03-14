@@ -30,6 +30,7 @@ interface TossPaymentButtonProps {
   label: string;
   className?: string;
   disabled?: boolean;
+  scheduled?: boolean;
 }
 
 function resolveErrorMessage(payload: unknown, fallback: string): string {
@@ -76,6 +77,7 @@ export default function TossPaymentButton({
   label,
   className,
   disabled,
+  scheduled,
 }: TossPaymentButtonProps) {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
@@ -117,6 +119,7 @@ export default function TossPaymentButton({
           planId,
           packageId,
           checkoutFlow,
+          ...(scheduled ? { scheduled: true } : {}),
         }),
       });
 

@@ -19,6 +19,7 @@ interface InitCheckoutBody {
   planId?: PlanId;
   packageId?: TopUpPackageId;
   checkoutFlow?: CheckoutFlow;
+  scheduled?: boolean;
 }
 
 function isCheckoutFlow(value: unknown): value is CheckoutFlow {
@@ -221,6 +222,7 @@ export async function POST(req: NextRequest) {
     refundAmount: 0,
     ...(planId ? { planId } : {}),
     ...(packageId ? { packageId } : {}),
+    ...(body.scheduled && body.type === "plan" ? { scheduled: true } : {}),
   };
 
   const pendingOrderRef = getDb().collection("pending_orders").doc(orderId);
