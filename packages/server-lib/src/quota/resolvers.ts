@@ -91,11 +91,25 @@ function normalizeCreditArray(entries: CreditEntry[] | undefined, now: Date): {
       continue;
     }
 
-    const normalized: CreditEntry = { remaining, purchasedAt, expiresAt };
+    const total =
+      typeof entry.total === "number" && Number.isFinite(entry.total) && entry.total > 0
+        ? entry.total
+        : undefined;
+    const orderId = typeof entry.orderId === "string" && entry.orderId ? entry.orderId : undefined;
+
+    const normalized: CreditEntry = {
+      remaining,
+      purchasedAt,
+      expiresAt,
+      ...(total !== undefined ? { total } : {}),
+      ...(orderId !== undefined ? { orderId } : {}),
+    };
     if (
       normalized.remaining !== entry.remaining ||
       normalized.purchasedAt !== entry.purchasedAt ||
-      normalized.expiresAt !== entry.expiresAt
+      normalized.expiresAt !== entry.expiresAt ||
+      normalized.total !== entry.total ||
+      normalized.orderId !== entry.orderId
     ) {
       changed = true;
     }
