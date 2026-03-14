@@ -20,8 +20,9 @@ export async function GET() {
     return NextResponse.json({ orders });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/billing/orders] Failed to fetch orders: ${message}`);
     return NextResponse.json(
-      { error: { code: "ORDERS_FETCH_ERROR", message } },
+      { error: { code: "ORDERS_FETCH_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

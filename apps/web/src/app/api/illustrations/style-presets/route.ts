@@ -37,8 +37,9 @@ export async function GET() {
     return NextResponse.json({ presets });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/style-presets] GET failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "STYLE_PRESET_LIST_ERROR", message } },
+      { error: { code: "STYLE_PRESET_LIST_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }
@@ -80,8 +81,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ preset }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/style-presets] POST failed: ${message}`);
     return NextResponse.json(
-      { error: { code: "STYLE_PRESET_SAVE_ERROR", message } },
+      { error: { code: "STYLE_PRESET_SAVE_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

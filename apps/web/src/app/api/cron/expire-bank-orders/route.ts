@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`[cron/expire-bank-orders] ${message}`);
     return NextResponse.json(
-      { error: { code: "CRON_ERROR", message } },
+      { error: { code: "CRON_ERROR", message: "Internal server error" } },
       { status: 500 }
     );
   }

@@ -36,11 +36,12 @@ export async function GET(
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/jobs/${jobId}] GET failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_JOB_GET_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }

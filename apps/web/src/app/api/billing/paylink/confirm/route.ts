@@ -117,11 +117,12 @@ export async function POST(req: NextRequest) {
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/billing/paylink/confirm] Failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "PAYLINK_CONFIRM_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }

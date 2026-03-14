@@ -225,11 +225,12 @@ export async function POST(req: NextRequest) {
     }
 
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`[api/illustrations/profile/sample] Failed: ${message}`);
     return NextResponse.json(
       {
         error: {
           code: "ILLUSTRATION_SAMPLE_ERROR",
-          message,
+          message: "Internal server error",
         },
       },
       { status: 500 }
