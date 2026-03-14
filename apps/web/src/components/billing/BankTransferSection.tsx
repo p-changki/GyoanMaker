@@ -218,7 +218,7 @@ export default function BankTransferSection() {
               <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
                 {/* Plan group */}
                 <p className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                  이용권 (30일)
+                  이용권 (30일) · VAT 포함
                 </p>
                 {PLAN_OPTIONS.map((opt) => (
                   <button
@@ -243,7 +243,7 @@ export default function BankTransferSection() {
 
                 {/* Topup group */}
                 <p className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                  크레딧 충전 (90일)
+                  크레딧 충전 (90일) · VAT 포함
                 </p>
                 {TOPUP_OPTIONS.map((opt) => (
                   <button
@@ -613,7 +613,7 @@ export default function BankTransferSection() {
             사업자등록번호, 상호, 대표자명, 이메일을 함께 기재해주세요.
           </li>
           <li>
-            VAT(부가가치세)는 별도이며, 결제 금액에 포함되어 있지 않습니다.
+            표시 금액은 VAT(부가가치세) 포함 금액입니다.
           </li>
         </ul>
       </div>

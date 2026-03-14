@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { applyPaylinkOrder } from "@/lib/paylink-confirm";
 import { TossPaymentError } from "@/lib/payment";
+import { paylinkCallbackLimiter } from "@/lib/rate-limit";
 
 interface PaylinkCallbackPayload {
   orderNo?: string;
@@ -24,6 +25,11 @@ export async function POST(req: NextRequest) {
 
   if (payStatus && !PAYLINK_COMPLETED_STATUSES.has(payStatus)) {
     return NextResponse.json({ ok: true, ignored: `status_${payStatus}` });
+  }
+
+  // Rate limit per orderId to prevent callback replay flooding
+  if (!paylinkCallbackLimiter.check(orderId)) {
+    return NextResponse.json({ ok: true, ignored: "rate_limited" });
   }
 
   try {

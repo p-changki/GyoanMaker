@@ -46,3 +46,21 @@ export const signInLimiter = createRateLimiter({
   windowMs: 60_000,
   max: 5,
 });
+
+/** Billing confirm: 5 attempts per minute per user */
+export const billingConfirmLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 5,
+});
+
+/** Billing checkout init: 10 attempts per minute per user */
+export const billingCheckoutInitLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 10,
+});
+
+/** Paylink callback: 10 attempts per minute per orderId */
+export const paylinkCallbackLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 10,
+});
