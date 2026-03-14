@@ -20,7 +20,8 @@ export const authConfig = {
         email: { label: "\uc774\uba54\uc77c", type: "email" },
         password: { label: "\ube44\ubc00\ubc88\ud638", type: "password" },
       },
-      authorize(credentials) {
+      async authorize(credentials) {
+        const { timingSafeEqual } = await import("crypto");
         const raw = process.env.TEMP_ACCOUNTS ?? "";
         const pairs = raw.split(",").map((s) => s.trim()).filter(Boolean);
         for (const pair of pairs) {
@@ -28,7 +29,12 @@ export const authConfig = {
           if (colonIdx === -1) continue;
           const email = pair.slice(0, colonIdx).trim();
           const password = pair.slice(colonIdx + 1).trim();
-          if (credentials?.email === email && credentials?.password === password) {
+          const input = String(credentials?.password ?? "");
+          if (
+            credentials?.email === email &&
+            input.length === password.length &&
+            timingSafeEqual(Buffer.from(input), Buffer.from(password))
+          ) {
             return { id: email, email, name: email.split("@")[0] };
           }
         }

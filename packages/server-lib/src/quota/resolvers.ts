@@ -15,10 +15,6 @@ import {
   type UserDocLike,
 } from "./types";
 
-function isPositiveNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value > 0;
-}
-
 export function toNonNegativeInt(value: unknown, fallback = 0): number {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return fallback;
@@ -58,17 +54,11 @@ function getLegacyMonthKey(data: UserDocLike): string {
 }
 
 function getFallbackModelLimit(
-  data: UserDocLike,
+  _data: UserDocLike,
   planTier: PlanId,
   model: QuotaModel
 ): number {
-  const planLimit = model === "flash" ? PLANS[planTier].flashLimit : PLANS[planTier].proLimit;
-  const legacyMonthlyLimit = data.quota?.monthlyLimit;
-
-  if (isPositiveNumber(legacyMonthlyLimit)) {
-    return Math.max(planLimit, Math.floor(legacyMonthlyLimit));
-  }
-  return planLimit;
+  return model === "flash" ? PLANS[planTier].flashLimit : PLANS[planTier].proLimit;
 }
 
 function normalizeCreditArray(entries: CreditEntry[] | undefined, now: Date): {
@@ -134,7 +124,7 @@ function normalizeModelQuota(
   legacyUsed: number
 ): { quota: UserQuota["flash"]; changed: boolean } {
   const rawLimit = toNonNegativeInt(raw?.monthlyLimit, fallbackLimit);
-  const monthlyLimit = rawLimit > 0 ? rawLimit : fallbackLimit;
+  const monthlyLimit = Math.max(rawLimit, fallbackLimit);
   const rawKey = raw?.monthKeyKst;
   const isSamePeriod = rawKey === periodKey;
   const usedFromRaw = toNonNegativeInt(raw?.used, 0);
@@ -415,12 +405,7 @@ export function buildPersistPayload(state: NormalizedUserState) {
     plan: state.plan,
     quota: {
       ...state.quota,
-      // Legacy compatibility fields
       dailyLimit: DEFAULT_QUOTA.dailyLimit,
-      monthlyLimit: Math.max(
-        state.quota.flash.monthlyLimit,
-        state.quota.pro.monthlyLimit
-      ),
     },
     credits: state.credits,
 

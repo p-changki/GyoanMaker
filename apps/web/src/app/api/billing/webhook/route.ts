@@ -66,7 +66,24 @@ async function revertConfirmedOrder(order: PendingOrder) {
   const orderType = normalizeOrderType((order as { type?: unknown }).type);
 
   if (orderType === "plan") {
-    await changePlan(email, "free");
+    // Skip revert if a newer plan has been activated since this order
+    const userSnap = await getDb().collection("users").doc(email).get();
+    const currentPeriodStart = userSnap.data()?.plan?.currentPeriodStartAt;
+    const orderConfirmedAt = (order as { confirmedAt?: string }).confirmedAt;
+
+    if (
+      typeof currentPeriodStart === "string" &&
+      typeof orderConfirmedAt === "string" &&
+      new Date(currentPeriodStart).getTime() > new Date(orderConfirmedAt).getTime()
+    ) {
+      console.warn("[webhook] skipping plan revert — newer plan active", {
+        orderId: order.orderId,
+        orderConfirmedAt,
+        currentPeriodStart,
+      });
+    } else {
+      await changePlan(email, "free");
+    }
   }
 
   if (orderType === "topup" && order.orderId) {

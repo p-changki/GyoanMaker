@@ -237,6 +237,10 @@ export async function POST(req: NextRequest) {
     const userEmail = session?.user?.email;
     const passageCount = Array.isArray(passages) ? passages.length : 1;
 
+    // TODO(billing): TOCTOU race — quota checked here but Cloud Run call
+    // takes 30+ seconds before incrementUsage. Concurrent requests can both
+    // pass. assertCanConsume in transaction prevents credit over-spend, but
+    // AI API cost is already incurred. Consider pre-reserving quota.
     if (userEmail) {
       await expirePlanIfNeeded(userEmail);
       const quota = await getQuotaStatus(userEmail);

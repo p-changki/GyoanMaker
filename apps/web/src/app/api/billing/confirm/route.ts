@@ -90,9 +90,6 @@ async function acquirePendingOrderForConfirm(
       return { kind: "already_failed" };
     }
 
-    // paid_not_applied: payment succeeded but plan/credits not applied — allow retry
-    const isRetry = orderDoc.status === "paid_not_applied";
-
     if (orderDoc.amount !== amount) {
       return { kind: "amount_mismatch" };
     }
@@ -101,7 +98,7 @@ async function acquirePendingOrderForConfirm(
       return { kind: "payment_key_mismatch" };
     }
 
-    if (!isRetry && hasRecentConfirmingLock(orderDoc.confirmingAt)) {
+    if (hasRecentConfirmingLock(orderDoc.confirmingAt)) {
       return { kind: "in_progress" };
     }
 
