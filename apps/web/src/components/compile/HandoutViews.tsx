@@ -41,6 +41,13 @@ import { useTemplateFontLoader } from "./useTemplateFontLoader";
 import { updateSentenceText } from "@/lib/sectionUpdaters";
 import SortableSection from "./SortableSection";
 
+/** Map Tailwind-style badgeShape values to CSS borderRadius (purge-safe) */
+const BADGE_SHAPE_RADIUS: Record<string, string> = {
+  "rounded-full": "9999px",
+  "rounded-lg": "8px",
+  "rounded-none": "0",
+};
+
 export const ExtendedVocabLayoutContext = createContext(false);
 
 function useTheme() {
@@ -328,7 +335,7 @@ export function ParsedHandoutViewPage1({
                   </div>
                 )}
                 <div
-                  className={`flex w-fit items-center justify-center font-bold border ${badgeShape} relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
+                  className={`flex w-fit items-center justify-center font-bold border relative z-10 ${pageNum === 1 ? "-ml-3" : ""}`}
                   style={{
                     color: p1TitleColor,
                     borderColor: p1TitleColor,
@@ -340,6 +347,7 @@ export function ParsedHandoutViewPage1({
                     paddingRight: `${badgePaddingX}px`,
                     letterSpacing: "0.01em",
                     fontFamily: p1BadgeFontFamily,
+                    borderRadius: BADGE_SHAPE_RADIUS[badgeShape] ?? "9999px",
                   }}
                 >
                   <EditableAnalysisTitle passageId={section.passageId} />
