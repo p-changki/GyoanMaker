@@ -8,8 +8,16 @@ import {
   type PlanId,
   type TopUpPackageId,
 } from "@gyoanmaker/shared/plans";
+import PlanUpgradeModal from "./PlanUpgradeModal";
 
 type ProductValue = `plan:${PlanId}` | `topup:${TopUpPackageId}`;
+
+const TIER_ORDER: Record<PlanId, number> = {
+  free: 0,
+  basic: 1,
+  standard: 2,
+  pro: 3,
+};
 
 interface ProductOption {
   value: ProductValue;
@@ -65,7 +73,15 @@ function parseProductValue(value: string): {
   return null;
 }
 
-export default function BankTransferSection() {
+interface BankTransferSectionProps {
+  currentPlan?: PlanId;
+  currentPeriodEndAt?: string | null;
+}
+
+export default function BankTransferSection({
+  currentPlan = "free",
+  currentPeriodEndAt = null,
+}: BankTransferSectionProps) {
   const [selectedProduct, setSelectedProduct] = useState<string>("");
   const [depositorName, setDepositorName] = useState("");
   const [receiptType, setReceiptType] = useState<"none" | "cash_receipt" | "tax_invoice">("none");
@@ -90,6 +106,10 @@ export default function BankTransferSection() {
   } | null>(null);
 
   const [copied, setCopied] = useState(false);
+  const [planChangeWarning, setPlanChangeWarning] = useState<{
+    direction: "upgrade" | "downgrade";
+    targetPlan: PlanId;
+  } | null>(null);
 
   const handleCopyAccount = useCallback(async () => {
     try {
@@ -113,7 +133,12 @@ export default function BankTransferSection() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmit = async () => {
+  const hasActivePeriod =
+    currentPlan !== "free" &&
+    !!currentPeriodEndAt &&
+    new Date(currentPeriodEndAt).getTime() > Date.now();
+
+  const submitRequest = async () => {
     const parsed = parseProductValue(selectedProduct);
     if (!parsed || !depositorName.trim()) return;
 
@@ -161,6 +186,28 @@ export default function BankTransferSection() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = () => {
+    const parsed = parseProductValue(selectedProduct);
+    if (!parsed || !depositorName.trim()) return;
+
+    // Only check plan changes (not topup)
+    if (parsed.type === "plan" && parsed.planId && hasActivePeriod) {
+      const targetTier = TIER_ORDER[parsed.planId];
+      const currentTier = TIER_ORDER[currentPlan];
+
+      if (targetTier < currentTier) {
+        setPlanChangeWarning({ direction: "downgrade", targetPlan: parsed.planId });
+        return;
+      }
+      if (targetTier > currentTier) {
+        setPlanChangeWarning({ direction: "upgrade", targetPlan: parsed.planId });
+        return;
+      }
+    }
+
+    submitRequest();
   };
 
   const isReceiptValid =
@@ -627,6 +674,102 @@ export default function BankTransferSection() {
         >
           dnsxj12345aa@gmail.com
         </a>
+      </div>
+
+      {/* Plan change warning modals */}
+      {planChangeWarning?.direction === "downgrade" && currentPeriodEndAt && (
+        <BankTransferDowngradeModal
+          currentPlan={currentPlan}
+          targetPlan={planChangeWarning.targetPlan}
+          currentPeriodEndAt={currentPeriodEndAt}
+          onConfirm={() => {
+            setPlanChangeWarning(null);
+            submitRequest();
+          }}
+          onCancel={() => setPlanChangeWarning(null)}
+        />
+      )}
+      {planChangeWarning?.direction === "upgrade" && currentPeriodEndAt && (
+        <PlanUpgradeModal
+          currentPlan={currentPlan}
+          targetPlan={planChangeWarning.targetPlan}
+          currentPeriodEndAt={currentPeriodEndAt}
+          onConfirm={() => {
+            setPlanChangeWarning(null);
+            submitRequest();
+          }}
+          onCancel={() => setPlanChangeWarning(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── My Bank Transfer Orders ──
+
+// ── Bank Transfer Downgrade Modal (no scheduled option) ──
+
+function getRemainingDays(periodEndAt: string): number {
+  const endMs = new Date(periodEndAt).getTime();
+  const nowMs = Date.now();
+  return Math.max(0, Math.ceil((endMs - nowMs) / (24 * 60 * 60 * 1000)));
+}
+
+function BankTransferDowngradeModal({
+  currentPlan,
+  targetPlan,
+  currentPeriodEndAt,
+  onConfirm,
+  onCancel,
+}: {
+  currentPlan: PlanId;
+  targetPlan: PlanId;
+  currentPeriodEndAt: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const remainingDays = getRemainingDays(currentPeriodEndAt);
+  const endDate = new Date(currentPeriodEndAt).toLocaleDateString("ko-KR");
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <h2 className="text-lg font-bold text-gray-900">플랜 변경 안내</h2>
+
+        <p className="mt-3 text-sm text-gray-600">
+          현재 <span className="font-semibold text-blue-600">{currentPlan.toUpperCase()}</span> 이용권이{" "}
+          <span className="font-semibold text-amber-600">{remainingDays}일</span> 남았습니다.
+          <br />
+          <span className="text-xs text-gray-400">만료일: {endDate}</span>
+        </p>
+
+        <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3">
+          <p className="text-sm text-amber-800">
+            {targetPlan.toUpperCase()}로 변경하면 현재 {currentPlan.toUpperCase()} 잔여 기간({remainingDays}일)이{" "}
+            <span className="font-semibold">소멸</span>되고, 관리자 승인 후 즉시 전환됩니다.
+          </p>
+        </div>
+
+        <p className="mt-3 text-xs text-gray-400">
+          무통장입금은 예약 전환을 지원하지 않습니다. 잔여 기간을 사용하려면 만료 후 신청해주세요.
+        </p>
+
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="flex-1 rounded-xl bg-amber-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-700"
+          >
+            즉시 전환 신청
+          </button>
+        </div>
       </div>
     </div>
   );

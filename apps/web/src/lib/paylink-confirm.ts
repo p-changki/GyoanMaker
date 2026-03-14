@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "./firebase-admin";
 import { fetchTossPaylinkStatus } from "./payment";
-import { addTopUpCredits, changePlan } from "./subscription";
+import { addTopUpCredits, changePlan, schedulePlanChange } from "./subscription";
 import { TOP_UP_PACKAGES, type PendingOrder } from "@gyoanmaker/shared/plans";
 
 const COLLECTION = "pending_orders";
@@ -183,7 +183,11 @@ export async function applyPaylinkOrder(
         throw new Error("Missing planId in paylink order.");
       }
 
-      await changePlan(order.email, order.planId);
+      if ((order as { scheduled?: boolean }).scheduled) {
+        await schedulePlanChange(order.email, order.planId);
+      } else {
+        await changePlan(order.email, order.planId);
+      }
     } else {
       if (!order.packageId) {
         await markOrderPaidNotApplied(orderId, "Missing packageId for top-up order.", status.payToken);

@@ -51,6 +51,8 @@ export interface PendingOrder {
   refundAmount?: number;
   depositorName?: string;
   approvedBy?: string;
+  /** When true, plan application is deferred to current period end */
+  scheduled?: boolean;
   /** 현금영수증/세금계산서 요청 */
   receiptType?: "none" | "cash_receipt" | "tax_invoice";
   receiptPhone?: string;
