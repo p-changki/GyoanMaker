@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "./firebase-admin";
 import { fetchTossPaylinkStatus } from "./payment";
-import { addTopUpCredits, changePlan } from "./subscription";
+import { addTopUpCredits, changePlan, schedulePlanChange } from "./subscription";
 import { TOP_UP_PACKAGES, type PendingOrder } from "@gyoanmaker/shared/plans";
 
 const COLLECTION = "pending_orders";
@@ -155,6 +155,13 @@ export async function applyPaylinkOrder(
   const { order } = acquired;
   const orderType = normalizeOrderType(order.type);
 
+  // Double-apply guard: check billing_orders for already-confirmed record
+  const billingSnap = await getDb().collection("billing_orders").doc(orderId).get();
+  if (billingSnap.exists && (billingSnap.data() as { status?: string })?.status === "confirmed") {
+    await clearConfirmingLock(orderId);
+    return { kind: "already_confirmed" };
+  }
+
   let status: Awaited<ReturnType<typeof fetchTossPaylinkStatus>>;
   try {
     status = await fetchTossPaylinkStatus({
@@ -183,7 +190,11 @@ export async function applyPaylinkOrder(
         throw new Error("Missing planId in paylink order.");
       }
 
-      await changePlan(order.email, order.planId);
+      if ((order as { scheduled?: boolean }).scheduled) {
+        await schedulePlanChange(order.email, order.planId);
+      } else {
+        await changePlan(order.email, order.planId);
+      }
     } else {
       if (!order.packageId) {
         await markOrderPaidNotApplied(orderId, "Missing packageId for top-up order.", status.payToken);

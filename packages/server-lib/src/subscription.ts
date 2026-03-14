@@ -137,6 +137,7 @@ export async function changePlan(
       {
         plan: nextPlan,
         planPendingTier: FieldValue.delete(),
+        planPendingApplyAt: FieldValue.delete(),
         billingKey: FieldValue.delete(),
         quota: upsertPlanLimits(data, targetPlan, periodKey),
         updatedAt: FieldValue.serverTimestamp(),
@@ -179,6 +180,7 @@ export async function changePlanManual(
       {
         plan: nextPlan,
         planPendingTier: FieldValue.delete(),
+        planPendingApplyAt: FieldValue.delete(),
         billingKey: FieldValue.delete(),
         quota: upsertPlanLimits(data, targetPlan, periodKey),
         updatedAt: FieldValue.serverTimestamp(),
@@ -191,13 +193,48 @@ export async function changePlanManual(
 }
 
 /**
+ * Schedule a plan change to take effect when the current period expires.
+ * Payment is already confirmed — only the plan application is deferred.
+ */
+export async function schedulePlanChange(
+  email: string,
+  targetPlan: PlanId
+): Promise<{ planPendingTier: PlanId; planPendingApplyAt: string | null }> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = (snap.data() ?? {}) as UserDocLike;
+    const plan = normalizePlan(data);
+
+    const applyAt = plan.currentPeriodEndAt ?? null;
+
+    tx.set(
+      docRef,
+      {
+        planPendingTier: targetPlan,
+        planPendingApplyAt: applyAt,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return { planPendingTier: targetPlan, planPendingApplyAt: applyAt };
+  });
+}
+
+/**
  * Lazily expires a plan if currentPeriodEndAt is in the past.
- * Returns true if the plan was expired and downgraded to free.
+ * If planPendingTier exists, applies that plan instead of free.
+ * Returns true if the plan was expired.
  */
 export async function expirePlanIfNeeded(email: string): Promise<boolean> {
   const key = email.toLowerCase();
   const snap = await getDb().collection(COLLECTION).doc(key).get();
-  const data = (snap.data() ?? {}) as UserDocLike;
+  const data = (snap.data() ?? {}) as UserDocLike & {
+    planPendingTier?: string;
+  };
   const plan = normalizePlan(data);
 
   if (plan.tier === "free") return false;
@@ -207,7 +244,12 @@ export async function expirePlanIfNeeded(email: string): Promise<boolean> {
   const periodEnd = new Date(plan.currentPeriodEndAt);
   if (now <= periodEnd) return false;
 
-  await changePlan(email, "free");
+  const pendingTier = data.planPendingTier;
+  if (pendingTier && pendingTier in PLANS) {
+    await changePlan(email, pendingTier as PlanId);
+  } else {
+    await changePlan(email, "free");
+  }
   return true;
 }
 

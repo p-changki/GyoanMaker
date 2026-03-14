@@ -2,6 +2,7 @@ export {
   getSubscription,
   changePlan,
   changePlanManual,
+  schedulePlanChange,
   expirePlanIfNeeded,
   addTopUpCredits,
   getSubscriptionExtended,
