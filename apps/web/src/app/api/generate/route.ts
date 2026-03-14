@@ -7,6 +7,7 @@ import {
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
 import { expirePlanIfNeeded } from "@/lib/subscription";
+import { getUserStatus } from "@/lib/users";
 import type { QuotaModel } from "@gyoanmaker/shared/plans";
 
 const MAX_WORDS_PER_PASSAGE = 400;
@@ -232,16 +233,25 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Quota check (requires authenticated user)
+    // Auth + approved check
     const session = await auth();
     const userEmail = session?.user?.email;
     const passageCount = Array.isArray(passages) ? passages.length : 1;
 
-    // TODO(billing): TOCTOU race — quota checked here but Cloud Run call
-    // takes 30+ seconds before incrementUsage. Concurrent requests can both
-    // pass. assertCanConsume in transaction prevents credit over-spend, but
-    // AI API cost is already incurred. Consider pre-reserving quota.
     if (userEmail) {
+      const status = await getUserStatus(userEmail);
+      if (status !== "approved") {
+        return jsonWithRequestId(
+          requestId,
+          { error: { code: "FORBIDDEN", message: "Account not approved." } },
+          { status: 403 }
+        );
+      }
+
+      // TODO(billing): TOCTOU race — quota checked here but Cloud Run call
+      // takes 30+ seconds before incrementUsage. Concurrent requests can both
+      // pass. assertCanConsume in transaction prevents credit over-spend, but
+      // AI API cost is already incurred. Consider pre-reserving quota.
       await expirePlanIfNeeded(userEmail);
       const quota = await getQuotaStatus(userEmail);
       const modelQuota = selectedModel === "flash" ? quota.flash : quota.pro;

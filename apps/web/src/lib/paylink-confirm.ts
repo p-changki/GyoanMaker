@@ -155,6 +155,13 @@ export async function applyPaylinkOrder(
   const { order } = acquired;
   const orderType = normalizeOrderType(order.type);
 
+  // Double-apply guard: check billing_orders for already-confirmed record
+  const billingSnap = await getDb().collection("billing_orders").doc(orderId).get();
+  if (billingSnap.exists && (billingSnap.data() as { status?: string })?.status === "confirmed") {
+    await clearConfirmingLock(orderId);
+    return { kind: "already_confirmed" };
+  }
+
   let status: Awaited<ReturnType<typeof fetchTossPaylinkStatus>>;
   try {
     status = await fetchTossPaylinkStatus({

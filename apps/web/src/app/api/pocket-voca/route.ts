@@ -7,6 +7,7 @@ import {
 } from "@/lib/quota";
 import { logUsage } from "@/lib/usageLog";
 import { expirePlanIfNeeded } from "@/lib/subscription";
+import { getUserStatus } from "@/lib/users";
 import type { QuotaModel } from "@gyoanmaker/shared/plans";
 
 // Vercel serverless function max duration (seconds). Must match CLOUDRUN_API_TIMEOUT_MS.
@@ -229,6 +230,15 @@ export async function POST(req: NextRequest) {
       requestId,
       { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
+    );
+  }
+
+  const userStatus = await getUserStatus(userEmail);
+  if (userStatus !== "approved") {
+    return jsonWithRequestId(
+      requestId,
+      { error: { code: "FORBIDDEN", message: "Account not approved." } },
+      { status: 403 }
     );
   }
 
