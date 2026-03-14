@@ -341,6 +341,15 @@ export async function POST(req: NextRequest) {
 
   // Toss confirm succeeded — now apply plan/credits
   try {
+    // Idempotency: if this order was already applied (retry scenario), skip re-application
+    if (isRetry) {
+      const existingOrder = await getDb().collection("billing_orders").doc(orderId).get();
+      if (existingOrder.exists && existingOrder.data()?.status === "confirmed") {
+        await orderRef.set({ confirmingAt: FieldValue.delete() }, { merge: true });
+        return NextResponse.json({ ok: true, orderId, type: orderType, alreadyApplied: true });
+      }
+    }
+
     let subscriptionResult: unknown;
     let creditsResult: unknown;
 

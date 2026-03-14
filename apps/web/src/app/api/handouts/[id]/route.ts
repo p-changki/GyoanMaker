@@ -154,7 +154,7 @@ export async function PATCH(
       console.error(`[api/handouts/${id}] Workbook passages: ${workbook.passages?.length}, model: ${workbook.model}`);
     }
     return NextResponse.json(
-      { error: { code: "UPDATE_ERROR", message: `Failed to update handout: ${message}` } },
+      { error: { code: "UPDATE_ERROR", message: "Failed to update handout." } },
       { status: 500 }
     );
   }
