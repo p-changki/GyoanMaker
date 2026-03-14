@@ -107,6 +107,17 @@ export const middleware = auth((req) => {
     return NextResponse.redirect(new URL("/pending", req.url));
   }
 
+  // Admin 경로: ADMIN_EMAILS에 포함된 사용자만 접근 허용
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    if (!adminEmails.includes(session.user.email?.toLowerCase() ?? "")) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
   return NextResponse.next();
 });
 
