@@ -20,7 +20,13 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.replace("Bearer ", "");
 
-  if (token !== cronSecret) {
+  const { timingSafeEqual } = await import("crypto");
+  const tokenBuf = Buffer.from(token);
+  const secretBuf = Buffer.from(cronSecret);
+  if (
+    tokenBuf.length !== secretBuf.length ||
+    !timingSafeEqual(tokenBuf, secretBuf)
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
