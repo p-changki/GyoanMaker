@@ -5,6 +5,7 @@ import { getDb } from "@/lib/firebase-admin";
 import { confirmTossPayment, TossPaymentError } from "@/lib/payment";
 import { addTopUpCredits, changePlan } from "@/lib/subscription";
 import { sendAdminPurchaseNotificationEmail } from "@/lib/email";
+import { billingConfirmLimiter } from "@/lib/rate-limit";
 import {
   type PendingOrder,
   TOP_UP_PACKAGES,
@@ -170,6 +171,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: { code: "UNAUTHORIZED", message: "Authentication required." } },
       { status: 401 }
+    );
+  }
+
+  if (!billingConfirmLimiter.check(email)) {
+    return NextResponse.json(
+      { error: { code: "RATE_LIMITED", message: "Too many requests. Please try again later." } },
+      { status: 429 }
     );
   }
 
