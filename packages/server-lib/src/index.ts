@@ -92,6 +92,12 @@ export {
   getIllustrationPreset,
 } from "./illustration-presets";
 
+// Telegram
+export {
+  sendBankTransferTelegramNotification,
+  type BankTransferTelegramInfo,
+} from "./telegram";
+
 // Illustration Samples
 export {
   listIllustrationSamples,
