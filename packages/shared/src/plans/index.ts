@@ -199,6 +199,8 @@ export function getCreditExpiryIso(
   purchasedAt: Date = new Date(),
   validDays: number = CREDIT_VALID_DAYS
 ): string {
-  const expiresAt = new Date(purchasedAt.getTime() + validDays * ONE_DAY_MS);
-  return expiresAt.toISOString();
+  // Expire at KST 23:59:59.999 on the last valid day (avoids early expiry for Korean users)
+  const rawExpiry = new Date(purchasedAt.getTime() + validDays * ONE_DAY_MS);
+  const kstDate = rawExpiry.toLocaleDateString("en-CA", { timeZone: KST_TIME_ZONE });
+  return new Date(`${kstDate}T23:59:59.999+09:00`).toISOString();
 }
