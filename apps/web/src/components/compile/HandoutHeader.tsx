@@ -18,6 +18,13 @@ import SectionNumberBadge from "./SectionNumberBadge";
 import { EditableText } from "./EditableText";
 import { useHandoutStore } from "@/stores/useHandoutStore";
 
+/** Map Tailwind-style badgeShape values to CSS borderRadius (purge-safe) */
+const BADGE_SHAPE_RADIUS: Record<string, string> = {
+  "rounded-full": "9999px",
+  "rounded-lg": "8px",
+  "rounded-none": "0",
+};
+
 function useTheme() {
   const preset = useTemplateSettingsStore((s) => s.themePreset);
   const useCustom = useTemplateSettingsStore((s) => s.useCustomTheme);
@@ -124,6 +131,7 @@ export function HandoutHeader({
   const hBadgeShape = headerBadgeStyle.badgeShape || "rounded-none";
   const hBadgeHeight = headerBadgeStyle.badgeHeight || 28;
   const hBadgePaddingX = headerBadgeStyle.badgePaddingX || 16;
+  const hBadgeBorderRadius = BADGE_SHAPE_RADIUS[hBadgeShape] ?? "0";
 
   // Continuation pages: minimal header (badge only, no logo)
   if (pageNum > 1) {
@@ -141,7 +149,7 @@ export function HandoutHeader({
         <div className="flex items-end justify-end pb-4 pt-4">
           <HeaderClickZone focusKey="header-badge" label="배지">
             <div
-              className={`shrink-0 whitespace-nowrap translate-y-4 ${hBadgeShape}`}
+              className="shrink-0 whitespace-nowrap translate-y-4"
               style={{
                 backgroundColor: badgeBg,
                 color: badgeTextColor,
@@ -154,6 +162,7 @@ export function HandoutHeader({
                 display: "flex",
                 width: "fit-content",
                 alignItems: "center",
+                borderRadius: hBadgeBorderRadius,
                 borderTop:
                   headerBadgeStyle.borderStyle &&
                   headerBadgeStyle.borderStyle !== "none"
@@ -257,7 +266,7 @@ export function HandoutHeader({
           className="shrink-0"
         >
           <div
-            className={`whitespace-nowrap translate-y-4 relative z-20 ${hBadgeShape}`}
+            className="whitespace-nowrap translate-y-4 relative z-20"
             style={{
               backgroundColor: badgeBg,
               color: badgeTextColor,
@@ -270,6 +279,7 @@ export function HandoutHeader({
               display: "flex",
               width: "fit-content",
               alignItems: "center",
+              borderRadius: hBadgeBorderRadius,
               borderTop:
                 headerBadgeStyle.borderStyle &&
                 headerBadgeStyle.borderStyle !== "none"
