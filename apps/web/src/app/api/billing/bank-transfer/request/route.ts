@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getDb } from "@/lib/firebase-admin";
 import { sendOrderReceivedEmail, sendAdminBankTransferNotificationEmail } from "@/lib/email";
+import { sendBankTransferTelegramNotification } from "@gyoanmaker/server-lib";
 import {
   type PendingOrder,
   type PlanId,
@@ -223,6 +224,16 @@ export async function POST(req: NextRequest) {
     receiptType,
     ...(receiptPhone ? { receiptPhone } : {}),
     ...(taxInvoiceInfo ? { taxInvoiceInfo } : {}),
+  }).catch(() => {});
+
+  // Fire-and-forget: Telegram notification
+  sendBankTransferTelegramNotification({
+    buyerEmail: email,
+    orderId,
+    orderName,
+    amount,
+    depositorName,
+    receiptType,
   }).catch(() => {});
 
   return NextResponse.json({
