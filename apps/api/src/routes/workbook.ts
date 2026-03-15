@@ -2,12 +2,23 @@ import { Router, type RequestHandler, type Response } from "express";
 import { requireApiKey } from "../middleware/auth";
 import {
   type PassageWorkbook,
+  type WorkbookStep3Item,
   generateWorkbookForPassage,
   type WorkbookTokenUsage,
 } from "../services/workbookGenerator";
 import { createGeminiClient } from "../services/gemini";
 import { getSystemPrompt } from "../services/prompt";
-import { workbookBodySchema } from "../validation/workbook";
+import { workbookBodySchema, validateStep3Item, type WorkbookWarning } from "../validation/workbook";
+
+/** Extends WorkbookStep3Item with optional warnings attached after validation. */
+interface Step3ItemWithWarnings extends WorkbookStep3Item {
+  warnings?: WorkbookWarning[];
+}
+
+/** PassageWorkbook variant where step3Items carry optional warnings. */
+interface PassageWorkbookWithWarnings extends Omit<PassageWorkbook, "step3Items"> {
+  step3Items: Step3ItemWithWarnings[];
+}
 
 const DEFAULT_FLASH_CONCURRENCY = 3;
 const DEFAULT_PRO_CONCURRENCY = 2;
@@ -55,21 +66,53 @@ function getWorkbookConcurrency(model: "flash" | "pro", passageCount: number): n
   return Math.min(configured, Math.max(1, passageCount));
 }
 
-function normalizePassages(passages: PassageWorkbook[]): PassageWorkbook[] {
+function enforceStep2Alternation(
+  template: string,
+  correct: string,
+  wrong: string,
+  questionNumber: number
+): string {
+  const isOdd = questionNumber % 2 === 1;
+  const bracketContent = isOdd
+    ? `[${correct} / ${wrong}]`
+    : `[${wrong} / ${correct}]`;
+  const swapped = template.replace(/\[[^\]]+\/[^\]]+\]/, bracketContent);
+  return swapped !== template ? swapped : template;
+}
+
+function normalizePassages(passages: PassageWorkbook[]): PassageWorkbookWithWarnings[] {
   let step2QuestionNumber = 1;
   let step3QuestionNumber = 1;
 
   return passages.map((passage, passageIndex) => ({
     ...passage,
-    step2Items: passage.step2Items.map((item) => ({
-      ...item,
-      questionNumber: step2QuestionNumber++,
-    })),
-    step3Items: passage.step3Items.map((item) => ({
-      ...item,
-      questionNumber: step3QuestionNumber++,
-      passageNumber: passageIndex + 1,
-    })),
+    step2Items: passage.step2Items.map((item) => {
+      const qNum = step2QuestionNumber++;
+      const choice = item.choices[0];
+      const finalTemplate = choice
+        ? enforceStep2Alternation(
+            item.sentenceTemplate,
+            choice.correct,
+            choice.wrong,
+            qNum
+          )
+        : item.sentenceTemplate;
+      return { ...item, questionNumber: qNum, sentenceTemplate: finalTemplate };
+    }),
+    step3Items: passage.step3Items.map((item, localIndex): Step3ItemWithWarnings => {
+      const normalized: Step3ItemWithWarnings = {
+        ...item,
+        questionNumber: step3QuestionNumber++,
+        passageNumber: passageIndex + 1,
+      };
+
+      // Merge generator-level warnings (e.g. fallback text) with quality check warnings.
+      // Items are never discarded — warnings are attached for the frontend to consume.
+      const qualityWarnings = validateStep3Item(normalized.paragraphs, localIndex);
+      const allWarnings = [...(item.warnings ?? []), ...qualityWarnings];
+
+      return allWarnings.length > 0 ? { ...normalized, warnings: allWarnings } : normalized;
+    }),
   }));
 }
 
