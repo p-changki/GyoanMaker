@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       if (checkoutFlow === "bank_transfer") {
         q = q.where("checkoutFlow", "==", "bank_transfer");
       } else if (checkoutFlow === "card") {
-        q = q.where("checkoutFlow", "==", null);
+        q = q.where("checkoutFlow", "in", ["widget", "paylink"]);
       }
       return q;
     }

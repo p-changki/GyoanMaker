@@ -99,11 +99,11 @@ export async function GET(req: NextRequest) {
 
     // checkoutFlow filter:
     // "bank_transfer" orders have checkoutFlow == "bank_transfer"
-    // "card" orders have checkoutFlow == null (not stored, treated as card)
+    // "card" orders have checkoutFlow == "widget" or "paylink"
     if (checkoutFlow === "bank_transfer") {
       query = query.where("checkoutFlow", "==", "bank_transfer");
     } else if (checkoutFlow === "card") {
-      query = query.where("checkoutFlow", "==", null);
+      query = query.where("checkoutFlow", "in", ["widget", "paylink"]);
     }
 
     // Date range filters on createdAt string field
