@@ -122,7 +122,8 @@ export default function WorkbookSheetsForCompile({
   }, [sortedPassages]);
 
   const step3Pages = useMemo(() => {
-    if (step3AllItems.length === 0) return [];
+    // Always render at least one STEP3 page so the empty state UI is reachable
+    if (step3AllItems.length === 0) return [[] as FlatStep3Item[]];
     const pages: FlatStep3Item[][] = [];
     pages.push(step3AllItems.slice(0, STEP3_FIRST_PAGE));
     let cursor = STEP3_FIRST_PAGE;
@@ -132,6 +133,11 @@ export default function WorkbookSheetsForCompile({
     }
     return pages;
   }, [step3AllItems]);
+
+  const defaultStep3PassageId = useMemo(
+    () => sortedPassages[0]?.passageId,
+    [sortedPassages],
+  );
 
   // Calculate continuous PDF order numbers
   const { step1Start, step2Start, step3Start, answerOrder } = useMemo(() => {
@@ -234,6 +240,7 @@ export default function WorkbookSheetsForCompile({
               <CompileStep3Content
                 items={pageItems}
                 startIndex={startIndex}
+                defaultPassageId={defaultStep3PassageId}
               />
             </WorkbookPageShell>
           </div>

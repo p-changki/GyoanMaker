@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { validateWorkbookOutput } from "../validation/workbook";
+import { validateWorkbookOutput, type WorkbookWarning } from "../validation/workbook";
 
 // NOTE: These types mirror @gyoanmaker/shared/types/workbook.ts.
 // API package uses moduleResolution: "Node" which cannot resolve
@@ -30,6 +30,8 @@ export interface WorkbookStep3Item {
   }[];
   options: string[][];
   answerIndex: number;
+  /** Generator-level warnings (e.g. fallback text used). Attached during normalization. */
+  warnings?: WorkbookWarning[];
 }
 
 export interface PassageWorkbook {
@@ -91,6 +93,28 @@ function is429Error(error: unknown): boolean {
       : "";
 
   return message.includes("429") || message.includes("RESOURCE_EXHAUSTED");
+}
+
+function fisherYatesShuffle<T>(arr: readonly T[]): T[] {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/** Ensure shuffled labels are NOT in alphabetical order (A-B-C never appears as correct answer). */
+function ensureNonAlphabetical(labels: readonly string[], maxRetries = 10): string[] {
+  const sortedKey = [...labels].sort().join("-");
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const result = fisherYatesShuffle(labels);
+    if (result.join("-") !== sortedKey) return result;
+  }
+
+  // Fallback: reverse (guaranteed non-alphabetical for 2+ items)
+  return [...labels].sort().reverse();
 }
 
 async function callWithRetry(ai: GoogleGenAI, config: object): Promise<unknown> {
@@ -315,25 +339,40 @@ function normalizeStep3Item(
       : sentences.slice(0, 2).join(" ").trim() || "Read the passage and choose the best order.";
 
   const labels = ["A", "B", "C", "D"];
+  // Support new segments format (v8+) with paragraphs fallback for backward compatibility
+  const rawSegments = Array.isArray(source.segments) ? source.segments : null;
   const rawParagraphs = Array.isArray(source.paragraphs) ? source.paragraphs : [];
-  const inferredType = source.type === "4p" || rawParagraphs.length >= 4 ? "4p" : "3p";
+  const rawItems = rawSegments ?? rawParagraphs;
+  const inferredType = source.type === "4p" || rawItems.length >= 4 ? "4p" : "3p";
   const desiredCount = inferredType === "4p" ? 4 : 3;
   const paragraphTexts = createParagraphTexts(sentences, desiredCount, intro);
 
-  // Build paragraphs from AI output (in original/correct content order)
+  // Build paragraphs from AI output (in original/correct content order).
+  // Track indices where fallback text is used so we can attach a generator warning.
+  // When using segments format, sort by order field to ensure correct reading sequence
+  const sortedRawItems = rawSegments
+    ? [...rawSegments].sort((a, b) => {
+        const orderA = isRecord(a) ? Number(a.order) || 0 : 0;
+        const orderB = isRecord(b) ? Number(b.order) || 0 : 0;
+        return orderA - orderB;
+      })
+    : rawParagraphs;
+
+  const fallbackIndices: number[] = [];
   const orderedParagraphs = Array.from({ length: desiredCount }, (_, index) => {
-    const candidate = isRecord(rawParagraphs[index]) ? rawParagraphs[index] : null;
-    const text = isNonEmptyString(candidate?.text)
-      ? candidate.text.trim()
-      : paragraphTexts[index];
-    return text;
+    const candidate = isRecord(sortedRawItems[index]) ? sortedRawItems[index] : null;
+    if (isNonEmptyString(candidate?.text)) {
+      return candidate.text.trim();
+    }
+    fallbackIndices.push(index);
+    return paragraphTexts[index];
   });
 
   // Shuffle label assignment so the correct order isn't always A-B-C.
   // AI tends to output segments in natural (correct) order, so without
   // shuffling, the answer is almost always the alphabetical sequence.
   const activeLabels = labels.slice(0, desiredCount);
-  const shuffledLabels = [...activeLabels].sort(() => Math.random() - 0.5);
+  const shuffledLabels = ensureNonAlphabetical(activeLabels);
 
   // Map: shuffled label → original content index
   // e.g. if shuffledLabels = ["C","A","B"], then label "C" gets content[0], "A" gets content[1], "B" gets content[2]
@@ -389,6 +428,17 @@ function normalizeStep3Item(
     (option) => option.join("-") === correctKey
   );
 
+  const generatorWarnings: WorkbookWarning[] =
+    fallbackIndices.length > 0
+      ? [
+          {
+            code: "FALLBACK_PARAGRAPH_TEXT",
+            message: `step3Items[${itemIndex}] used fallback sentence text for paragraph(s) at index(es) [${fallbackIndices.join(", ")}] because AI output was missing or invalid.`,
+            severity: "warning",
+          },
+        ]
+      : [];
+
   return {
     questionNumber: itemIndex + 1,
     passageNumber:
@@ -400,6 +450,7 @@ function normalizeStep3Item(
     paragraphs,
     options: finalOptions,
     answerIndex: answerIndex >= 0 ? answerIndex : 0,
+    ...(generatorWarnings.length > 0 ? { warnings: generatorWarnings } : {}),
   };
 }
 
@@ -408,6 +459,13 @@ function normalizeStep3Items(
   passageNumber: number,
   sentences: string[]
 ): WorkbookStep3Item[] {
+  // Code-level 8-sentence gate: passages with fewer than 8 sentences
+  // cannot produce a valid 3-segment question (intro 2 + 3 segments × min 2 = 8).
+  // This enforces the prompt instruction even if the AI ignores it.
+  if (sentences.length < 8) {
+    return [];
+  }
+
   const rawItems = Array.isArray(raw.step3Items) ? raw.step3Items : [];
   const candidates = rawItems
     .filter((item): item is Record<string, unknown> => isRecord(item))

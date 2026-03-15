@@ -13,6 +13,13 @@ export interface WorkbookStep2Item {
   answerKey: string[]; // choices.map((c) => c.correct)
 }
 
+/** STEP 3 품질 검수 경고 */
+export interface WorkbookWarning {
+  code: string; // e.g. "DUPLICATE_SEGMENT", "SHORT_SEGMENT", "LOW_COVERAGE", "UNBALANCED_LENGTH", "FALLBACK_PARAGRAPH_TEXT"
+  message: string; // human-readable description
+  severity: "warning" | "error";
+}
+
 /** STEP 3: 단락 배열 순서 문제 */
 export interface WorkbookStep3Item {
   questionNumber: number; // 문제 번호 (1-based)
@@ -25,6 +32,7 @@ export interface WorkbookStep3Item {
   }[];
   options: string[][]; // 5개 순서 배열
   answerIndex: number; // 정답 선택지 인덱스 (0-based, 0~4)
+  warnings?: WorkbookWarning[]; // backend validation warnings (optional)
 }
 
 /** 지문 1개의 워크북 데이터 */
