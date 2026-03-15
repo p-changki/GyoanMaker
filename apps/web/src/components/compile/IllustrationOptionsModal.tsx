@@ -129,7 +129,8 @@ export default function IllustrationOptionsModal({
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 px-4">
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="relative w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl">
+        <div className="overflow-y-auto p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-black text-gray-900">일러스트 생성</h3>
@@ -653,10 +654,11 @@ export default function IllustrationOptionsModal({
             일러스트 생성 시작
           </button>
         </div>
+        </div>
 
         {/* Time notice overlay */}
         {showTimeNotice && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 backdrop-blur-sm p-6">
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 backdrop-blur-sm p-6 overflow-hidden">
             <div className="text-center max-w-xs space-y-4">
               <div className="text-5xl">☕</div>
               <h4 className="text-lg font-black text-gray-900">
