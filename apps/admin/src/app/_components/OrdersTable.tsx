@@ -6,8 +6,10 @@ import OrderRowItem from "./OrderRowItem";
 
 export default function OrdersTable() {
   const {
-    allOrders,
+    orders,
     loading,
+    hasMore,
+    cursorStack,
     activeFilter,
     flowFilter,
     taxFilter,
@@ -21,15 +23,11 @@ export default function OrdersTable() {
     taxUpdating,
     cashReceiptUpdating,
     bankActionId,
-    currentPage,
-    pagedOrders,
-    filteredOrders,
+    displayOrders,
     tabCounts,
     taxInvoicePendingCount,
     cashReceiptPendingCount,
     flowCounts,
-    totalPages,
-    setCurrentPage,
     toggleExpanded,
     handleFilterChange,
     handleFlowFilterChange,
@@ -37,12 +35,16 @@ export default function OrdersTable() {
     handleReceiptFilterChange,
     handleDateRangeChange,
     handleAmountRangeChange,
+    handleNextPage,
+    handlePrevPage,
     handleRetry,
     handleBankApprove,
     handleBankReject,
     handleTaxStatusUpdate,
     handleCashReceiptStatusUpdate,
   } = useOrdersTable();
+
+  const hasPrev = cursorStack.length > 1;
 
   return (
     <div className="space-y-4">
@@ -72,7 +74,7 @@ export default function OrdersTable() {
         </div>
         <button
           type="button"
-          onClick={() => exportTaxInvoiceCsv(allOrders)}
+          onClick={() => exportTaxInvoiceCsv(orders)}
           className="shrink-0 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
         >
           세금계산서 CSV 내보내기
@@ -233,14 +235,14 @@ export default function OrdersTable() {
       {loading ? (
         <div className="text-center py-12 text-gray-400">
           <div className="w-6 h-6 border-2 border-gray-200 border-t-blue-500 rounded-full animate-spin mx-auto mb-2" />
-          Loading...
+          로딩 중...
         </div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">No orders found</div>
+      ) : displayOrders.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">주문 내역이 없습니다</div>
       ) : (
         <>
           <div className="space-y-2">
-            {pagedOrders.map((order) => (
+            {displayOrders.map((order) => (
               <OrderRowItem
                 key={order.orderId}
                 order={order}
@@ -259,35 +261,23 @@ export default function OrdersTable() {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 pt-2">
+          {(hasPrev || hasMore) && (
+            <div className="flex items-center justify-center gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
-                className="px-2.5 py-1 text-xs font-medium text-gray-500 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                onClick={handlePrevPage}
+                disabled={!hasPrev}
+                className="px-3 py-1.5 text-xs font-medium text-gray-500 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                &lsaquo;
+                &lsaquo; 이전
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() => setCurrentPage(page)}
-                  className={`min-w-7 px-1.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                    page === currentPage ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
               <button
                 type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage >= totalPages}
-                className="px-2.5 py-1 text-xs font-medium text-gray-500 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                onClick={handleNextPage}
+                disabled={!hasMore}
+                className="px-3 py-1.5 text-xs font-medium text-gray-500 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                &rsaquo;
+                다음 &rsaquo;
               </button>
             </div>
           )}

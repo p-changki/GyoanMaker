@@ -112,12 +112,17 @@ export interface ModelQuota {
   monthKeyKst: string;
 }
 
+export type CreditStatus = "active" | "exhausted" | "expired";
+
 export interface CreditEntry {
   remaining: number;
   total?: number;
   purchasedAt: string;
   expiresAt: string;
   orderId?: string;
+  status?: CreditStatus;
+  exhaustedAt?: string;
+  expiredAt?: string;
 }
 
 export interface UserQuota {

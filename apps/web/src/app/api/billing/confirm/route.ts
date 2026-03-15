@@ -371,7 +371,10 @@ export async function POST(req: NextRequest) {
         // Scheduled downgrade: defer plan application to current period end
         subscriptionResult = await schedulePlanChange(email, order.planId);
       } else {
-        subscriptionResult = await changePlan(email, order.planId);
+        subscriptionResult = await changePlan(email, order.planId, {
+          changedBy: "user",
+          reason: "payment_confirmed",
+        });
       }
     }
 

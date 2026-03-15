@@ -67,3 +67,14 @@ export const PLAN_LABELS: Record<string, string> = {
   standard: "Standard",
   pro: "Pro",
 };
+
+export interface OrdersApiResponse {
+  orders: OrderRow[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface OrdersCountsResponse {
+  counts: Record<StatusFilter, number>;
+  flowCounts: Record<FlowFilter, number>;
+}

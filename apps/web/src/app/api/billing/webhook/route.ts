@@ -82,7 +82,10 @@ async function revertConfirmedOrder(order: PendingOrder) {
         currentPeriodStart,
       });
     } else {
-      await changePlan(email, "free");
+      await changePlan(email, "free", {
+        changedBy: "system",
+        reason: "canceled",
+      });
     }
   }
 

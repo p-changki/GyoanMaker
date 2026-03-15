@@ -53,6 +53,9 @@ export async function PATCH(
     );
   }
 
-  const subscription = await changePlan(targetEmail, body.planId);
+  const subscription = await changePlan(targetEmail, body.planId, {
+    changedBy: "admin",
+    reason: "admin_manual",
+  });
   return NextResponse.json({ ok: true, email: targetEmail, subscription });
 }

@@ -6,11 +6,44 @@ import type { TopUpCreditType } from "@gyoanmaker/shared/plans";
 import type {
   FlowFilter,
   OrderRow,
+  OrdersApiResponse,
+  OrdersCountsResponse,
   ReceiptFilter,
   StatusFilter,
   TaxFilter,
 } from "./ordersTable.types";
 import { PLAN_LABELS } from "./ordersTable.types";
+
+const PAGE_LIMIT = 30;
+
+const INITIAL_TAB_COUNTS: Record<StatusFilter, number> = {
+  all: 0,
+  confirmed: 0,
+  paid_not_applied: 0,
+  failed: 0,
+  pending: 0,
+  awaiting_deposit: 0,
+};
+
+const INITIAL_FLOW_COUNTS: Record<FlowFilter, number> = {
+  all: 0,
+  card: 0,
+  bank_transfer: 0,
+};
+
+interface FetchOrdersParams {
+  status: StatusFilter;
+  checkoutFlow: FlowFilter;
+  dateFrom: string;
+  dateTo: string;
+  cursor: string | null;
+}
+
+interface FetchCountsParams {
+  checkoutFlow: FlowFilter;
+  dateFrom: string;
+  dateTo: string;
+}
 
 export function getOrderLabel(order: OrderRow): string {
   if (order.type === "plan") {
@@ -68,61 +101,99 @@ export function exportTaxInvoiceCsv(orders: OrderRow[]) {
 }
 
 export function useOrdersTable() {
-  const [allOrders, setAllOrders] = useState<OrderRow[]>([]);
+  // ── Server-paged data ─────────────────────────────────────────────────────
+  const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  // cursorStack[last] = cursor used to fetch current page (null = first page)
+  const [cursorStack, setCursorStack] = useState<(string | null)[]>([null]);
+
+  // ── Server filter state ───────────────────────────────────────────────────
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
-  const [taxFilter, setTaxFilter] = useState<TaxFilter>("all");
-  const [receiptFilter, setReceiptFilter] = useState<ReceiptFilter>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+
+  // ── Client filter state ───────────────────────────────────────────────────
+  const [taxFilter, setTaxFilter] = useState<TaxFilter>("all");
+  const [receiptFilter, setReceiptFilter] = useState<ReceiptFilter>("all");
   const [amountMin, setAmountMin] = useState<string>("");
   const [amountMax, setAmountMax] = useState<string>("");
+
+  // ── Counts (from API, not derived from page data) ─────────────────────────
+  const [tabCounts, setTabCounts] = useState<Record<StatusFilter, number>>(INITIAL_TAB_COUNTS);
+  const [flowCounts, setFlowCounts] = useState<Record<FlowFilter, number>>(INITIAL_FLOW_COUNTS);
+
+  // ── Other UI state ────────────────────────────────────────────────────────
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [taxUpdating, setTaxUpdating] = useState<string | null>(null);
   const [cashReceiptUpdating, setCashReceiptUpdating] = useState<string | null>(null);
   const [bankActionId, setBankActionId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchAllOrders = useCallback(async () => {
+  // ── Fetch helpers ─────────────────────────────────────────────────────────
+
+  const fetchOrders = useCallback(async (params: FetchOrdersParams) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ status: "all", limit: "200" });
-      const res = await fetch(`/api/billing/orders?${params}`);
+      const urlParams = new URLSearchParams({ limit: String(PAGE_LIMIT) });
+      if (params.status !== "all") urlParams.set("status", params.status);
+      if (params.checkoutFlow !== "all") urlParams.set("checkoutFlow", params.checkoutFlow);
+      if (params.dateFrom) urlParams.set("dateFrom", params.dateFrom);
+      if (params.dateTo) urlParams.set("dateTo", params.dateTo);
+      if (params.cursor) urlParams.set("cursor", params.cursor);
+      const res = await fetch(`/api/billing/orders?${urlParams}`);
       if (!res.ok) throw new Error("Failed to load orders");
-      const data = await res.json();
-      setAllOrders(data.orders ?? []);
+      const data: OrdersApiResponse = await res.json();
+      setOrders(data.orders ?? []);
+      setNextCursor(data.nextCursor);
+      setHasMore(data.hasMore);
     } catch {
-      setAllOrders([]);
+      setOrders([]);
+      setHasMore(false);
+      setNextCursor(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const fetchCounts = useCallback(async (params: FetchCountsParams) => {
+    try {
+      const urlParams = new URLSearchParams();
+      if (params.checkoutFlow !== "all") urlParams.set("checkoutFlow", params.checkoutFlow);
+      if (params.dateFrom) urlParams.set("dateFrom", params.dateFrom);
+      if (params.dateTo) urlParams.set("dateTo", params.dateTo);
+      const res = await fetch(`/api/billing/orders/counts?${urlParams}`);
+      if (!res.ok) return;
+      const data: OrdersCountsResponse = await res.json();
+      setTabCounts(data.counts);
+      setFlowCounts(data.flowCounts);
+    } catch {
+      // keep current counts on error
+    }
+  }, []);
+
+  // ── Initial load ──────────────────────────────────────────────────────────
+
   useEffect(() => {
-    fetchAllOrders();
-  }, [fetchAllOrders]);
+    fetchOrders({ status: "all", checkoutFlow: "all", dateFrom: "", dateTo: "", cursor: null });
+    fetchCounts({ checkoutFlow: "all", dateFrom: "", dateTo: "" });
+  }, [fetchOrders, fetchCounts]);
 
-  // ── Filtering ─────────────────────────────────────────────────────────────
-
-  const flowFilteredOrders = useMemo(() => {
-    if (flowFilter === "all") return allOrders;
-    if (flowFilter === "bank_transfer") return allOrders.filter((o) => o.checkoutFlow === "bank_transfer");
-    return allOrders.filter((o) => o.checkoutFlow !== "bank_transfer");
-  }, [allOrders, flowFilter]);
+  // ── Client-side filtering (on current page data) ──────────────────────────
 
   const taxFilteredOrders = useMemo(() => {
-    if (taxFilter === "all") return flowFilteredOrders;
+    if (taxFilter === "all") return orders;
     if (taxFilter === "tax_invoice_pending") {
-      return flowFilteredOrders.filter(
+      return orders.filter(
         (o) => o.receiptType === "tax_invoice" && o.status === "confirmed" && o.taxStatus !== "issued"
       );
     }
-    return flowFilteredOrders.filter(
+    return orders.filter(
       (o) => o.receiptType === "tax_invoice" && o.taxStatus === "issued"
     );
-  }, [flowFilteredOrders, taxFilter]);
+  }, [orders, taxFilter]);
 
   const receiptFilteredOrders = useMemo(() => {
     if (receiptFilter === "all") return taxFilteredOrders;
@@ -136,67 +207,59 @@ export function useOrdersTable() {
     );
   }, [taxFilteredOrders, receiptFilter]);
 
-  const dateAmountFilteredOrders = useMemo(() => {
+  const displayOrders = useMemo(() => {
     let result = receiptFilteredOrders;
-    if (dateFrom) {
-      const from = new Date(dateFrom);
-      result = result.filter((o) => new Date(o.createdAt) >= from);
-    }
-    if (dateTo) {
-      const to = new Date(dateTo);
-      to.setHours(23, 59, 59, 999);
-      result = result.filter((o) => new Date(o.createdAt) <= to);
-    }
     const min = amountMin !== "" ? Number(amountMin) : null;
     const max = amountMax !== "" ? Number(amountMax) : null;
     if (min !== null) result = result.filter((o) => o.amount >= min);
     if (max !== null) result = result.filter((o) => o.amount <= max);
     return result;
-  }, [receiptFilteredOrders, dateFrom, dateTo, amountMin, amountMax]);
+  }, [receiptFilteredOrders, amountMin, amountMax]);
 
-  const filteredOrders = useMemo(
-    () => (activeFilter === "all" ? dateAmountFilteredOrders : dateAmountFilteredOrders.filter((o) => o.status === activeFilter)),
-    [dateAmountFilteredOrders, activeFilter]
+  // Pending counts derived from current page (approximate)
+  const taxInvoicePendingCount = useMemo(
+    () =>
+      orders.filter(
+        (o) => o.receiptType === "tax_invoice" && o.status === "confirmed" && o.taxStatus !== "issued"
+      ).length,
+    [orders]
   );
 
-  // ── Counts ─────────────────────────────────────────────────────────────────
-
-  const tabCounts: Record<StatusFilter, number> = {
-    all: dateAmountFilteredOrders.length,
-    awaiting_deposit: dateAmountFilteredOrders.filter((o) => o.status === "awaiting_deposit").length,
-    confirmed: dateAmountFilteredOrders.filter((o) => o.status === "confirmed").length,
-    paid_not_applied: dateAmountFilteredOrders.filter((o) => o.status === "paid_not_applied").length,
-    failed: dateAmountFilteredOrders.filter((o) => o.status === "failed").length,
-    pending: dateAmountFilteredOrders.filter((o) => o.status === "pending").length,
-  };
-
-  const taxInvoicePendingCount = flowFilteredOrders.filter(
-    (o) => o.receiptType === "tax_invoice" && o.status === "confirmed" && o.taxStatus !== "issued"
-  ).length;
-
-  const cashReceiptPendingCount = flowFilteredOrders.filter(
-    (o) => o.receiptType === "cash_receipt" && o.status === "confirmed" && o.cashReceiptStatus !== "issued"
-  ).length;
-
-  const flowCounts = {
-    all: allOrders.length,
-    card: allOrders.filter((o) => o.checkoutFlow !== "bank_transfer").length,
-    bank_transfer: allOrders.filter((o) => o.checkoutFlow === "bank_transfer").length,
-  };
-
-  // ── Pagination ─────────────────────────────────────────────────────────────
-
-  const PAGE_SIZE = 15;
-  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
-  const pagedOrders = useMemo(
-    () => filteredOrders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-    [filteredOrders, currentPage]
+  const cashReceiptPendingCount = useMemo(
+    () =>
+      orders.filter(
+        (o) =>
+          o.receiptType === "cash_receipt" &&
+          o.status === "confirmed" &&
+          o.cashReceiptStatus !== "issued"
+      ).length,
+    [orders]
   );
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  // ── Pagination handlers ───────────────────────────────────────────────────
+
+  const handleNextPage = () => {
+    if (!hasMore || !nextCursor) return;
+    const newStack = [...cursorStack, nextCursor];
+    setCursorStack(newStack);
+    setExpandedId(null);
+    fetchOrders({ status: activeFilter, checkoutFlow: flowFilter, dateFrom, dateTo, cursor: nextCursor });
+  };
+
+  const handlePrevPage = () => {
+    if (cursorStack.length <= 1) return;
+    const newStack = cursorStack.slice(0, -1);
+    const prevCursor = newStack[newStack.length - 1] ?? null;
+    setCursorStack(newStack);
+    setExpandedId(null);
+    fetchOrders({ status: activeFilter, checkoutFlow: flowFilter, dateFrom, dateTo, cursor: prevCursor });
+  };
+
+  // ── Action handlers ───────────────────────────────────────────────────────
 
   const handleRetry = async (orderId: string) => {
     setRetrying(orderId);
+    const cursor = cursorStack[cursorStack.length - 1] ?? null;
     try {
       const res = await fetch("/api/billing/retry-apply", {
         method: "POST",
@@ -208,7 +271,7 @@ export function useOrdersTable() {
         alert(data?.error?.message ?? "Retry failed");
         return;
       }
-      await fetchAllOrders();
+      await fetchOrders({ status: activeFilter, checkoutFlow: flowFilter, dateFrom, dateTo, cursor });
     } catch {
       alert("Retry request failed");
     } finally {
@@ -219,6 +282,7 @@ export function useOrdersTable() {
   const handleBankApprove = async (orderId: string) => {
     if (!confirm("입금 확인 후 서비스를 적용하시겠습니까?")) return;
     setBankActionId(orderId);
+    const cursor = cursorStack[cursorStack.length - 1] ?? null;
     try {
       const res = await fetch("/api/billing/bank-transfer/approve", {
         method: "POST",
@@ -230,7 +294,7 @@ export function useOrdersTable() {
         alert(data?.error?.message ?? "승인 실패");
         return;
       }
-      await fetchAllOrders();
+      await fetchOrders({ status: activeFilter, checkoutFlow: flowFilter, dateFrom, dateTo, cursor });
     } catch {
       alert("승인 요청 실패");
     } finally {
@@ -242,6 +306,7 @@ export function useOrdersTable() {
     const reason = prompt("거절 사유를 입력하세요 (선택):");
     if (reason === null) return;
     setBankActionId(orderId);
+    const cursor = cursorStack[cursorStack.length - 1] ?? null;
     try {
       const res = await fetch("/api/billing/bank-transfer/reject", {
         method: "POST",
@@ -253,7 +318,7 @@ export function useOrdersTable() {
         alert(data?.error?.message ?? "거절 실패");
         return;
       }
-      await fetchAllOrders();
+      await fetchOrders({ status: activeFilter, checkoutFlow: flowFilter, dateFrom, dateTo, cursor });
     } catch {
       alert("거절 요청 실패");
     } finally {
@@ -274,7 +339,8 @@ export function useOrdersTable() {
         alert(data?.error?.message ?? "발행 상태 업데이트 실패");
         return;
       }
-      setAllOrders((prev) =>
+      // Optimistic local update for current page
+      setOrders((prev) =>
         prev.map((o) =>
           o.orderId === orderId
             ? { ...o, taxStatus, taxStatusUpdatedAt: new Date().toISOString() }
@@ -286,32 +352,6 @@ export function useOrdersTable() {
     } finally {
       setTaxUpdating(null);
     }
-  };
-
-  const handleFilterChange = (filter: StatusFilter) => {
-    setActiveFilter(filter);
-    setExpandedId(null);
-    setCurrentPage(1);
-  };
-
-  const handleFlowFilterChange = (flow: FlowFilter) => {
-    setFlowFilter(flow);
-    setActiveFilter("all");
-    setTaxFilter("all");
-    setExpandedId(null);
-    setCurrentPage(1);
-  };
-
-  const handleDateRangeChange = (from: string, to: string) => {
-    setDateFrom(from);
-    setDateTo(to);
-    setCurrentPage(1);
-  };
-
-  const handleAmountRangeChange = (min: string, max: string) => {
-    setAmountMin(min);
-    setAmountMax(max);
-    setCurrentPage(1);
   };
 
   const handleCashReceiptStatusUpdate = async (orderId: string, cashReceiptStatus: "issued" | "none") => {
@@ -327,7 +367,8 @@ export function useOrdersTable() {
         alert(data?.error?.message ?? "현금영수증 상태 업데이트 실패");
         return;
       }
-      setAllOrders((prev) =>
+      // Optimistic local update for current page
+      setOrders((prev) =>
         prev.map((o) =>
           o.orderId === orderId
             ? { ...o, cashReceiptStatus, cashReceiptStatusUpdatedAt: new Date().toISOString() }
@@ -341,20 +382,51 @@ export function useOrdersTable() {
     }
   };
 
+  // ── Server filter change handlers (reset cursor, refetch) ─────────────────
+
+  const handleFilterChange = (filter: StatusFilter) => {
+    setActiveFilter(filter);
+    setCursorStack([null]);
+    setExpandedId(null);
+    // status filter doesn't affect counts API
+    fetchOrders({ status: filter, checkoutFlow: flowFilter, dateFrom, dateTo, cursor: null });
+  };
+
+  const handleFlowFilterChange = (flow: FlowFilter) => {
+    setFlowFilter(flow);
+    setActiveFilter("all");
+    setTaxFilter("all");
+    setCursorStack([null]);
+    setExpandedId(null);
+    fetchOrders({ status: "all", checkoutFlow: flow, dateFrom, dateTo, cursor: null });
+    fetchCounts({ checkoutFlow: flow, dateFrom, dateTo });
+  };
+
+  const handleDateRangeChange = (from: string, to: string) => {
+    setDateFrom(from);
+    setDateTo(to);
+    setCursorStack([null]);
+    fetchOrders({ status: activeFilter, checkoutFlow: flowFilter, dateFrom: from, dateTo: to, cursor: null });
+    fetchCounts({ checkoutFlow: flowFilter, dateFrom: from, dateTo: to });
+  };
+
+  // ── Client filter change handlers (no server refetch) ─────────────────────
+
+  const handleAmountRangeChange = (min: string, max: string) => {
+    setAmountMin(min);
+    setAmountMax(max);
+  };
+
   const handleTaxFilterChange = (tax: TaxFilter) => {
     setTaxFilter(tax);
     setReceiptFilter("all");
-    setActiveFilter("all");
     setExpandedId(null);
-    setCurrentPage(1);
   };
 
   const handleReceiptFilterChange = (receipt: ReceiptFilter) => {
     setReceiptFilter(receipt);
     setTaxFilter("all");
-    setActiveFilter("all");
     setExpandedId(null);
-    setCurrentPage(1);
   };
 
   const toggleExpanded = (orderId: string) => {
@@ -363,8 +435,10 @@ export function useOrdersTable() {
 
   return {
     // state
-    allOrders,
+    orders,
     loading,
+    hasMore,
+    cursorStack,
     activeFilter,
     flowFilter,
     taxFilter,
@@ -378,17 +452,13 @@ export function useOrdersTable() {
     taxUpdating,
     cashReceiptUpdating,
     bankActionId,
-    currentPage,
     // derived
-    pagedOrders,
-    filteredOrders,
+    displayOrders,
     tabCounts,
     taxInvoicePendingCount,
     cashReceiptPendingCount,
     flowCounts,
-    totalPages,
     // handlers
-    setCurrentPage,
     toggleExpanded,
     handleFilterChange,
     handleFlowFilterChange,
@@ -396,6 +466,8 @@ export function useOrdersTable() {
     handleReceiptFilterChange,
     handleDateRangeChange,
     handleAmountRangeChange,
+    handleNextPage,
+    handlePrevPage,
     handleRetry,
     handleBankApprove,
     handleBankReject,

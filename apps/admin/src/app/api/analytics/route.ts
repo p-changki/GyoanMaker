@@ -6,6 +6,7 @@ import { isAdmin } from "@gyoanmaker/server-lib/users";
 import { getDb } from "@gyoanmaker/server-lib/firebase-admin";
 import { estimateCostUsd } from "@gyoanmaker/server-lib/usageLog";
 import { getMonthKeyKst, PLANS } from "@gyoanmaker/shared/plans";
+import { AggregateField } from "firebase-admin/firestore";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -103,12 +104,17 @@ export async function GET() {
   const thisMonthStart = `${thisMonthKey}-01T00:00:00.000Z`;
 
   try {
-    const [usersSnap, usageSnap, revenueSnap, topUsersSnap, allRevenueSnap] = await Promise.all([
+    const allRevenueAggQuery = db
+      .collection("billing_orders")
+      .where("status", "==", "confirmed")
+      .aggregate({ totalAmount: AggregateField.sum("amount") });
+
+    const [usersSnap, usageSnap, revenueSnap, topUsersSnap, allRevenueAgg] = await Promise.all([
       db.collection("users").get(),
       db.collection("usage_logs").where("createdAt", ">=", new Date(sixMonthsAgo)).get(),
       db.collection("billing_orders").where("status", "==", "confirmed").where("confirmedAt", ">=", sixMonthsAgo).get(),
       db.collection("usage_logs").where("createdAt", ">=", new Date(thirtyDaysAgo)).get(),
-      db.collection("billing_orders").where("status", "==", "confirmed").get(),
+      allRevenueAggQuery.get(),
     ]);
 
     // ── 1. Plan distribution + MRR ────────────────────
@@ -296,11 +302,8 @@ export async function GET() {
     let totalRevenueThisMonth = 0;
     let totalRevenueToday = 0;
 
-    // All-time revenue from unfiltered query
-    allRevenueSnap.forEach((doc) => {
-      const d = doc.data();
-      totalRevenueAllTime += typeof d.amount === "number" ? d.amount : 0;
-    });
+    // All-time revenue from aggregate sum (no full scan)
+    totalRevenueAllTime = (allRevenueAgg.data().totalAmount as number | null) ?? 0;
 
     // This month & today from 6-month filtered snap
     revenueSnap.forEach((doc) => {

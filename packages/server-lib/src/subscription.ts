@@ -9,6 +9,7 @@ import {
   type QuotaModel,
 } from "@gyoanmaker/shared/plans";
 import type { CreditEntry, UserCredits, UserPlan } from "@gyoanmaker/shared/types";
+import { logPlanChange } from "./plan-history";
 
 const COLLECTION = "users";
 const PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
@@ -112,12 +113,13 @@ export async function getSubscription(email: string): Promise<UserPlan> {
  */
 export async function changePlan(
   email: string,
-  targetPlan: PlanId
+  targetPlan: PlanId,
+  options?: { changedBy?: "system" | "admin" | "user"; reason?: string },
 ): Promise<UserPlan> {
   const key = email.toLowerCase();
   const docRef = getDb().collection(COLLECTION).doc(key);
 
-  return getDb().runTransaction(async (tx) => {
+  const result = await getDb().runTransaction(async (tx) => {
     const snap = await tx.get(docRef);
     const data = (snap.data() ?? {}) as UserDocLike;
     const currentPlan = normalizePlan(data);
@@ -145,8 +147,21 @@ export async function changePlan(
       { merge: true }
     );
 
-    return nextPlan;
+    return { currentPlan, nextPlan, now };
   });
+
+  // Fire-and-forget: log plan change outside transaction
+  logPlanChange(email, {
+    fromTier: result.currentPlan.tier,
+    toTier: result.nextPlan.tier,
+    fromStatus: result.currentPlan.status,
+    toStatus: result.nextPlan.status,
+    changedBy: options?.changedBy ?? "system",
+    reason: options?.reason ?? "plan_change",
+    changedAt: result.now,
+  });
+
+  return result.nextPlan;
 }
 
 /**
@@ -156,14 +171,16 @@ export async function changePlan(
 export async function changePlanManual(
   email: string,
   targetPlan: PlanId,
-  periodEndAt: string | null
+  periodEndAt: string | null,
+  options?: { changedBy?: "system" | "admin" | "user"; reason?: string },
 ): Promise<UserPlan> {
   const key = email.toLowerCase();
   const docRef = getDb().collection(COLLECTION).doc(key);
 
-  return getDb().runTransaction(async (tx) => {
+  const result = await getDb().runTransaction(async (tx) => {
     const snap = await tx.get(docRef);
     const data = (snap.data() ?? {}) as UserDocLike;
+    const currentPlan = normalizePlan(data);
 
     const now = getNowIso();
     const periodKey = targetPlan === "free" ? getMonthKeyKst() : now.slice(0, 10);
@@ -188,8 +205,20 @@ export async function changePlanManual(
       { merge: true }
     );
 
-    return nextPlan;
+    return { currentPlan, nextPlan, now };
   });
+
+  logPlanChange(email, {
+    fromTier: result.currentPlan.tier,
+    toTier: result.nextPlan.tier,
+    fromStatus: result.currentPlan.status,
+    toStatus: result.nextPlan.status,
+    changedBy: options?.changedBy ?? "admin",
+    reason: options?.reason ?? "manual_grant",
+    changedAt: result.now,
+  });
+
+  return result.nextPlan;
 }
 
 /**
@@ -246,9 +275,15 @@ export async function expirePlanIfNeeded(email: string): Promise<boolean> {
 
   const pendingTier = data.planPendingTier;
   if (pendingTier && pendingTier in PLANS) {
-    await changePlan(email, pendingTier as PlanId);
+    await changePlan(email, pendingTier as PlanId, {
+      changedBy: "system",
+      reason: "payment_confirmed",
+    });
   } else {
-    await changePlan(email, "free");
+    await changePlan(email, "free", {
+      changedBy: "system",
+      reason: "expired",
+    });
   }
   return true;
 }
@@ -269,6 +304,7 @@ export async function addTopUpCredits(
     total,
     purchasedAt,
     expiresAt: getCreditExpiryIso(now),
+    status: "active",
     ...(orderId ? { orderId } : {}),
   };
 
@@ -322,4 +358,41 @@ export async function getSubscriptionExtended(
     typeof data.createdAt === "string" ? data.createdAt : null;
 
   return { subscription, createdAt, credits };
+}
+
+/**
+ * Revoke (remove) a specific credit entry by orderId.
+ * Used for admin correction or refund scenarios.
+ */
+export async function revokeCredits(
+  email: string,
+  type: QuotaModel | "illustration",
+  orderId: string,
+): Promise<UserCredits> {
+  const key = email.toLowerCase();
+  const docRef = getDb().collection(COLLECTION).doc(key);
+
+  return getDb().runTransaction(async (tx) => {
+    const snap = await tx.get(docRef);
+    const data = (snap.data() ?? {}) as UserDocLike;
+    const credits = normalizeCredits(data);
+
+    const before = credits[type].length;
+    credits[type] = credits[type].filter((c) => c.orderId !== orderId);
+
+    if (credits[type].length === before) {
+      throw new Error(`Credit entry with orderId "${orderId}" not found.`);
+    }
+
+    tx.set(
+      docRef,
+      {
+        credits,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return credits;
+  });
 }

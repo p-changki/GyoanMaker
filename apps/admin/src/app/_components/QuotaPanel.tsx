@@ -6,6 +6,7 @@ import UserCreditHistory from "./management/user-detail/UserCreditHistory";
 import UserLimitEditor from "./management/user-detail/UserLimitEditor";
 import UserPlanEditor from "./management/user-detail/UserPlanEditor";
 import UserManualGrant from "./management/user-detail/UserManualGrant";
+import UserPlanHistory from "./management/user-detail/UserPlanHistory";
 
 interface CreditEntryInfo {
   remaining: number;
@@ -13,6 +14,9 @@ interface CreditEntryInfo {
   purchasedAt: string;
   expiresAt: string;
   orderId?: string;
+  status?: "active" | "exhausted" | "expired";
+  exhaustedAt?: string;
+  expiredAt?: string;
 }
 
 interface QuotaModelStatus {
@@ -176,6 +180,8 @@ export default function QuotaPanel({ email }: { email: string }) {
         flashEntries={quota.flash.creditEntries ?? []}
         proEntries={quota.pro.creditEntries ?? []}
         illustrationEntries={quota.illustration.creditEntries ?? []}
+        email={email}
+        onRevoked={fetchQuota}
       />
 
       <UserLimitEditor
@@ -199,6 +205,8 @@ export default function QuotaPanel({ email }: { email: string }) {
         onChangePlan={setEditPlan}
         onSave={handleSavePlan}
       />
+
+      <UserPlanHistory email={email} />
 
       <UserManualGrant email={email} onGranted={fetchQuota} />
     </div>
