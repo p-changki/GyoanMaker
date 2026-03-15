@@ -16,6 +16,12 @@ export default function UserManualGrant({ email, onGranted }: UserManualGrantPro
   const [granting, setGranting] = useState(false);
   const [grantMsg, setGrantMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
+  // Credit grant state
+  const [creditType, setCreditType] = useState<"flash" | "pro" | "illustration">("illustration");
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditGranting, setCreditGranting] = useState(false);
+  const [creditMsg, setCreditMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
   const defaultEndDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 30);
@@ -56,6 +62,38 @@ export default function UserManualGrant({ email, onGranted }: UserManualGrantPro
       setGrantMsg({ text: err instanceof Error ? err.message : "오류 발생", ok: false });
     } finally {
       setGranting(false);
+    }
+  };
+
+  const handleCreditGrant = async () => {
+    const amount = parseInt(creditAmount, 10);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setCreditMsg({ text: "올바른 수량을 입력하세요.", ok: false });
+      return;
+    }
+    setCreditGranting(true);
+    setCreditMsg(null);
+    try {
+      const res = await fetch("/api/billing/manual-credit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, type: creditType, amount }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(
+          (data as { error?: { message?: string } })?.error?.message ?? "크레딧 부여 실패",
+        );
+      }
+      const typeLabel = creditType === "flash" ? "속도" : creditType === "pro" ? "정밀" : "삽화";
+      setCreditMsg({ text: `${typeLabel} ${amount}건 부여 완료`, ok: true });
+      setCreditAmount("");
+      onGranted();
+      setTimeout(() => setCreditMsg(null), 4000);
+    } catch (err) {
+      setCreditMsg({ text: err instanceof Error ? err.message : "오류 발생", ok: false });
+    } finally {
+      setCreditGranting(false);
     }
   };
 
@@ -149,6 +187,63 @@ export default function UserManualGrant({ email, onGranted }: UserManualGrantPro
               {grantMsg.text}
             </p>
           )}
+
+          {/* Credit grant section */}
+          <div className="mt-3 pt-3 border-t border-purple-200">
+            <p className="text-[10px] text-purple-600 font-medium mb-2">
+              크레딧 수동 부여
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  유형
+                </label>
+                <select
+                  value={creditType}
+                  onChange={(e) =>
+                    setCreditType(e.target.value as "flash" | "pro" | "illustration")
+                  }
+                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                >
+                  <option value="flash">속도</option>
+                  <option value="pro">정밀</option>
+                  <option value="illustration">삽화</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  수량
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="10"
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                  className="mt-1 w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={handleCreditGrant}
+                  disabled={creditGranting}
+                  className="w-full px-3 py-1.5 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                >
+                  {creditGranting ? "처리 중..." : "크레딧 부여"}
+                </button>
+              </div>
+            </div>
+            {creditMsg && (
+              <p
+                className={`mt-1 text-xs font-medium ${
+                  creditMsg.ok ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {creditMsg.text}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>

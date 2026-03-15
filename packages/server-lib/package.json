@@ -16,7 +16,8 @@
     "./email": "./src/email.ts",
     "./firebase-storage": "./src/firebase-storage.ts",
     "./illustration-presets": "./src/illustration-presets.ts",
-    "./illustration-samples": "./src/illustration-samples.ts"
+    "./illustration-samples": "./src/illustration-samples.ts",
+    "./plan-history": "./src/plan-history.ts"
   },
   "peerDependencies": {
     "firebase-admin": ">=13",

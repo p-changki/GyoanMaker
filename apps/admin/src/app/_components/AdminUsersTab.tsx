@@ -44,6 +44,8 @@ export default function AdminUsersTab() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 7;
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -132,6 +134,17 @@ export default function AdminUsersTab() {
     return sorted;
   }, [users, filter, search, sortMode]);
 
+  const totalPages = Math.max(1, Math.ceil(displayUsers.length / PAGE_SIZE));
+  const pagedUsers = displayUsers.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, search, sortMode]);
+
   return (
     <div className="space-y-5">
       {error && (
@@ -213,7 +226,7 @@ export default function AdminUsersTab() {
         </div>
       ) : (
         <div className="space-y-3">
-          {displayUsers.map((user) => (
+          {pagedUsers.map((user) => (
             <div
               key={user.email}
               className="bg-white border border-gray-200/60 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
@@ -300,6 +313,40 @@ export default function AdminUsersTab() {
               {expandedEmail === user.email && <QuotaPanel email={user.email} />}
             </div>
           ))}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1 pt-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="px-2.5 py-1 text-xs font-medium text-gray-500 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                &lsaquo; 이전
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={`min-w-7 px-1.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    page === currentPage ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="px-2.5 py-1 text-xs font-medium text-gray-500 rounded-md hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                다음 &rsaquo;
+              </button>
+            </div>
+          )}
         </div>
       )}
       {/* Reject confirmation modal */}

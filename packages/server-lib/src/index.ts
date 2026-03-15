@@ -45,8 +45,17 @@ export {
   expirePlanIfNeeded,
   addTopUpCredits,
   getSubscriptionExtended,
+  revokeCredits,
   type SubscriptionExtended,
 } from "./subscription";
+
+// Plan History
+export {
+  logPlanChange,
+  getPlanHistory,
+  type PlanHistoryEntry,
+  type PlanHistoryRow,
+} from "./plan-history";
 
 // Orders
 export { getUserOrders, type OrderRow } from "./orders";

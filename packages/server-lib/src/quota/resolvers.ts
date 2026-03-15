@@ -5,7 +5,7 @@ import {
   PLANS,
   type QuotaModel,
 } from "@gyoanmaker/shared/plans";
-import type { CreditEntry, UserPlan, UserQuota } from "@gyoanmaker/shared/types";
+import type { CreditEntry, CreditStatus, UserPlan, UserQuota } from "@gyoanmaker/shared/types";
 import {
   DEFAULT_PLAN,
   DEFAULT_QUOTA,
@@ -71,6 +71,7 @@ function normalizeCreditArray(entries: CreditEntry[] | undefined, now: Date): {
 
   let changed = false;
   const nowMs = now.getTime();
+  const nowIso = now.toISOString();
   const list: CreditEntry[] = [];
 
   for (const entry of entries) {
@@ -81,12 +82,13 @@ function normalizeCreditArray(entries: CreditEntry[] | undefined, now: Date): {
 
     const remaining = toNonNegativeInt(entry.remaining, 0);
     const purchasedAt =
-      typeof entry.purchasedAt === "string" ? entry.purchasedAt : now.toISOString();
+      typeof entry.purchasedAt === "string" ? entry.purchasedAt : nowIso;
     const expiresAt =
-      typeof entry.expiresAt === "string" ? entry.expiresAt : now.toISOString();
+      typeof entry.expiresAt === "string" ? entry.expiresAt : nowIso;
     const expiresMs = new Date(expiresAt).getTime();
 
-    if (!Number.isFinite(expiresMs) || expiresMs <= nowMs || remaining <= 0) {
+    // Drop entries with unparseable expiry (corrupt data)
+    if (!Number.isFinite(expiresMs)) {
       changed = true;
       continue;
     }
@@ -97,19 +99,41 @@ function normalizeCreditArray(entries: CreditEntry[] | undefined, now: Date): {
         : undefined;
     const orderId = typeof entry.orderId === "string" && entry.orderId ? entry.orderId : undefined;
 
+    // Determine status — preserve existing exhausted/expired status, set new one if needed
+    let status: CreditStatus | undefined = entry.status;
+    let exhaustedAt: string | undefined =
+      typeof entry.exhaustedAt === "string" ? entry.exhaustedAt : undefined;
+    let expiredAt: string | undefined =
+      typeof entry.expiredAt === "string" ? entry.expiredAt : undefined;
+
+    if (remaining <= 0 && (!status || status === "active")) {
+      status = "exhausted";
+      exhaustedAt = exhaustedAt ?? nowIso;
+    } else if (expiresMs <= nowMs && (!status || status === "active")) {
+      status = "expired";
+      expiredAt = expiredAt ?? nowIso;
+    }
+
     const normalized: CreditEntry = {
       remaining,
       purchasedAt,
       expiresAt,
       ...(total !== undefined ? { total } : {}),
       ...(orderId !== undefined ? { orderId } : {}),
+      ...(status !== undefined ? { status } : {}),
+      ...(exhaustedAt !== undefined ? { exhaustedAt } : {}),
+      ...(expiredAt !== undefined ? { expiredAt } : {}),
     };
+
     if (
       normalized.remaining !== entry.remaining ||
       normalized.purchasedAt !== entry.purchasedAt ||
       normalized.expiresAt !== entry.expiresAt ||
       normalized.total !== entry.total ||
-      normalized.orderId !== entry.orderId
+      normalized.orderId !== entry.orderId ||
+      normalized.status !== entry.status ||
+      normalized.exhaustedAt !== entry.exhaustedAt ||
+      normalized.expiredAt !== entry.expiredAt
     ) {
       changed = true;
     }
@@ -301,7 +325,9 @@ export function normalizeUserState(
 }
 
 function sumCredits(entries: CreditEntry[]): number {
-  return entries.reduce((sum, entry) => sum + toNonNegativeInt(entry.remaining, 0), 0);
+  return entries
+    .filter((e) => !e.status || e.status === "active")
+    .reduce((sum, entry) => sum + toNonNegativeInt(entry.remaining, 0), 0);
 }
 
 export function buildQuotaStatus(state: NormalizedUserState): QuotaStatus {
@@ -368,6 +394,7 @@ export function consumeCredits(entries: CreditEntry[], need: number): {
 
   let remainingNeed = need;
   const updated: CreditEntry[] = [];
+  const nowIso = new Date().toISOString();
 
   for (const entry of entries) {
     if (remainingNeed <= 0) {
@@ -375,8 +402,16 @@ export function consumeCredits(entries: CreditEntry[], need: number): {
       continue;
     }
 
+    // Skip non-active entries (expired, exhausted)
+    if (entry.status && entry.status !== "active") {
+      updated.push(entry);
+      continue;
+    }
+
     const available = toNonNegativeInt(entry.remaining, 0);
     if (available <= 0) {
+      // Preserve already-exhausted/expired entries in history
+      updated.push(entry);
       continue;
     }
 
@@ -385,9 +420,14 @@ export function consumeCredits(entries: CreditEntry[], need: number): {
     remainingNeed -= take;
 
     if (nextRemaining > 0) {
+      updated.push({ ...entry, remaining: nextRemaining });
+    } else {
+      // Credit fully consumed — mark as exhausted and preserve in history
       updated.push({
         ...entry,
-        remaining: nextRemaining,
+        remaining: 0,
+        status: "exhausted",
+        exhaustedAt: entry.exhaustedAt ?? nowIso,
       });
     }
   }

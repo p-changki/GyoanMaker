@@ -193,7 +193,10 @@ export async function applyPaylinkOrder(
       if ((order as { scheduled?: boolean }).scheduled) {
         await schedulePlanChange(order.email, order.planId);
       } else {
-        await changePlan(order.email, order.planId);
+        await changePlan(order.email, order.planId, {
+          changedBy: "system",
+          reason: "payment_confirmed",
+        });
       }
     } else {
       if (!order.packageId) {
